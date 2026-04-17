@@ -6,11 +6,10 @@
 
 *Declare your domain. Sail with the generated code.*
 
-A schema-driven, composable full-stack framework for Phoenix projects,
-inspired by Ballerina. You describe a domain (entities, fields,
-relations) as an Elixir DSL; Caravela generates Ecto schemas,
-migrations, Phoenix contexts, controllers, LiveViews, and typed Svelte
-components.
+A schema-driven, composable full-stack framework for Phoenix projects.
+You describe a domain (entities, fields, relations) as an Elixir DSL;
+Caravela generates Ecto schemas, migrations, Phoenix contexts,
+controllers, LiveViews, and typed Svelte components.
 
 > **Status — Phase 1.** The DSL, the compiler, and the Ecto-schema +
 > migration generators are in place. Contexts, LiveView, Svelte, and
@@ -150,7 +149,7 @@ keys. No enumeration attacks, no sequence exhaustion, and Ecto-native.
 Later phases add Phoenix contexts, JSON controllers, LiveView modules
 that mount Svelte components via LiveSvelte, typed Svelte component
 generation, Absinthe/GraphQL schema generation, and a GenServer-backed
-flow runtime for composable async workflows. See `plans/` for details.
+flow runtime for composable async workflows.
 
 ## License
 
