@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Phase 4 — LiveView + typed Svelte component generation and
+`Caravela.Live.*` runtime for composable state.
+
+### Added
+
+- `mix caravela.gen.live` — generates three LiveView modules per entity
+  (index / show / form) plus matching typed Svelte components and a
+  TypeScript interfaces file. LiveViews mount components via
+  `<LiveSvelte.render>` and delegate CRUD to the generated context, so
+  authorization, hooks, and multi-tenant scoping apply for free.
+- `Caravela.Gen.LiveView` + `Caravela.Gen.Svelte` — EEx-backed
+  generators that emit index/show/form templates. Both respect the
+  `# --- CUSTOM ---` marker (TypeScript uses `// --- CUSTOM ---`,
+  Svelte uses `<!-- --- CUSTOM --- -->`).
+- `Caravela.Live.Updater` — composable assigns-transformer helpers:
+  `compose/2`, `embed/2`, `apply/2,3`, and the `~>` pipe operator.
+- `Caravela.Live.Domain` — `use` macro with `state`, `updater`, and
+  `on_event` DSL for server-side state machines. Compile-time checks
+  enforce updater arity (`1` or `2`) and require string event names.
+- `Caravela.Live.Template` — `use Caravela.Live.Template, domain: Mod`
+  binds a LiveView to a `Live.Domain` module, auto-generating `mount/3`,
+  `handle_event/3`, and `apply_updater/2,3` helpers. Both mount and
+  handle_event are `defoverridable` so developers can extend them
+  without losing the generated defaults.
+- Naming helpers: `live_module/3`, `live_file_path/3`,
+  `svelte_component_name/2`, `svelte_component_ref/3`,
+  `svelte_file_path/3`, `svelte_types_file_path/1` — all version-aware.
+
 ## [0.3.0] — 2026-04-17
 
 Phase 3 — multi-tenancy, API versioning, Absinthe/GraphQL generation.

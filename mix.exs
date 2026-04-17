@@ -25,7 +25,25 @@ defmodule Caravela.MixProject do
     [
       main: "readme",
       logo: "assets/logo.svg",
-      extras: ["README.md", "CHANGELOG.md", "LICENSE", "NOTICE"],
+      extras: [
+        "README.md",
+        "docs/getting_started.md": [title: "Getting started"],
+        "docs/dsl.md": [title: "DSL reference"],
+        "docs/generators.md": [title: "Generators"],
+        "docs/multi_tenancy.md": [title: "Multi-tenancy"],
+        "docs/versioning.md": [title: "API versioning"],
+        "docs/graphql.md": [title: "GraphQL with Absinthe"],
+        "docs/livesvelte.md": [title: "LiveSvelte frontend"],
+        "docs/live_runtime.md": [title: "Live runtime"],
+        "docs/regeneration.md": [title: "Regeneration"],
+        "CHANGELOG.md": [title: "Changelog"],
+        LICENSE: [title: "License"],
+        NOTICE: [title: "Notice"]
+      ],
+      groups_for_extras: [
+        Guides: ~r"docs/.*\.md",
+        Meta: ~r"(CHANGELOG|LICENSE|NOTICE)\.md"
+      ],
       source_url: @source_url,
       source_ref: "v#{@version}"
     ]
@@ -47,7 +65,7 @@ defmodule Caravela.MixProject do
   defp package do
     [
       licenses: ["MPL-2.0"],
-      files: ~w(lib priv mix.exs README.md CHANGELOG.md LICENSE NOTICE),
+      files: ~w(lib priv docs mix.exs README.md CHANGELOG.md LICENSE NOTICE),
       links: %{
         "GitHub" => @source_url,
         "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"

@@ -1,0 +1,118 @@
+# DSL reference
+
+Every Caravela domain is a module that `use`s `Caravela.Domain`. The
+DSL declares entities, relations, lifecycle hooks, and authorization
+rules; the compiler builds an IR and validates it before generators
+run.
+
+## `entity :<name> do ... end`
+
+Declares one entity (one database table). The name is plural
+(`:books`); the generator derives a singular module name (`Book`), a
+plural table name (`library_books`), and a path
+(`lib/<app>/library/book.ex`).
+
+```elixir
+entity :books do
+  field :title, :string, required: true
+  field :isbn, :string
+end
+```
+
+## `field :<name>, <type>, opts`
+
+| option                     | applies to        | effect                              |
+|----------------------------|-------------------|-------------------------------------|
+| `required`                 | any               | `null: false` + `validate_required` |
+| `default`                  | any               | column default                      |
+| `min`, `max`               | numeric           | `validate_number`                   |
+| `min_length`, `max_length` | string-like       | `validate_length`                   |
+| `format`                   | string-like       | `validate_format` (regex)           |
+| `precision`, `scale`       | numeric           | decimal precision/scale             |
+
+**Recognised types:** `:string`, `:text`, `:integer`, `:bigint`,
+`:float`, `:decimal`, `:boolean`, `:date`, `:time`, `:naive_datetime`,
+`:utc_datetime`, `:binary`, `:binary_id`, `:uuid`, `:map`, `:json`,
+`:jsonb`.
+
+## `relation :<from>, :<to>, type: <t>`
+
+`t` is one of `:has_many`, `:has_one`, `:belongs_to`, `:many_to_many`.
+Declare either side of a relationship — Caravela infers the other.
+
+```elixir
+relation :authors, :books,   type: :has_many
+relation :books,   :publishers, type: :belongs_to, required: true
+```
+
+`required: true` on a `:belongs_to` produces `null: false` on the FK
+and `on_delete: :delete_all` in the migration.
+
+## `version "v<n>"` *(optional)*
+
+Declares the domain's API version. When set, generated modules and
+routes are namespaced under the version segment. See
+[versioning](versioning.md).
+
+```elixir
+use Caravela.Domain
+version "v1"
+```
+
+## `use Caravela.Domain, multi_tenant: true` *(optional)*
+
+Opts the domain into row-level multi-tenancy: a `:tenant_id`
+(`:binary_id`, `null: false`) field is auto-injected into every
+entity, and the generated context scopes reads/writes by
+`context.tenant.id`. See [multi-tenancy](multi_tenancy.md).
+
+## Hooks: `on_create`, `on_update`, `on_delete`
+
+Hooks run inside the generated context, between authorization and the
+final `Repo` call:
+
+```elixir
+on_create :books, fn changeset, context -> ... end     # → changeset
+on_update :books, fn changeset, context -> ... end     # → changeset
+on_delete :authors, fn author, context -> ... end      # → :ok | {:error, reason}
+```
+
+`context` is whatever map you pass to the context function. In the
+generated controllers it defaults to `%{current_user: …, conn: conn}`
+(plus `tenant:` when `multi_tenant: true`).
+
+If `{:error, reason}` is returned from `on_delete`, the delete is
+aborted and the tuple propagates back to the caller.
+
+## Permissions: `can_read`, `can_create`, `can_update`, `can_delete`
+
+```elixir
+can_read   :books, fn query, context -> query end        # → Ecto.Query
+can_create :books, fn context -> true end                # → boolean
+can_update :books, fn book, context -> true end          # → boolean
+can_delete :books, fn _book, context -> true end         # → boolean
+```
+
+`can_read` is applied as a query filter *before* `Repo.all`/`Repo.get`
+so restricted users never see forbidden rows. The other three return
+booleans; `false` short-circuits the context function with
+`{:error, :unauthorized}`.
+
+To use query macros like `where` / `from` inside `can_read`, add
+`import Ecto.Query` at the top of your domain module.
+
+## Compile-time validations
+
+Every rule raises a `CompileError` pointing at the offending line:
+
+1. Unknown field types (`:widget` etc.)
+2. Numeric constraints on non-numeric fields (and vice versa)
+3. Duplicate entity names
+4. Relations referencing undeclared entities
+5. Incompatible cardinality (e.g. both sides `:has_many`)
+6. Circular chains of required `belongs_to` (unsatisfiable inserts)
+7. Hooks / permissions with the wrong function arity
+8. Hooks / permissions referring to unknown entities
+9. Duplicate hook / permission for the same (action, entity)
+10. Version strings that don't match `~r/^v\d+$/`
+11. Manual `tenant_id` fields in a `multi_tenant: true` domain

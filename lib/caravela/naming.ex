@@ -319,4 +319,120 @@ defmodule Caravela.Naming do
       route_path(:books) #=> "/books"
   """
   def route_path(entity_name), do: "/" <> plural_string(entity_name)
+
+  # --- Phase 4: LiveView + Svelte naming ---------------------------------
+
+  @doc """
+  LiveView module name for an entity view. `kind` is `:index`, `:show`,
+  or `:form`.
+
+      live_module(domain, :books, :index)
+      #=> MyAppWeb.Library.BookLive.Index
+      #=> MyAppWeb.V1.Library.BookLive.Index  (when version set)
+  """
+  def live_module(%Domain{} = domain, entity_name, kind) do
+    web = web_module(domain)
+
+    web_with_version =
+      case Domain.version_segment(domain) do
+        nil -> web
+        seg -> Module.concat(web, seg)
+      end
+
+    ctx_short = domain |> context_short() |> Macro.camelize()
+    entity_camel = camelize(singularize(entity_name))
+    kind_camel = kind |> Atom.to_string() |> Macro.camelize()
+
+    Module.concat([web_with_version, ctx_short, entity_camel <> "Live", kind_camel])
+  end
+
+  @doc """
+  File path for a generated LiveView module.
+
+      live_file_path(domain, :books, :index)
+      #=> "lib/my_app_web/live/library/book_live/index.ex"
+      #=> "lib/my_app_web/live/v1/library/book_live/index.ex"  (when versioned)
+  """
+  def live_file_path(%Domain{} = domain, entity_name, kind) do
+    web_root = web_module(domain) |> Module.split() |> List.first() |> Macro.underscore()
+    ctx_short = context_short(domain)
+    entity = singular_string(entity_name)
+    kind_s = Atom.to_string(kind)
+
+    base_segments =
+      case Domain.version(domain) do
+        nil -> ["lib", web_root, "live", ctx_short]
+        v -> ["lib", web_root, "live", v, ctx_short]
+      end
+
+    Path.join(base_segments ++ ["#{entity}_live", "#{kind_s}.ex"])
+  end
+
+  @doc """
+  Svelte component name (CamelCase). `kind` is `:index`, `:show`, or
+  `:form`.
+
+      svelte_component_name(:books, :index) #=> "BookIndex"
+      svelte_component_name(:books, :form)  #=> "BookForm"
+  """
+  def svelte_component_name(entity_name, kind) do
+    camelize(singularize(entity_name)) <> Macro.camelize(Atom.to_string(kind))
+  end
+
+  @doc """
+  LiveSvelte component reference — the path string passed to
+  `<LiveSvelte.render name="..." />`. Matches the Svelte-file path
+  relative to `assets/svelte/`, without the `.svelte` extension.
+
+      svelte_component_ref(domain, :books, :index) #=> "library/BookIndex"
+      #=> "v1/library/BookIndex"                   (when versioned)
+  """
+  def svelte_component_ref(%Domain{} = domain, entity_name, kind) do
+    component = svelte_component_name(entity_name, kind)
+    ctx_short = context_short(domain)
+
+    case Domain.version(domain) do
+      nil -> "#{ctx_short}/#{component}"
+      v -> "#{v}/#{ctx_short}/#{component}"
+    end
+  end
+
+  @doc """
+  Filesystem path for the generated Svelte component.
+
+      svelte_file_path(domain, :books, :index)
+      #=> "assets/svelte/library/BookIndex.svelte"
+      #=> "assets/svelte/v1/library/BookIndex.svelte"  (when versioned)
+  """
+  def svelte_file_path(%Domain{} = domain, entity_name, kind) do
+    component = svelte_component_name(entity_name, kind)
+    ctx_short = context_short(domain)
+
+    segments =
+      case Domain.version(domain) do
+        nil -> ["assets", "svelte", ctx_short]
+        v -> ["assets", "svelte", v, ctx_short]
+      end
+
+    Path.join(segments ++ ["#{component}.svelte"])
+  end
+
+  @doc """
+  Filesystem path for the generated TypeScript interfaces file.
+
+      svelte_types_file_path(domain)
+      #=> "assets/svelte/types/library.ts"
+      #=> "assets/svelte/v1/types/library.ts"  (when versioned)
+  """
+  def svelte_types_file_path(%Domain{} = domain) do
+    ctx_short = context_short(domain)
+
+    segments =
+      case Domain.version(domain) do
+        nil -> ["assets", "svelte", "types"]
+        v -> ["assets", "svelte", v, "types"]
+      end
+
+    Path.join(segments ++ ["#{ctx_short}.ts"])
+  end
 end

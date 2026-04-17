@@ -11,7 +11,12 @@ locals_without_parens = [
   can_read: 2,
   can_create: 2,
   can_update: 2,
-  can_delete: 2
+  can_delete: 2,
+  # Caravela.Live.Domain DSL
+  state: 1,
+  updater: 2,
+  on_event: 2,
+  on_info: 2
 ]
 
 [

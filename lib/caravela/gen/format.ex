@@ -40,6 +40,12 @@ defmodule Caravela.Gen.Format do
     foreign_key_constraint: 1,
     foreign_key_constraint: 2,
 
+    # Caravela.Live.Domain DSL
+    state: 1,
+    updater: 2,
+    on_event: 2,
+    on_info: 2,
+
     # Ecto.Migration
     add: 2,
     add: 3,
