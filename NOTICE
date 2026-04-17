@@ -1,0 +1,33 @@
+Caravela
+Copyright (c) 2026 The Caravela Authors and Contributors.
+
+This product is licensed under the Mozilla Public License, v. 2.0.
+A copy of the license is included in the file LICENSE, and is also
+available at https://mozilla.org/MPL/2.0/.
+
+----------------------------------------------------------------------
+
+Attribution
+-----------
+
+If you build on top of Caravela, please preserve the copyright and
+license notices in every source file of the framework you modify, and
+keep a visible credit to the project in your README, docs, or about
+page. This is both required by the license and sincerely appreciated.
+
+Plagiarism is explicitly not permitted. You are welcome to learn from,
+fork, extend, and redistribute this code under the MPL-2.0, but you
+may not strip authorship, relicense modified source files under an
+incompatible license, or pass this work off as your own.
+
+Supporting the project
+----------------------
+
+Caravela is developed in the open and offered free of charge. If the
+project saves you time or helps you ship, please consider supporting
+its continued development. Donation channels (GitHub Sponsors, Open
+Collective, etc.) will be announced in the README once available.
+
+Sponsorship and donations keep maintenance, documentation, and new
+phases of the framework moving. Thank you for helping keep the sails
+full.

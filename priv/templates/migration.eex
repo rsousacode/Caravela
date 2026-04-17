@@ -1,0 +1,17 @@
+defmodule <%= inspect @module %> do
+  use Ecto.Migration
+
+  def change do
+<%= for t <- @tables do %>    create table(:<%= t.name %>, primary_key: false) do
+      add :id, :binary_id, primary_key: true
+<%= for f <- t.columns do %>      add :<%= f.name %>, <%= inspect f.pg_type %><%= if f.default != :__no_default__, do: ", default: " <> inspect(f.default) %><%= if f.null == false, do: ", null: false" %><%= if f.precision, do: ", precision: " <> Integer.to_string(f.precision) %><%= if f.scale, do: ", scale: " <> Integer.to_string(f.scale) %>
+<% end %><%= for ref <- t.refs do %>      add :<%= ref.column %>, references(:<%= ref.table %>, type: :binary_id, on_delete: :<%= ref.on_delete %>)<%= if ref.null == false, do: ", null: false" %>
+
+<% end %>
+      timestamps(type: :utc_datetime)
+    end
+
+<%= for idx <- t.indexes do %>    create index(:<%= t.name %>, [:<%= idx %>])
+<% end %>
+<% end %>  end
+end

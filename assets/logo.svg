@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Caravela">
+  <title>Caravela</title>
+  <defs>
+    <linearGradient id="cv-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset=".55" stop-color="#fb923c"/>
+      <stop offset="1" stop-color="#be123c"/>
+    </linearGradient>
+    <linearGradient id="cv-sail" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff7ed"/>
+      <stop offset="1" stop-color="#fcd34d"/>
+    </linearGradient>
+    <linearGradient id="cv-sail-shadow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fcd34d"/>
+      <stop offset="1" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="cv-hull" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7c2d12"/>
+      <stop offset="1" stop-color="#292524"/>
+    </linearGradient>
+    <linearGradient id="cv-sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0ea5e9"/>
+      <stop offset="1" stop-color="#1e3a8a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- disc backdrop (sun over sea) -->
+  <circle cx="128" cy="128" r="120" fill="url(#cv-sky)"/>
+  <circle cx="128" cy="104" r="46" fill="#fef3c7" opacity=".55"/>
+
+  <!-- sea band -->
+  <path d="M8 168 A120 120 0 0 0 248 168 L248 208 L8 208 Z" fill="url(#cv-sea)"/>
+
+  <!-- masts -->
+  <g stroke="#1c1917" stroke-linecap="round">
+    <line x1="82"  y1="168" x2="82"  y2="68"  stroke-width="3"/>
+    <line x1="128" y1="172" x2="128" y2="40"  stroke-width="3.5"/>
+    <line x1="174" y1="168" x2="174" y2="70"  stroke-width="3"/>
+    <!-- main yard -->
+    <line x1="96"  y1="72"  x2="160" y2="72"  stroke-width="2.5"/>
+  </g>
+
+  <!-- pennant -->
+  <path d="M128 40 L150 46 L128 52 Z" fill="#be123c"/>
+
+  <!-- foresail (lateen, left) -->
+  <path d="M82 70 Q 52 118 56 166 L 82 166 Z"
+        fill="url(#cv-sail)" stroke="#78350f" stroke-width="1.25" stroke-linejoin="round"/>
+
+  <!-- mainsail (square, billowed) -->
+  <path d="M96 72 Q 128 86 160 72 L 164 158 Q 128 172 92 158 Z"
+        fill="url(#cv-sail)" stroke="#78350f" stroke-width="1.25" stroke-linejoin="round"/>
+  <path d="M128 82 Q 140 120 128 162 Q 116 120 128 82 Z"
+        fill="url(#cv-sail-shadow)" opacity=".35"/>
+
+  <!-- mizzen (lateen, right) -->
+  <path d="M174 72 Q 208 120 202 166 L 174 166 Z"
+        fill="url(#cv-sail)" stroke="#78350f" stroke-width="1.25" stroke-linejoin="round"/>
+
+  <!-- hull -->
+  <path d="M42 166 L214 166 L198 196 Q 128 214 58 196 Z"
+        fill="url(#cv-hull)"/>
+  <!-- hull plank line -->
+  <path d="M54 180 Q 128 196 202 180" stroke="#fcd34d" stroke-width="1.5" fill="none" opacity=".55"/>
+  <!-- portholes -->
+  <circle cx="96"  cy="182" r="2.5" fill="#fcd34d"/>
+  <circle cx="128" cy="184" r="2.5" fill="#fcd34d"/>
+  <circle cx="160" cy="182" r="2.5" fill="#fcd34d"/>
+
+  <!-- waves in front of hull -->
+  <g fill="none" stroke="#e0f2fe" stroke-width="2" stroke-linecap="round" opacity=".85">
+    <path d="M24 204 Q 44 198 64 204 T 104 204 T 144 204 T 184 204 T 232 204"/>
+    <path d="M16 216 Q 40 210 64 216 T 112 216 T 160 216 T 208 216 T 240 216" opacity=".6"/>
+  </g>
+
+  <!-- rim -->
+  <circle cx="128" cy="128" r="120" fill="none" stroke="#1c1917" stroke-width="3" opacity=".85"/>
+</svg>
