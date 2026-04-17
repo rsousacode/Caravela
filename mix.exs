@@ -1,16 +1,33 @@
 defmodule Caravela.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+  @source_url "https://github.com/rsousacode/caravela"
+
   def project do
     [
       app: :caravela,
-      version: "0.1.0",
+      name: "Caravela",
+      version: @version,
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
+      source_url: @source_url,
+      homepage_url: @source_url,
+      docs: docs(),
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps()
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      logo: "assets/logo.svg",
+      extras: ["README.md", "CHANGELOG.md", "LICENSE", "NOTICE"],
+      source_url: @source_url,
+      source_ref: "v#{@version}"
     ]
   end
 
@@ -30,8 +47,11 @@ defmodule Caravela.MixProject do
   defp package do
     [
       licenses: ["MPL-2.0"],
-      files: ~w(lib priv mix.exs README.md LICENSE NOTICE),
-      links: %{}
+      files: ~w(lib priv mix.exs README.md CHANGELOG.md LICENSE NOTICE),
+      links: %{
+        "GitHub" => @source_url,
+        "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"
+      }
     ]
   end
 

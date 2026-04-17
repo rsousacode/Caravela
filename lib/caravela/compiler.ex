@@ -2,8 +2,8 @@ defmodule Caravela.Compiler do
   @moduledoc """
   Compile-time hook that assembles and validates a domain IR.
 
-  Invoked via `@before_compile Caravela.Compiler` from
-  `Caravela.Domain.__using__/1`.
+  Wired up via `@before_compile Caravela.Compiler` from modules that
+  `use Caravela.Domain`.
   """
 
   alias Caravela.Schema.{Domain, Entity, Field, Relation}
