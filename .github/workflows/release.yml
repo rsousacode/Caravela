@@ -13,7 +13,6 @@ jobs:
     name: Publish ${{ github.ref_name }}
     runs-on: ubuntu-latest
     env:
-      MIX_ENV: test
       HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
 
     steps:
@@ -34,7 +33,7 @@ jobs:
           restore-keys: ${{ runner.os }}-mix-
 
       - name: Install dependencies
-        run: mix deps.get --only-prod
+        run: mix deps.get
 
       - name: Verify formatting
         run: mix format --check-formatted
@@ -57,6 +56,4 @@ jobs:
           fi
 
       - name: Publish to Hex
-        env:
-          MIX_ENV: prod
         run: mix hex.publish --yes
