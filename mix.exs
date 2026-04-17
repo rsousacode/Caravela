@@ -35,6 +35,7 @@ defmodule Caravela.MixProject do
         "docs/graphql.md": [title: "GraphQL with Absinthe"],
         "docs/livesvelte.md": [title: "LiveSvelte frontend"],
         "docs/live_runtime.md": [title: "Live runtime"],
+        "docs/flows.md": [title: "Flows"],
         "docs/regeneration.md": [title: "Regeneration"],
         "CHANGELOG.md": [title: "Changelog"],
         LICENSE: [title: "License"],

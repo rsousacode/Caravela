@@ -165,3 +165,74 @@ Running the live generator with `--with-domain` emits a
 regenerates `form.ex` to use `Caravela.Live.Template`. It's the
 shortest path to a working example of the pattern without writing a
 domain from scratch.
+
+## `Caravela.Live.Form` — visibility predicates + async validation
+
+When a form needs conditional fields or server-round-trip validation,
+reach for `Caravela.Live.Form`. It's a thin DSL layered on top of
+`Caravela.Live.Domain`: everything from the Domain DSL still works,
+plus two new macros:
+
+```elixir
+defmodule MyApp.BookFormDomain do
+  use Caravela.Live.Form,
+    entity: MyApp.Library.V1.Book,
+    context_fields: [:current_user]
+
+  state do
+    field :attrs, :map, default: %{}
+    field :current_user, :map, default: nil
+  end
+
+  # Compile-time visibility predicate. Evaluated server-side on every
+  # assigns change. The result is sent to the Svelte component as
+  # `field_visibility.published`.
+  visible :published, fn assigns ->
+    Map.get(assigns.attrs, :advanced_mode) == true
+  end
+
+  visible :price, fn assigns ->
+    Map.get(assigns.current_user || %{}, :role) in [:admin, :editor]
+  end
+
+  # Async field validator. The optional `:debounce` option (ms) is
+  # emitted as metadata so the generated Svelte form can debounce the
+  # input before pushing `"validate_async"` back to the LiveView.
+  validate_async :isbn, [debounce: 500], fn value, _assigns ->
+    MyApp.ISBNService.validate(value)
+  end
+end
+```
+
+The compiled module exposes:
+
+- `__caravela_form__/0` — metadata (entity, context fields, visible
+  fields, async fields, debounce map)
+- `__caravela_form_visibility__/1` — compute the `field_visibility`
+  map by running every predicate against an assigns map
+- `__caravela_form_visible__/2` — per-field visibility predicate
+  (fallback returns `true`)
+- `__caravela_form_validate_async__/3` — dispatches a field's async
+  validator
+
+Authorization-sensitive visibility **stays on the server** — the
+client only receives the boolean result. Svelte's `{#if ...}` blocks
+never see fields the current user shouldn't have.
+
+### Dynamic Svelte form — `Caravela.Gen.SvelteForm`
+
+`Caravela.Gen.SvelteForm.render(form_module, domain)` generates a
+`<Entity>FormDynamic.svelte` sibling to the plain `<Entity>Form.svelte`
+the CRUD generator emits. The dynamic form:
+
+- Declares `field_visibility`, `async_errors`, and `pushEvent` props
+- Wraps every field that has a `visible` predicate in
+  `{#if field_visibility.<name>}`
+- Installs a client-side `setTimeout` per `validate_async` field,
+  firing `pushEvent("validate_async", { field, value })` after the
+  declared debounce
+- Renders async errors in a separate `.error.async` span so they
+  don't conflict with synchronous changeset errors
+
+Both form variants coexist: plain CRUD keeps the static form, forms
+that need conditional/async behaviour switch to the dynamic one.

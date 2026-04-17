@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Phase 5 — dynamic Svelte forms with server-driven visibility and
+async validation, plus the `Caravela.Flow` GenServer runtime for
+composable async workflows.
+
+### Added
+
+- `Caravela.Live.Form` — DSL layered on `Caravela.Live.Domain` for
+  form-visibility predicates (`visible/2`) and async field validators
+  (`validate_async/3`). Each form-domain module exposes
+  `__caravela_form__/0`, `__caravela_form_visibility__/1`,
+  `__caravela_form_visible__/2`, and `__caravela_form_validate_async__/3`
+  for introspection and runtime dispatch.
+- `Caravela.Gen.SvelteForm` — generator that reads a form-domain
+  module plus its owning `Caravela.Schema.Domain` and emits
+  `<Entity>FormDynamic.svelte`. The component declares
+  `field_visibility` / `async_errors` props, wraps guarded fields in
+  `{#if field_visibility.*}`, and debounces async-validation
+  `pushEvent` calls client-side.
+- `Caravela.Flow` / `Caravela.Flow.DSL` — `use Caravela.Flow` plus
+  `flow/3`, `sequence`, `repeat`, `wait`, `wait_until`, `debounce`,
+  `set_state`, `run`, `parallel`, `race`, and `each` macros. Compiles
+  to nested step-tree structs in `Caravela.Flow.Steps`.
+- `Caravela.Flow.Runner` — GenServer interpreting step trees. Supports
+  retry/backoff (linear + exponential), `wait_until` that unblocks on
+  `signal/2`, `debounce` that resets on state change during the
+  pause, parallel/race task orchestration, and per-item `each`
+  iteration with `{:ok|:skip|:error, _}` returns.
+- `Caravela.Flow.Supervisor` — optional DynamicSupervisor for flow
+  runners. `Caravela.Flow.start/3` attaches runners when the
+  supervisor is running, falls back to unsupervised `start_link`
+  otherwise (useful in tests and tooling).
+- Top-level API: `Caravela.Flow.start/3`, `Caravela.Flow.signal/2`,
+  `Caravela.Flow.get_state/1`, `Caravela.Flow.stop/1,2`. Flows deliver
+  `{:flow_state, _}`, `{:flow_done, _}`, and `{:flow_error, _}`
+  messages to the `:notify` pid.
+- `docs/flows.md` — new guide covering the flow DSL, primitives, the
+  real-time loop through LiveView + LiveSvelte, and the scope
+  boundary (no event sourcing).
+- `docs/live_runtime.md` — extended with `Caravela.Live.Form` and
+  `Caravela.Gen.SvelteForm` sections.
+
+### Scope
+
+- Flows are strictly ephemeral: in-memory state, no persistence, no
+  event sourcing. Teams needing durable event streams should use
+  [Commanded](https://github.com/commanded/commanded).
+
 ## [0.4.0] — 2026-04-17
 
 Phase 4 — LiveView + typed Svelte component generation,

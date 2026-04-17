@@ -50,17 +50,19 @@ Full guides live under `docs/` and ship with the Hex package.
 - [GraphQL with Absinthe](docs/graphql.md)
 - [LiveSvelte frontend](docs/livesvelte.md)
 - [Live runtime (`Caravela.Live.*`)](docs/live_runtime.md)
+- [Flows — async workflow orchestration](docs/flows.md)
 - [Regeneration & the CUSTOM marker](docs/regeneration.md)
 
 Run `mix docs` to build the full API reference locally (HexDocs-style).
 
 ## Status
 
-Phases 1–4 are in place: DSL + compiler, Ecto schemas + migrations,
+Phases 1–5 are in place: DSL + compiler, Ecto schemas + migrations,
 hooks + permissions, Phoenix contexts, JSON API, Absinthe/GraphQL,
-multi-tenancy, API versioning, LiveSvelte generation, and the
-`Caravela.Live.*` runtime. A GenServer-backed flow runtime for
-composable async workflows lands next.
+multi-tenancy, API versioning, LiveSvelte generation, the
+`Caravela.Live.*` runtime, dynamic Svelte forms with visibility
+predicates + async validation, and a GenServer-backed flow runtime
+(`Caravela.Flow`) for composable async workflows.
 
 ## License
 
