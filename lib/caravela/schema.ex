@@ -46,20 +46,73 @@ defmodule Caravela.Schema do
           }
   end
 
+  defmodule Hook do
+    @moduledoc """
+    A lifecycle hook declared in the DSL via `on_create`, `on_update`, or
+    `on_delete`.
+
+    The hook function itself is compiled into the domain module as a
+    clause of `__caravela_hook__/4`. This struct is purely metadata so
+    generators and compile-time validations can reason about which
+    hooks exist.
+    """
+    defstruct [:action, :entity, :arity]
+
+    @type action :: :on_create | :on_update | :on_delete
+
+    @type t :: %__MODULE__{
+            action: action(),
+            entity: atom(),
+            arity: non_neg_integer()
+          }
+  end
+
+  defmodule Permission do
+    @moduledoc """
+    An authorization rule declared via `can_read`, `can_create`,
+    `can_update`, or `can_delete`.
+
+    Compiled into a clause of `__caravela_permission__` on the domain
+    module. This struct records the (action, entity) pair so generators
+    know which permission checks to wire into the context.
+    """
+    defstruct [:action, :entity, :arity]
+
+    @type action :: :can_read | :can_create | :can_update | :can_delete
+
+    @type t :: %__MODULE__{
+            action: action(),
+            entity: atom(),
+            arity: non_neg_integer()
+          }
+  end
+
   defmodule Domain do
     @moduledoc "A whole domain: the top-level IR produced by compilation."
-    defstruct [:module, entities: [], relations: [], opts: []]
+    defstruct [:module, entities: [], relations: [], hooks: [], permissions: [], opts: []]
 
     @type t :: %__MODULE__{
             module: module(),
             entities: [Entity.t()],
             relations: [Relation.t()],
+            hooks: [Hook.t()],
+            permissions: [Permission.t()],
             opts: keyword()
           }
 
     @doc "Lookup an entity by its DSL name."
     def fetch_entity(%__MODULE__{entities: es}, name) do
       Enum.find(es, &(&1.name == name))
+    end
+
+    @doc "Does the domain declare a hook for `action` on `entity`?"
+    def has_hook?(%__MODULE__{hooks: hs}, action, entity) do
+      Enum.any?(hs, &(&1.action == action and &1.entity == entity))
+    end
+
+    @doc "Does the domain declare a permission for `action` on `entity`?"
+    def has_permission?(%__MODULE__{permissions: ps}, action, entity) do
+      Enum.any?(ps, &(&1.action == action and &1.entity == entity))
     end
   end
 end

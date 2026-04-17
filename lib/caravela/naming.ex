@@ -119,4 +119,88 @@ defmodule Caravela.Naming do
   @doc "CamelCase an atom or string."
   def camelize(name) when is_atom(name), do: Macro.camelize(Atom.to_string(name))
   def camelize(name) when is_binary(name), do: Macro.camelize(name)
+
+  @doc """
+  Singular string form for a plural entity name. Used by the context
+  and controller generators to derive function / route names.
+
+      singular_string(:books) #=> "book"
+  """
+  def singular_string(entity_name), do: to_string(singularize(entity_name))
+
+  @doc """
+  Plural string form of an entity name.
+
+      plural_string(:books) #=> "books"
+  """
+  def plural_string(entity_name), do: to_string(entity_name)
+
+  @doc """
+  File path for the generated context module, relative to the project
+  root.
+
+      context_file_path(MyApp.Domains.Library)
+      #=> "lib/my_app/library.ex"
+  """
+  def context_file_path(domain_module) do
+    parts =
+      domain_module
+      |> context_module()
+      |> Module.split()
+      |> Enum.map(&Macro.underscore/1)
+
+    {last, dir_parts} = List.pop_at(parts, length(parts) - 1)
+    dir = Path.join(["lib" | dir_parts])
+    Path.join(dir, last <> ".ex")
+  end
+
+  @doc """
+  Repo module derived by convention from the app root. `MyApp.Library`
+  becomes `MyApp.Repo`.
+
+      repo_module(MyApp.Domains.Library) #=> MyApp.Repo
+  """
+  def repo_module(domain_module) do
+    [root | _] = domain_module |> context_module() |> Module.split()
+    Module.concat([root, "Repo"])
+  end
+
+  @doc """
+  Web module name derived from the app/context root. `MyApp.Library`
+  becomes `MyAppWeb`.
+
+      web_module(MyApp.Domains.Library) #=> MyAppWeb
+  """
+  def web_module(domain_module) do
+    [root | _] = domain_module |> context_module() |> Module.split()
+    Module.concat([root <> "Web"])
+  end
+
+  @doc """
+  Controller module for an entity.
+
+      controller_module(MyApp.Domains.Library, :books)
+      #=> MyAppWeb.BookController
+  """
+  def controller_module(domain_module, entity_name) do
+    Module.concat(web_module(domain_module), "#{camelize(singularize(entity_name))}Controller")
+  end
+
+  @doc """
+  Controller file path relative to the project root.
+
+      controller_file_path(MyApp.Domains.Library, :books)
+      #=> "lib/my_app_web/controllers/book_controller.ex"
+  """
+  def controller_file_path(domain_module, entity_name) do
+    web = web_module(domain_module) |> Module.split() |> List.first() |> Macro.underscore()
+    Path.join(["lib", web, "controllers", "#{singular_string(entity_name)}_controller.ex"])
+  end
+
+  @doc """
+  Plural route segment for an entity.
+
+      route_path(:books) #=> "/books"
+  """
+  def route_path(entity_name), do: "/" <> plural_string(entity_name)
 end

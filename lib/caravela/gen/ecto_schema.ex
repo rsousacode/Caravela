@@ -4,28 +4,35 @@ defmodule Caravela.Gen.EctoSchema do
   `Caravela.Schema.Domain`.
 
   Returns a list of `{path, source}` tuples. `Caravela.Gen` or the Mix
-  task is responsible for actually writing the files.
+  task is responsible for actually writing the files. Files preserve
+  content below the `# --- CUSTOM ---` marker on regeneration.
   """
 
   alias Caravela.Schema.Domain
-  alias Caravela.Naming
+  alias Caravela.{Gen, Naming}
 
   @template_path Path.expand("../../../priv/templates/ecto_schema.eex", __DIR__)
 
   @doc "Render every entity in the domain as an Ecto schema file."
-  def render_all(%Domain{} = domain) do
+  def render_all(%Domain{} = domain, opts \\ []) do
     Enum.map(domain.entities, fn entity ->
       path = Naming.schema_file_path(domain.module, entity.name)
-      source = render_entity(domain, entity)
+      source = render_entity(domain, entity, opts)
       {path, source}
     end)
   end
 
   @doc "Render a single entity."
-  def render_entity(%Domain{} = domain, entity) do
-    assigns = build_assigns(domain, entity)
+  def render_entity(%Domain{} = domain, entity, opts \\ []) do
+    root = Keyword.get(opts, :root, File.cwd!())
+    path = Naming.schema_file_path(domain.module, entity.name)
+    existing_path = Path.join(root, path)
 
-    EEx.eval_file(@template_path, assigns: assigns, trim: true)
+    assigns = build_assigns(domain, entity)
+    rendered = EEx.eval_file(@template_path, assigns: assigns, trim: true)
+
+    rendered
+    |> Gen.Custom.merge_with_file(existing_path)
     |> Caravela.Gen.Format.try_format()
   end
 
@@ -56,7 +63,8 @@ defmodule Caravela.Gen.EctoSchema do
       belongs_to: belongs_to,
       required_fields: required_plain,
       optional_fields: optional_plain ++ optional_fks,
-      validation_lines: build_validations(entity.fields)
+      validation_lines: build_validations(entity.fields),
+      custom_marker: Gen.Custom.marker_block()
     ]
   end
 

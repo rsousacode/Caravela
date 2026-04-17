@@ -7,13 +7,14 @@
 *Declare your domain. Sail with the generated code.*
 
 A schema-driven, composable full-stack framework for Phoenix projects.
-You describe a domain (entities, fields, relations) as an Elixir DSL;
-Caravela generates Ecto schemas, migrations, Phoenix contexts,
-controllers, LiveViews, and typed Svelte components.
+You describe a domain (entities, fields, relations, hooks, permissions)
+as an Elixir DSL; Caravela generates Ecto schemas, migrations, Phoenix
+contexts, JSON controllers, LiveViews, and typed Svelte components.
 
-> **Status — Phase 1.** The DSL, the compiler, and the Ecto-schema +
-> migration generators are in place. Contexts, LiveView, Svelte, and
-> Flow orchestration land in later phases.
+> **Status — Phase 2.** The DSL, compiler, schema + migration
+> generators (Phase 1) plus hooks, permissions, context, and JSON API
+> generators (Phase 2) are in place. LiveView, Svelte, and Flow
+> orchestration land in later phases.
 
 ## Installation
 
@@ -59,35 +60,80 @@ defmodule MyApp.Domains.Library do
 
   relation :authors, :books, type: :has_many
   relation :books, :publishers, type: :belongs_to
+
+  # Hooks
+
+  on_create :books, fn changeset, _context ->
+    if Ecto.Changeset.get_field(changeset, :published) do
+      Ecto.Changeset.validate_required(changeset, [:published_at])
+    else
+      changeset
+    end
+  end
+
+  on_update :books, fn changeset, _context ->
+    if Ecto.Changeset.get_change(changeset, :published) == true do
+      Ecto.Changeset.put_change(changeset, :published_at, DateTime.utc_now())
+    else
+      changeset
+    end
+  end
+
+  # Permissions
+
+  can_create :books, fn context ->
+    context.current_user.role in [:admin, :editor]
+  end
+
+  can_update :books, fn book, context ->
+    context.current_user.role == :admin or
+      book.author_id == context.current_user.author_id
+  end
+
+  can_delete :books, fn _book, context ->
+    context.current_user.role == :admin
+  end
 end
 ```
 
-### 2. Generate schemas and a migration
+### 2. Generate everything
 
 ```bash
-mix caravela.gen.schema MyApp.Domains.Library
-# * created priv/repo/migrations/20260417120000_create_library_tables.exs
+mix caravela.gen MyApp.Domains.Library
+# * created priv/repo/migrations/…_create_library_tables.exs
 # * created lib/my_app/library/author.ex
 # * created lib/my_app/library/book.ex
 # * created lib/my_app/library/publisher.ex
+# * created lib/my_app/library.ex                    (context)
+# * created lib/my_app_web/controllers/author_controller.ex
+# * created lib/my_app_web/controllers/book_controller.ex
+# * created lib/my_app_web/controllers/publisher_controller.ex
+#
+# (and prints a router scope snippet to paste into router.ex)
 ```
 
-The generator drops files where a standard Phoenix app expects them.
-Every file is plain Phoenix / Ecto code — no runtime magic.
+Or target a single layer:
 
-Pass `--dry-run` to preview, or `--force` to overwrite existing files
-without prompting.
+```bash
+mix caravela.gen.schema  MyApp.Domains.Library   # schemas + migration only
+mix caravela.gen.context MyApp.Domains.Library   # context only
+mix caravela.gen.api     MyApp.Domains.Library   # controllers + router scope
+```
 
-### 3. Migrate
+Pass `--dry-run` to preview, or `--force` to overwrite without prompts.
+
+### 3. Migrate and run
 
 ```bash
 mix ecto.migrate
-```
+mix phx.server
 
-The generated migration creates tables in dependency order and adds
-foreign-key indexes. Required fields get `null: false`; required
-`belongs_to` relations become `on_delete: :delete_all` (non-required
-become `:nilify_all`).
+curl -X POST localhost:4000/api/books \
+  -H "content-type: application/json" \
+  -d '{"title":"Test Title"}'
+# → 201 Created on valid input, 403 if can_create denies,
+#   422 if the changeset fails validation or the hook rejects it.
+```
 
 ## DSL reference
 
@@ -99,14 +145,14 @@ generator derives a singular module name (`Book`), a plural table name
 
 ### `field :<name>, <type>, opts`
 
-| option        | applies to        | effect                        |
-|---------------|-------------------|-------------------------------|
-| `required`    | any               | `null: false` + `validate_required` |
-| `default`     | any               | column default                |
-| `min`, `max`  | numeric           | `validate_number`             |
-| `min_length`, `max_length` | string-like | `validate_length` |
-| `format`      | string-like       | `validate_format` (regex)     |
-| `precision`, `scale` | numeric    | decimal precision/scale       |
+| option                     | applies to        | effect                              |
+|----------------------------|-------------------|-------------------------------------|
+| `required`                 | any               | `null: false` + `validate_required` |
+| `default`                  | any               | column default                      |
+| `min`, `max`               | numeric           | `validate_number`                   |
+| `min_length`, `max_length` | string-like       | `validate_length`                   |
+| `format`                   | string-like       | `validate_format` (regex)           |
+| `precision`, `scale`       | numeric           | decimal precision/scale             |
 
 Recognised types: `:string`, `:text`, `:integer`, `:bigint`, `:float`,
 `:decimal`, `:boolean`, `:date`, `:time`, `:naive_datetime`,
@@ -118,10 +164,43 @@ Recognised types: `:string`, `:text`, `:integer`, `:bigint`, `:float`,
 `t` is one of `:has_many`, `:has_one`, `:belongs_to`, `:many_to_many`.
 Declare either side of a relationship — Caravela infers the other.
 
+### Hooks: `on_create`, `on_update`, `on_delete`
+
+Hooks run inside the generated context, between authorization and the
+final `Repo` call:
+
+```elixir
+on_create :books, fn changeset, context -> ... end     # → changeset
+on_update :books, fn changeset, context -> ... end     # → changeset
+on_delete :authors, fn author, context -> ... end      # → :ok | {:error, reason}
+```
+
+`context` is whatever map you pass to the context function. In the
+generated controllers it defaults to `%{current_user: …, conn: conn}`.
+
+If a `{:error, reason}` is returned from `on_delete`, the delete is
+aborted and the tuple propagates back to the caller.
+
+### Permissions: `can_read`, `can_create`, `can_update`, `can_delete`
+
+```elixir
+can_read   :books, fn query, context -> query end        # → Ecto.Query
+can_create :books, fn context -> true end                # → boolean
+can_update :books, fn book, context -> true end          # → boolean
+can_delete :books, fn _book, context -> true end         # → boolean
+```
+
+`can_read` is applied as a query filter before `Repo.all`/`Repo.get`,
+so restricted users never see forbidden rows. The other three return
+booleans; a `false` short-circuits the context function with
+`{:error, :unauthorized}`.
+
+To use query macros like `where` / `from` inside `can_read`, add
+`import Ecto.Query` at the top of your domain module.
+
 ## Compile-time validations
 
-The DSL is validated before any code is generated. Each rule raises
-a `CompileError` with a file/line pointing at the declaration:
+Every rule raises a `CompileError` pointing at the offending line:
 
 1. Unknown field types (`:widget` etc.)
 2. Numeric constraints on non-numeric fields (and vice versa)
@@ -129,27 +208,47 @@ a `CompileError` with a file/line pointing at the declaration:
 4. Relations referencing undeclared entities
 5. Incompatible cardinality (e.g. both sides `:has_many`)
 6. Circular chains of required `belongs_to` (unsatisfiable inserts)
+7. Hooks / permissions with the wrong function arity
+8. Hooks / permissions referring to unknown entities
+9. Duplicate hook / permission for the same (action, entity)
+
+## Regeneration safety — the `# --- CUSTOM ---` marker
+
+Every generated file (schemas, context, controllers) ends with:
+
+```elixir
+  # --- CUSTOM ---
+  # Custom code below this line is preserved on regeneration.
+end
+```
+
+Anything you write below that line is preserved verbatim the next time
+you run `mix caravela.gen`. Migrations are always emitted as fresh
+timestamped files — write bridging `ALTER TABLE` migrations yourself.
 
 ## Primary keys and ids
 
 Every generated schema uses `:binary_id` (UUID) primary and foreign
-keys. No enumeration attacks, no sequence exhaustion, and Ecto-native.
+keys. No enumeration attacks, no sequence exhaustion, Ecto-native.
 
-## What's in Phase 1
+## What's in Phase 1 + 2
 
-- `Caravela.Domain` DSL: `entity`, `field`, `relation`
-- `Caravela.Compiler` with six validations
-- `Caravela.Gen.EctoSchema` — Ecto schema generator (with changeset)
-- `Caravela.Gen.Migration` — Ecto migration generator (topologically
-  sorted, FK indexes)
-- `mix caravela.gen.schema MyApp.Domains.<Module>`
+**Phase 1** — `Caravela.Domain` DSL (`entity`, `field`, `relation`), the
+compiler with six validations, Ecto-schema and migration generators,
+`mix caravela.gen.schema`.
+
+**Phase 2** — hook DSL (`on_create`, `on_update`, `on_delete`),
+permission DSL (`can_read`, `can_create`, `can_update`, `can_delete`),
+Phoenix context generator, JSON controller generator, router-scope
+printer, regeneration-safe `# --- CUSTOM ---` marker,
+`mix caravela.gen.context`, `mix caravela.gen.api`, and `mix caravela.gen`.
 
 ## Roadmap
 
-Later phases add Phoenix contexts, JSON controllers, LiveView modules
-that mount Svelte components via LiveSvelte, typed Svelte component
-generation, Absinthe/GraphQL schema generation, and a GenServer-backed
-flow runtime for composable async workflows.
+Later phases add LiveView modules that mount Svelte components via
+LiveSvelte, typed Svelte component generation, Absinthe/GraphQL schema
+generation, and a GenServer-backed flow runtime for composable async
+workflows.
 
 ## License
 

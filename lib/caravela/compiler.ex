@@ -6,7 +6,7 @@ defmodule Caravela.Compiler do
   `use Caravela.Domain`.
   """
 
-  alias Caravela.Schema.{Domain, Entity, Field, Relation}
+  alias Caravela.Schema.{Domain, Entity, Field, Relation, Hook, Permission}
   alias Caravela.Types
 
   @relation_types ~w(has_many has_one belongs_to many_to_many)a
@@ -14,12 +14,16 @@ defmodule Caravela.Compiler do
   defmacro __before_compile__(env) do
     entities = env.module |> Module.get_attribute(:caravela_entities) |> Enum.reverse()
     relations = env.module |> Module.get_attribute(:caravela_relations) |> Enum.reverse()
+    hooks = env.module |> Module.get_attribute(:caravela_hooks) |> Enum.reverse()
+    permissions = env.module |> Module.get_attribute(:caravela_permissions) |> Enum.reverse()
     opts = Module.get_attribute(env.module, :caravela_domain_opts) || []
 
     domain = %Domain{
       module: env.module,
       entities: entities,
       relations: relations,
+      hooks: hooks,
+      permissions: permissions,
       opts: opts
     }
 
@@ -32,11 +36,24 @@ defmodule Caravela.Compiler do
       def __caravela_domain__ do
         @caravela_domain_compiled
       end
+
+      # Fallbacks. Must come after the specific clauses emitted by each
+      # on_* / can_* macro.
+      @doc false
+      def __caravela_hook__(:on_create, _entity, changeset, _context), do: changeset
+      def __caravela_hook__(:on_update, _entity, changeset, _context), do: changeset
+      def __caravela_hook__(:on_delete, _entity, _entity_value, _context), do: :ok
+
+      @doc false
+      def __caravela_permission__(:can_read, _entity, query, _context), do: query
+      def __caravela_permission__(:can_create, _entity, _context), do: true
+      def __caravela_permission__(:can_update, _entity, _entity_value, _context), do: true
+      def __caravela_permission__(:can_delete, _entity, _entity_value, _context), do: true
     end
   end
 
   @doc """
-  Runs all Phase 1 validations on a compiled `Caravela.Schema.Domain`.
+  Runs all validations on a compiled `Caravela.Schema.Domain`.
 
   Raises `CompileError` with a descriptive message on the first failure.
   """
@@ -47,7 +64,11 @@ defmodule Caravela.Compiler do
          :ok <- validate_relation_types(domain, env),
          :ok <- validate_referential_integrity(domain, env),
          :ok <- validate_cardinality(domain, env),
-         :ok <- validate_no_circular_required(domain, env) do
+         :ok <- validate_no_circular_required(domain, env),
+         :ok <- validate_hook_entities(domain, env),
+         :ok <- validate_unique_hooks(domain, env),
+         :ok <- validate_permission_entities(domain, env),
+         :ok <- validate_unique_permissions(domain, env) do
       :ok
     end
   end
@@ -219,6 +240,54 @@ defmodule Caravela.Compiler do
           end
       end
     end)
+  end
+
+  defp validate_hook_entities(%Domain{entities: es, hooks: hooks}, env) do
+    names = MapSet.new(es, & &1.name)
+
+    Enum.each(hooks, fn %Hook{action: a, entity: e} ->
+      unless MapSet.member?(names, e) do
+        compile_error!(env, "hook #{a} references unknown entity #{inspect(e)}")
+      end
+    end)
+
+    :ok
+  end
+
+  defp validate_unique_hooks(%Domain{hooks: hooks}, env) do
+    pairs = Enum.map(hooks, &{&1.action, &1.entity})
+
+    case pairs -- Enum.uniq(pairs) do
+      [] ->
+        :ok
+
+      [{a, e} | _] ->
+        compile_error!(env, "duplicate hook #{a} for entity #{inspect(e)}")
+    end
+  end
+
+  defp validate_permission_entities(%Domain{entities: es, permissions: ps}, env) do
+    names = MapSet.new(es, & &1.name)
+
+    Enum.each(ps, fn %Permission{action: a, entity: e} ->
+      unless MapSet.member?(names, e) do
+        compile_error!(env, "permission #{a} references unknown entity #{inspect(e)}")
+      end
+    end)
+
+    :ok
+  end
+
+  defp validate_unique_permissions(%Domain{permissions: ps}, env) do
+    pairs = Enum.map(ps, &{&1.action, &1.entity})
+
+    case pairs -- Enum.uniq(pairs) do
+      [] ->
+        :ok
+
+      [{a, e} | _] ->
+        compile_error!(env, "duplicate permission #{a} for entity #{inspect(e)}")
+    end
   end
 
   defp compile_error!(env, msg) do
