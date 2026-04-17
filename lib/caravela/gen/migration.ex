@@ -47,18 +47,35 @@ defmodule Caravela.Gen.Migration do
 
   defp build_tables(%Domain{} = domain) do
     ordered = topological_order(domain)
+    tenant? = Domain.multi_tenant?(domain)
 
     Enum.map(ordered, fn entity ->
       belongs_to_rels = belongs_to_for_entity(domain, entity)
 
+      fk_indexes =
+        belongs_to_rels
+        |> Enum.map(fn {other_entity, _required?} -> Naming.foreign_key(other_entity) end)
+        |> Enum.uniq()
+
+      # When multi-tenant, add composite indexes (`[:tenant_id, :<fk>]`)
+      # in addition to the FK indexes so tenant-scoped queries on related
+      # entities remain fast. Also add a standalone `[:tenant_id]` index
+      # when the table has no FKs at all.
+      composite_indexes =
+        if tenant? and fk_indexes != [] do
+          Enum.map(fk_indexes, fn fk -> [:tenant_id, fk] end)
+        else
+          []
+        end
+
+      single_tenant_index =
+        if tenant? and fk_indexes == [], do: [[:tenant_id]], else: []
+
       %{
-        name: Naming.table_name(domain.module, entity.name),
+        name: Naming.table_name(domain, entity.name),
         columns: build_columns(entity),
         refs: build_refs(domain, belongs_to_rels),
-        indexes:
-          belongs_to_rels
-          |> Enum.map(fn {other_entity, _required?} -> Naming.foreign_key(other_entity) end)
-          |> Enum.uniq()
+        indexes: Enum.map(fk_indexes, &[&1]) ++ composite_indexes ++ single_tenant_index
       }
     end)
   end
@@ -82,7 +99,7 @@ defmodule Caravela.Gen.Migration do
     Enum.map(belongs_to_rels, fn {other_entity, required?} ->
       %{
         column: Naming.foreign_key(other_entity),
-        table: Naming.table_name(domain.module, other_entity),
+        table: Naming.table_name(domain, other_entity),
         on_delete: if(required?, do: :delete_all, else: :nilify_all),
         null: not required?
       }

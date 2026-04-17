@@ -9,16 +9,37 @@ defmodule Caravela.Naming do
 
   The domain module's `.Domains.` segment (if present) is stripped to
   obtain the "context module": `MyApp.Domains.Library` → `MyApp.Library`.
+
+  When a domain declares `version "v1"`, entity and context modules are
+  further namespaced under a camelized version segment
+  (`MyApp.Library.V1.Book`), and matching directories appear under
+  `lib/<app>/<context>/v1/...`.
+
+  Most helpers accept either a domain module (atom) or a compiled
+  `Caravela.Schema.Domain` struct. Passing the struct is required to
+  pick up version-aware behaviour.
   """
+
+  alias Caravela.Schema.Domain
 
   @doc """
   Context module derived from the domain module by stripping a `.Domains.`
-  segment if present.
+  segment if present. When given a `Domain` struct with a declared
+  version, appends the version segment.
 
-      context_module(MyApp.Domains.Library) #=> MyApp.Library
-      context_module(MyApp.Library)         #=> MyApp.Library
+      context_module(MyApp.Domains.Library)          #=> MyApp.Library
+      context_module(%Domain{... version: "v1" ...}) #=> MyApp.Library.V1
   """
-  def context_module(domain_module) do
+  def context_module(%Domain{} = domain) do
+    base = context_module(domain.module)
+
+    case Domain.version_segment(domain) do
+      nil -> base
+      seg -> Module.concat(base, seg)
+    end
+  end
+
+  def context_module(domain_module) when is_atom(domain_module) do
     parts = Module.split(domain_module)
     parts = Enum.reject(parts, &(&1 == "Domains"))
     Module.concat(parts)
@@ -26,11 +47,14 @@ defmodule Caravela.Naming do
 
   @doc """
   Short context name (lowercased, underscored). Used as the table-name
-  prefix and directory name.
+  prefix and directory name. Version-agnostic: always derived from the
+  raw context module so table names remain stable across versions.
 
       context_short(MyApp.Domains.Library) #=> "library"
   """
-  def context_short(domain_module) do
+  def context_short(%Domain{} = domain), do: context_short(domain.module)
+
+  def context_short(domain_module) when is_atom(domain_module) do
     domain_module
     |> context_module()
     |> Module.split()
@@ -39,38 +63,49 @@ defmodule Caravela.Naming do
   end
 
   @doc """
-  Full module name for an entity under its context.
+  Full module name for an entity under its context. Version-aware when
+  given a `Domain` struct.
 
-      entity_module(MyApp.Domains.Library, :books) #=> MyApp.Library.Book
+      entity_module(MyApp.Domains.Library, :books)            #=> MyApp.Library.Book
+      entity_module(%Domain{... version: "v1" ...}, :books)   #=> MyApp.Library.V1.Book
   """
-  def entity_module(domain_module, entity_name) do
-    ctx = context_module(domain_module)
-    Module.concat(ctx, camelize(singularize(entity_name)))
+  def entity_module(%Domain{} = domain, entity_name) do
+    Module.concat(context_module(domain), camelize(singularize(entity_name)))
+  end
+
+  def entity_module(domain_module, entity_name) when is_atom(domain_module) do
+    Module.concat(context_module(domain_module), camelize(singularize(entity_name)))
   end
 
   @doc """
-  Postgres table name for an entity: `"<context>_<entity>"`.
+  Postgres table name for an entity: `"<context>_<entity>"`. Tables are
+  version-independent — different versions of a domain share a table.
 
       table_name(MyApp.Domains.Library, :books) #=> "library_books"
   """
-  def table_name(domain_module, entity_name) do
+  def table_name(%Domain{} = domain, entity_name), do: table_name(domain.module, entity_name)
+
+  def table_name(domain_module, entity_name) when is_atom(domain_module) do
     context_short(domain_module) <> "_" <> to_string(entity_name)
   end
 
   @doc """
   File path for the generated schema module, relative to the project root.
+  Version-aware when given a `Domain` struct.
 
       schema_file_path(MyApp.Domains.Library, :books)
       #=> "lib/my_app/library/book.ex"
-  """
-  def schema_file_path(domain_module, entity_name) do
-    ctx_parts =
-      domain_module
-      |> context_module()
-      |> Module.split()
-      |> Enum.map(&Macro.underscore/1)
 
-    dir = Path.join(["lib" | ctx_parts])
+      schema_file_path(%Domain{... version: "v1" ...}, :books)
+      #=> "lib/my_app/library/v1/book.ex"
+  """
+  def schema_file_path(%Domain{} = domain, entity_name) do
+    dir = context_dir(domain)
+    Path.join(dir, to_string(singularize(entity_name)) <> ".ex")
+  end
+
+  def schema_file_path(domain_module, entity_name) when is_atom(domain_module) do
+    dir = context_dir(domain_module)
     Path.join(dir, to_string(singularize(entity_name)) <> ".ex")
   end
 
@@ -137,12 +172,33 @@ defmodule Caravela.Naming do
 
   @doc """
   File path for the generated context module, relative to the project
-  root.
+  root. When the domain declares a version, the context file lives under
+  the context directory as `v<n>.ex`.
 
       context_file_path(MyApp.Domains.Library)
       #=> "lib/my_app/library.ex"
+
+      context_file_path(%Domain{... version: "v1" ...})
+      #=> "lib/my_app/library/v1.ex"
   """
-  def context_file_path(domain_module) do
+  def context_file_path(%Domain{} = domain) do
+    case Domain.version(domain) do
+      nil ->
+        context_file_path(domain.module)
+
+      v when is_binary(v) ->
+        parts =
+          domain.module
+          |> context_module()
+          |> Module.split()
+          |> Enum.map(&Macro.underscore/1)
+
+        dir = Path.join(["lib" | parts])
+        Path.join(dir, v <> ".ex")
+    end
+  end
+
+  def context_file_path(domain_module) when is_atom(domain_module) do
     parts =
       domain_module
       |> context_module()
@@ -154,13 +210,42 @@ defmodule Caravela.Naming do
     Path.join(dir, last <> ".ex")
   end
 
+  # Directory where schema files live. With a version, adds a `v<n>/`
+  # leaf dir under the context.
+  defp context_dir(%Domain{} = domain) do
+    base =
+      domain.module
+      |> context_module()
+      |> Module.split()
+      |> Enum.map(&Macro.underscore/1)
+
+    dir = Path.join(["lib" | base])
+
+    case Domain.version(domain) do
+      nil -> dir
+      v -> Path.join(dir, v)
+    end
+  end
+
+  defp context_dir(domain_module) when is_atom(domain_module) do
+    base =
+      domain_module
+      |> context_module()
+      |> Module.split()
+      |> Enum.map(&Macro.underscore/1)
+
+    Path.join(["lib" | base])
+  end
+
   @doc """
   Repo module derived by convention from the app root. `MyApp.Library`
   becomes `MyApp.Repo`.
 
       repo_module(MyApp.Domains.Library) #=> MyApp.Repo
   """
-  def repo_module(domain_module) do
+  def repo_module(%Domain{} = domain), do: repo_module(domain.module)
+
+  def repo_module(domain_module) when is_atom(domain_module) do
     [root | _] = domain_module |> context_module() |> Module.split()
     Module.concat([root, "Repo"])
   end
@@ -171,28 +256,59 @@ defmodule Caravela.Naming do
 
       web_module(MyApp.Domains.Library) #=> MyAppWeb
   """
-  def web_module(domain_module) do
+  def web_module(%Domain{} = domain), do: web_module(domain.module)
+
+  def web_module(domain_module) when is_atom(domain_module) do
     [root | _] = domain_module |> context_module() |> Module.split()
     Module.concat([root <> "Web"])
   end
 
   @doc """
-  Controller module for an entity.
+  Controller module for an entity. Version-aware when given a `Domain`
+  struct — inserts a version segment between the web module and the
+  controller name.
 
       controller_module(MyApp.Domains.Library, :books)
       #=> MyAppWeb.BookController
+
+      controller_module(%Domain{... version: "v1" ...}, :books)
+      #=> MyAppWeb.V1.BookController
   """
-  def controller_module(domain_module, entity_name) do
+  def controller_module(%Domain{} = domain, entity_name) do
+    base =
+      case Domain.version_segment(domain) do
+        nil -> web_module(domain)
+        seg -> Module.concat(web_module(domain), seg)
+      end
+
+    Module.concat(base, "#{camelize(singularize(entity_name))}Controller")
+  end
+
+  def controller_module(domain_module, entity_name) when is_atom(domain_module) do
     Module.concat(web_module(domain_module), "#{camelize(singularize(entity_name))}Controller")
   end
 
   @doc """
-  Controller file path relative to the project root.
+  Controller file path relative to the project root. Version-aware when
+  given a `Domain` struct.
 
       controller_file_path(MyApp.Domains.Library, :books)
       #=> "lib/my_app_web/controllers/book_controller.ex"
+
+      controller_file_path(%Domain{... version: "v1" ...}, :books)
+      #=> "lib/my_app_web/controllers/v1/book_controller.ex"
   """
-  def controller_file_path(domain_module, entity_name) do
+  def controller_file_path(%Domain{} = domain, entity_name) do
+    web = web_module(domain) |> Module.split() |> List.first() |> Macro.underscore()
+    filename = "#{singular_string(entity_name)}_controller.ex"
+
+    case Domain.version(domain) do
+      nil -> Path.join(["lib", web, "controllers", filename])
+      v -> Path.join(["lib", web, "controllers", v, filename])
+    end
+  end
+
+  def controller_file_path(domain_module, entity_name) when is_atom(domain_module) do
     web = web_module(domain_module) |> Module.split() |> List.first() |> Macro.underscore()
     Path.join(["lib", web, "controllers", "#{singular_string(entity_name)}_controller.ex"])
   end

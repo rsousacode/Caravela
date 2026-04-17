@@ -14,8 +14,13 @@ defmodule Caravela.Gen.RouterScope do
 
   @doc "Return the router snippet as a string."
   def render(%Domain{} = domain) do
-    web_mod = Naming.web_module(domain.module)
-    scope_prefix = "/api"
+    web_mod = Naming.web_module(domain)
+
+    {scope_prefix, scope_module} =
+      case Domain.version(domain) do
+        nil -> {"/api", web_mod}
+        v -> {"/api/" <> v, Module.concat(web_mod, Macro.camelize(v))}
+      end
 
     resources =
       domain.entities
@@ -30,7 +35,7 @@ defmodule Caravela.Gen.RouterScope do
     """
     # Paste into lib/#{scope_app_dir(domain)}_web/router.ex under your :api pipeline:
 
-    scope #{inspect(scope_prefix)}, #{inspect(web_mod)} do
+    scope #{inspect(scope_prefix)}, #{inspect(scope_module)} do
       pipe_through :api
 
     #{resources}

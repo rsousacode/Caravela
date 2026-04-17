@@ -56,6 +56,7 @@ defmodule Caravela.Domain do
           field: 2,
           field: 3,
           relation: 3,
+          version: 1,
           on_create: 2,
           on_update: 2,
           on_delete: 2,
@@ -70,10 +71,31 @@ defmodule Caravela.Domain do
       Module.register_attribute(__MODULE__, :caravela_hooks, accumulate: true)
       Module.register_attribute(__MODULE__, :caravela_permissions, accumulate: true)
       Module.register_attribute(__MODULE__, :caravela_domain_opts, persist: false)
+      Module.register_attribute(__MODULE__, :caravela_version, persist: false)
       Module.register_attribute(__MODULE__, :caravela_current_fields, persist: false)
 
       @caravela_domain_opts unquote(opts)
+      @caravela_version nil
       @before_compile Caravela.Compiler
+    end
+  end
+
+  @doc """
+  Declare the API version for this domain. Must match `~r/^v\\d+$/`.
+
+      version "v1"
+
+  When set, all generated modules are namespaced under the version
+  (`MyApp.Library.V1.Book`) and controller routes are prefixed with
+  `/api/v1/`.
+  """
+  defmacro version(v) do
+    quote bind_quoted: [v: v] do
+      unless is_binary(v) do
+        raise ArgumentError, "version must be a string like \"v1\", got: #{inspect(v)}"
+      end
+
+      @caravela_version v
     end
   end
 

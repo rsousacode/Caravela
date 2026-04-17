@@ -16,7 +16,7 @@ defmodule Caravela.Gen.EctoSchema do
   @doc "Render every entity in the domain as an Ecto schema file."
   def render_all(%Domain{} = domain, opts \\ []) do
     Enum.map(domain.entities, fn entity ->
-      path = Naming.schema_file_path(domain.module, entity.name)
+      path = Naming.schema_file_path(domain, entity.name)
       source = render_entity(domain, entity, opts)
       {path, source}
     end)
@@ -25,7 +25,7 @@ defmodule Caravela.Gen.EctoSchema do
   @doc "Render a single entity."
   def render_entity(%Domain{} = domain, entity, opts \\ []) do
     root = Keyword.get(opts, :root, File.cwd!())
-    path = Naming.schema_file_path(domain.module, entity.name)
+    path = Naming.schema_file_path(domain, entity.name)
     existing_path = Path.join(root, path)
 
     assigns = build_assigns(domain, entity)
@@ -45,25 +45,30 @@ defmodule Caravela.Gen.EctoSchema do
     has_one = assocs |> Enum.filter(&(&1.kind == :has_one)) |> Enum.uniq_by(& &1.assoc_name)
     belongs_to = assocs |> Enum.filter(&(&1.kind == :belongs_to)) |> Enum.uniq_by(& &1.assoc_name)
 
+    # Tenant-injected fields are declared on the schema but kept out of
+    # the changeset cast — the generated context assigns `tenant_id` via
+    # `put_change` using the caller's context.
+    castable_fields = Enum.reject(entity.fields, &Caravela.Tenant.injected?/1)
+
     required_plain =
-      for f <- entity.fields, Keyword.get(f.opts || [], :required, false), do: f.name
+      for f <- castable_fields, Keyword.get(f.opts || [], :required, false), do: f.name
 
     optional_plain =
-      for f <- entity.fields, not Keyword.get(f.opts || [], :required, false), do: f.name
+      for f <- castable_fields, not Keyword.get(f.opts || [], :required, false), do: f.name
 
     optional_fks = Enum.map(belongs_to, & &1.fk)
 
     [
-      module: Naming.entity_module(domain.module, entity.name),
+      module: Naming.entity_module(domain, entity.name),
       domain_module: domain.module,
-      table: Naming.table_name(domain.module, entity.name),
+      table: Naming.table_name(domain, entity.name),
       plain_fields: entity.fields,
       has_many: has_many,
       has_one: has_one,
       belongs_to: belongs_to,
       required_fields: required_plain,
       optional_fields: optional_plain ++ optional_fks,
-      validation_lines: build_validations(entity.fields),
+      validation_lines: build_validations(castable_fields),
       custom_marker: Gen.Custom.marker_block()
     ]
   end
@@ -87,21 +92,21 @@ defmodule Caravela.Gen.EctoSchema do
         %{
           kind: :has_many,
           assoc_name: Naming.has_many_name(rel.to),
-          target_module: Naming.entity_module(domain.module, rel.to)
+          target_module: Naming.entity_module(domain, rel.to)
         }
 
       :has_one ->
         %{
           kind: :has_one,
           assoc_name: Naming.belongs_to_name(rel.to),
-          target_module: Naming.entity_module(domain.module, rel.to)
+          target_module: Naming.entity_module(domain, rel.to)
         }
 
       :belongs_to ->
         %{
           kind: :belongs_to,
           assoc_name: Naming.belongs_to_name(rel.to),
-          target_module: Naming.entity_module(domain.module, rel.to),
+          target_module: Naming.entity_module(domain, rel.to),
           fk: Naming.foreign_key(rel.to)
         }
 
@@ -116,7 +121,7 @@ defmodule Caravela.Gen.EctoSchema do
         %{
           kind: :belongs_to,
           assoc_name: Naming.belongs_to_name(rel.from),
-          target_module: Naming.entity_module(domain.module, rel.from),
+          target_module: Naming.entity_module(domain, rel.from),
           fk: Naming.foreign_key(rel.from)
         }
 
@@ -124,7 +129,7 @@ defmodule Caravela.Gen.EctoSchema do
         %{
           kind: :belongs_to,
           assoc_name: Naming.belongs_to_name(rel.from),
-          target_module: Naming.entity_module(domain.module, rel.from),
+          target_module: Naming.entity_module(domain, rel.from),
           fk: Naming.foreign_key(rel.from)
         }
 
@@ -132,7 +137,7 @@ defmodule Caravela.Gen.EctoSchema do
         %{
           kind: :has_many,
           assoc_name: Naming.has_many_name(rel.from),
-          target_module: Naming.entity_module(domain.module, rel.from)
+          target_module: Naming.entity_module(domain, rel.from)
         }
 
       :many_to_many ->

@@ -11,7 +11,7 @@ defmodule <%= inspect @module %> do
       timestamps(type: :utc_datetime)
     end
 
-<%= for idx <- t.indexes do %>    create index(:<%= t.name %>, [:<%= idx %>])
+<%= for cols <- t.indexes do %>    create index(:<%= t.name %>, [<%= Enum.map_join(cols, ", ", &(":" <> Atom.to_string(&1))) %>])
 <% end %>
 <% end %>  end
 end

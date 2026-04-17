@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Phase 3 — multi-tenancy, API versioning, Absinthe/GraphQL generation.
+
+### Added
+
+- `use Caravela.Domain, multi_tenant: true` — opts into row-level
+  multi-tenancy. `Caravela.Tenant` auto-injects a `:tenant_id`
+  (`:binary_id`, `null: false`) field into every entity, and the
+  generated context gains `scope_tenant/2` + `inject_tenant_id/2`
+  helpers driven by `context.tenant.id`.
+- Migrations in multi-tenant domains add the `tenant_id` column and
+  composite `[:tenant_id, :<fk>]` indexes alongside each FK index, plus
+  a standalone `[:tenant_id]` index on tables with no FKs.
+- `version "v1"` DSL directive — all generated Elixir modules and file
+  paths are namespaced under the version segment
+  (`MyApp.Library.V1.Book`, `MyAppWeb.V1.BookController`,
+  `lib/my_app/library/v1/book.ex`). The router snippet is emitted at
+  `scope "/api/v1", MyAppWeb.V1`. Table names stay version-free so rows
+  are shared across versions.
+- Two new compile-time validations: invalid version format (must match
+  `~r/^v\d+$/`) and manual `:tenant_id` declarations colliding with
+  auto-injection.
+- `Caravela.Gen.GraphQL` — renders Absinthe object types, query object,
+  and mutation object (with typed input objects) for the domain. Every
+  resolver delegates to the generated context, so authorization, hooks,
+  and tenant scoping apply to GraphQL for free. Tenant-injected fields
+  are hidden from both object and input types.
+- `mix caravela.gen.graphql` task — checks for Absinthe at runtime and
+  prints an actionable error if the optional dependencies are missing.
+- Generated controllers read `conn.assigns[:tenant]` into the context
+  when the domain is multi-tenant.
+
 ## [0.2.0] — 2026-04-17
 
 Phase 2 — hooks, permissions, Phoenix context + JSON API generators.

@@ -114,5 +114,29 @@ defmodule Caravela.Schema do
     def has_permission?(%__MODULE__{permissions: ps}, action, entity) do
       Enum.any?(ps, &(&1.action == action and &1.entity == entity))
     end
+
+    @doc "Is the domain multi-tenant (row-level scoped by tenant_id)?"
+    def multi_tenant?(%__MODULE__{opts: opts}) do
+      Keyword.get(opts || [], :multi_tenant, false) == true
+    end
+
+    @doc """
+    Explicit API version declared via `version "v1"` in the DSL. Returns
+    the raw string (e.g. `"v1"`) or `nil` when no version was declared.
+    """
+    def version(%__MODULE__{opts: opts}) do
+      Keyword.get(opts || [], :version)
+    end
+
+    @doc """
+    Camelized version segment usable as a module name suffix
+    (`"v1"` → `"V1"`). Returns `nil` when no version is declared.
+    """
+    def version_segment(%__MODULE__{} = domain) do
+      case version(domain) do
+        nil -> nil
+        v when is_binary(v) -> Macro.camelize(v)
+      end
+    end
   end
 end

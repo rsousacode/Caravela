@@ -7,16 +7,24 @@ defmodule Caravela.Compiler do
   """
 
   alias Caravela.Schema.{Domain, Entity, Field, Relation, Hook, Permission}
-  alias Caravela.Types
+  alias Caravela.{Tenant, Types}
 
   @relation_types ~w(has_many has_one belongs_to many_to_many)a
+  @version_re ~r/^v\d+$/
 
   defmacro __before_compile__(env) do
     entities = env.module |> Module.get_attribute(:caravela_entities) |> Enum.reverse()
     relations = env.module |> Module.get_attribute(:caravela_relations) |> Enum.reverse()
     hooks = env.module |> Module.get_attribute(:caravela_hooks) |> Enum.reverse()
     permissions = env.module |> Module.get_attribute(:caravela_permissions) |> Enum.reverse()
-    opts = Module.get_attribute(env.module, :caravela_domain_opts) || []
+    raw_opts = Module.get_attribute(env.module, :caravela_domain_opts) || []
+    version = Module.get_attribute(env.module, :caravela_version)
+
+    opts =
+      case version do
+        nil -> raw_opts
+        v when is_binary(v) -> Keyword.put(raw_opts, :version, v)
+      end
 
     domain = %Domain{
       module: env.module,
@@ -28,6 +36,7 @@ defmodule Caravela.Compiler do
     }
 
     :ok = validate!(domain, env)
+    domain = Tenant.inject(domain)
 
     Module.put_attribute(env.module, :caravela_domain_compiled, domain)
 
@@ -58,7 +67,9 @@ defmodule Caravela.Compiler do
   Raises `CompileError` with a descriptive message on the first failure.
   """
   def validate!(%Domain{} = domain, env \\ %{file: "unknown", line: 0}) do
-    with :ok <- validate_unique_entities(domain, env),
+    with :ok <- validate_version(domain, env),
+         :ok <- validate_tenant_field_collision(domain, env),
+         :ok <- validate_unique_entities(domain, env),
          :ok <- validate_field_types(domain, env),
          :ok <- validate_field_constraints(domain, env),
          :ok <- validate_relation_types(domain, env),
@@ -71,6 +82,42 @@ defmodule Caravela.Compiler do
          :ok <- validate_unique_permissions(domain, env) do
       :ok
     end
+  end
+
+  defp validate_version(%Domain{} = domain, env) do
+    case Domain.version(domain) do
+      nil ->
+        :ok
+
+      v when is_binary(v) ->
+        if Regex.match?(@version_re, v) do
+          :ok
+        else
+          compile_error!(
+            env,
+            "version #{inspect(v)} is invalid — must match #{inspect(@version_re)} (e.g. \"v1\")"
+          )
+        end
+
+      other ->
+        compile_error!(env, "version must be a string like \"v1\", got: #{inspect(other)}")
+    end
+  end
+
+  defp validate_tenant_field_collision(%Domain{} = domain, env) do
+    if Domain.multi_tenant?(domain) do
+      Enum.each(domain.entities, fn %Entity{name: ename, fields: fs} ->
+        if Enum.any?(fs, &(&1.name == Caravela.Tenant.field_name())) do
+          compile_error!(
+            env,
+            "entity #{inspect(ename)} declares a :tenant_id field, but the domain " <>
+              "has multi_tenant: true — tenant_id is auto-injected. Remove the manual field."
+          )
+        end
+      end)
+    end
+
+    :ok
   end
 
   # --- validations --------------------------------------------------------

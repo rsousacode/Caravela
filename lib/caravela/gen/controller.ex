@@ -25,7 +25,7 @@ defmodule Caravela.Gen.Controller do
 
   @doc "Render a single controller for one entity."
   def render_entity(%Domain{} = domain, entity, opts \\ []) do
-    path = Naming.controller_file_path(domain.module, entity.name)
+    path = Naming.controller_file_path(domain, entity.name)
     root = Keyword.get(opts, :root, File.cwd!())
     existing_path = Path.join(root, path)
 
@@ -45,11 +45,11 @@ defmodule Caravela.Gen.Controller do
   defp build_assigns(%Domain{} = domain, entity) do
     singular = Naming.singular_string(entity.name)
     plural = Naming.plural_string(entity.name)
-    context_module = Naming.context_module(domain.module)
+    context_module = Naming.context_module(domain)
     [context_short | _] = context_module |> Module.split() |> Enum.reverse()
 
     [
-      controller_module: Naming.controller_module(domain.module, entity.name),
+      controller_module: Naming.controller_module(domain, entity.name),
       context_module: context_module,
       context_short: context_short,
       domain_module: domain.module,
@@ -61,6 +61,7 @@ defmodule Caravela.Gen.Controller do
       create_fn: String.to_atom("create_#{singular}"),
       update_fn: String.to_atom("update_#{singular}"),
       delete_fn: String.to_atom("delete_#{singular}"),
+      multi_tenant: Domain.multi_tenant?(domain),
       custom_marker: Gen.Custom.marker_block()
     ]
   end

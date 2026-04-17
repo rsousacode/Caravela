@@ -28,7 +28,7 @@ defmodule Caravela.Gen.Context do
 
   @doc "Render the context file for the domain."
   def render(%Domain{} = domain, opts \\ []) do
-    path = Naming.context_file_path(domain.module)
+    path = Naming.context_file_path(domain)
     root = Keyword.get(opts, :root, File.cwd!())
     existing_path = Path.join(root, path)
 
@@ -55,7 +55,7 @@ defmodule Caravela.Gen.Context do
           entity_name: entity.name,
           singular: singular,
           plural: plural,
-          module: Naming.entity_module(domain.module, entity.name),
+          module: Naming.entity_module(domain, entity.name),
           module_short: Naming.camelize(Naming.singularize(entity.name)),
           list_fn: String.to_atom("list_#{plural}"),
           get_fn: String.to_atom("get_#{singular}"),
@@ -68,10 +68,11 @@ defmodule Caravela.Gen.Context do
       end)
 
     [
-      context_module: Naming.context_module(domain.module),
+      context_module: Naming.context_module(domain),
       domain_module: domain.module,
-      repo_module: Naming.repo_module(domain.module),
+      repo_module: Naming.repo_module(domain),
       entities: entities,
+      multi_tenant: Domain.multi_tenant?(domain),
       custom_marker: Gen.Custom.marker_block()
     ]
   end
