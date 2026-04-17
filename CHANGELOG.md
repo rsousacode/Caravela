@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Phase 4 — LiveView + typed Svelte component generation and
-`Caravela.Live.*` runtime for composable state.
+## [0.4.0] — 2026-04-17
+
+Phase 4 — LiveView + typed Svelte component generation,
+`Caravela.Live.*` runtime for composable state, and a docs restructure.
 
 ### Added
 
@@ -21,19 +23,57 @@ Phase 4 — LiveView + typed Svelte component generation and
   generators that emit index/show/form templates. Both respect the
   `# --- CUSTOM ---` marker (TypeScript uses `// --- CUSTOM ---`,
   Svelte uses `<!-- --- CUSTOM --- -->`).
+- `Caravela.Gen.LiveRoute` — prints a `live` router scope snippet with
+  four routes per entity (`index`, `:new`, `:show`, `:edit`), analogous
+  to `Caravela.Gen.RouterScope` for the JSON API.
+- `--with-domain` flag on `mix caravela.gen.live` — also emits a
+  `Caravela.Live.Domain` companion module per entity and regenerates
+  `form.ex` from a Template-backed variant. Index and show stay plain.
+  Useful as an onramp to the `Caravela.Live.*` runtime.
 - `Caravela.Live.Updater` — composable assigns-transformer helpers:
-  `compose/2`, `embed/2`, `apply/2,3`, and the `~>` pipe operator.
-- `Caravela.Live.Domain` — `use` macro with `state`, `updater`, and
-  `on_event` DSL for server-side state machines. Compile-time checks
-  enforce updater arity (`1` or `2`) and require string event names.
+  `run/2,3`, `compose/2`, `embed/2`, and the `~>` pipe operator.
+- `Caravela.Live.Domain` — `use` macro with `state`, `updater`,
+  `on_event`, and `on_info` DSL for server-side state machines.
+  Compile-time checks enforce updater arity (`1` or `2`) and require
+  string event names. The `use` block sets
+  `@caravela_live_domain __MODULE__` so `apply_updater/2,3` resolves
+  inside domain bodies without an explicit module argument.
 - `Caravela.Live.Template` — `use Caravela.Live.Template, domain: Mod`
-  binds a LiveView to a `Live.Domain` module, auto-generating `mount/3`,
-  `handle_event/3`, and `apply_updater/2,3` helpers. Both mount and
-  handle_event are `defoverridable` so developers can extend them
-  without losing the generated defaults.
+  binds a LiveView to a `Live.Domain` module, injecting `mount/3`,
+  `handle_event/3`, `handle_info/2`, and `apply_updater/2,3`. Unknown
+  events log a warning instead of crashing; all callbacks are
+  `defoverridable`.
 - Naming helpers: `live_module/3`, `live_file_path/3`,
   `svelte_component_name/2`, `svelte_component_ref/3`,
   `svelte_file_path/3`, `svelte_types_file_path/1` — all version-aware.
+- Documentation split into topic guides under `docs/` (getting_started,
+  dsl, generators, multi_tenancy, versioning, graphql, livesvelte,
+  live_runtime, regeneration), wired into `mix docs` as ex_doc extras.
+  README trimmed to a minimal entry point.
+- GitHub Actions workflow (`docs.yml`) that deploys `mix docs` output to
+  GitHub Pages on every push to `main`. HexDocs continues to publish on
+  tag release.
+
+### Changed
+
+- **BC-preserving rename.** `Caravela.Live.Updater.apply/2,3` → `run/2,3`
+  to avoid shadowing `Kernel.apply/2,3`. `apply/2,3` remains as an
+  undocumented alias.
+- Generated Svelte `BookShow.svelte` now renders fields with the same
+  null-safe expression as the index, so a missing field prints `—`
+  instead of `undefined`.
+- Generated Svelte `BookIndex.svelte` now includes a "New book" button
+  that dispatches `pushEvent('new', {})`; the matching `handle_event`
+  navigates to the form route.
+
+### Fixed
+
+- `Caravela.Live.Domain` docstring previously showed an example that
+  wouldn't compile: `apply_updater/2,3` was invoked inside `on_event`
+  bodies but the macro required `@caravela_live_domain`, which was only
+  set by `use Caravela.Live.Template`. Now set by
+  `Caravela.Live.Domain` too.
+- Removed an unused `dirty` local from the generated Svelte form.
 
 ## [0.3.0] — 2026-04-17
 
@@ -119,7 +159,8 @@ generators.
   `--dry-run` and `--force` options.
 - `:binary_id` primary and foreign keys by default.
 
-[Unreleased]: https://github.com/rsousacode/caravela/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/rsousacode/caravela/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/rsousacode/caravela/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/rsousacode/caravela/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/rsousacode/caravela/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rsousacode/caravela/releases/tag/v0.1.0
