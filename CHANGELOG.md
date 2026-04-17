@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-17
+
 Phase 3 — multi-tenancy, API versioning, Absinthe/GraphQL generation.
 
 ### Added
@@ -89,6 +91,7 @@ generators.
   `--dry-run` and `--force` options.
 - `:binary_id` primary and foreign keys by default.
 
-[Unreleased]: https://github.com/rsousacode/caravela/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/rsousacode/caravela/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/rsousacode/caravela/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/rsousacode/caravela/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rsousacode/caravela/releases/tag/v0.1.0
