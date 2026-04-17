@@ -23,7 +23,7 @@ Add `caravela` to your deps in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:caravela, "~> 0.1.0"}
+    {:caravela, "~> 0.2.0"}
   ]
 end
 ```
