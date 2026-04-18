@@ -361,9 +361,21 @@ defmodule Caravela.Domain do
 
     arity =
       case fun_arity(fun) do
-        {:ok, n} when n in [1, 2] -> n
-        {:ok, n} -> compile_error!(caller, "policy field :#{fname} expects an fn of arity 1 or 2, got arity #{n}")
-        :unknown -> compile_error!(caller, "policy field :#{fname} requires a literal fn or capture, got: " <> Macro.to_string(fun))
+        {:ok, n} when n in [1, 2] ->
+          n
+
+        {:ok, n} ->
+          compile_error!(
+            caller,
+            "policy field :#{fname} expects an fn of arity 1 or 2, got arity #{n}"
+          )
+
+        :unknown ->
+          compile_error!(
+            caller,
+            "policy field :#{fname} requires a literal fn or capture, got: " <>
+              Macro.to_string(fun)
+          )
       end
 
     clause = policy_field_clause(entity, fname, fun, arity)
@@ -386,9 +398,21 @@ defmodule Caravela.Domain do
 
     arity =
       case fun_arity(fun) do
-        {:ok, n} when n in [1, 2] -> n
-        {:ok, n} -> compile_error!(caller, "policy allow :#{action} expects an fn of arity 1 or 2, got arity #{n}")
-        :unknown -> compile_error!(caller, "policy allow :#{action} requires a literal fn or capture, got: " <> Macro.to_string(fun))
+        {:ok, n} when n in [1, 2] ->
+          n
+
+        {:ok, n} ->
+          compile_error!(
+            caller,
+            "policy allow :#{action} expects an fn of arity 1 or 2, got arity #{n}"
+          )
+
+        :unknown ->
+          compile_error!(
+            caller,
+            "policy allow :#{action} requires a literal fn or capture, got: " <>
+              Macro.to_string(fun)
+          )
       end
 
     clause = policy_allow_clause(entity, action, fun, arity)

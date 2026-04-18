@@ -156,7 +156,9 @@ defmodule Caravela.Phase8AuthSvelteTest do
     test "two-phase (request + confirm) with mode prop", %{src: src} do
       assert src =~ "mode?: 'request' | 'confirm';"
       assert src =~ "live.pushEvent('request_reset', { email });"
-      assert src =~ "live.pushEvent('reset_password', { token, password, password_confirmation });"
+
+      assert src =~
+               "live.pushEvent('reset_password', { token, password, password_confirmation });"
     end
   end
 

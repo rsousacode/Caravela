@@ -42,9 +42,11 @@ defmodule MyApp.Domains.PolicyLibrary do
       end
 
     allow :create, fn actor -> actor.role in [:admin, :editor] end
+
     allow :update, fn actor, record ->
       actor.role == :admin or actor.id == Map.get(record, :author_id)
     end
+
     allow :delete, fn actor -> actor.role == :admin end
   end
 

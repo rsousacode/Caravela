@@ -85,7 +85,10 @@ defmodule Caravela.Gen.Context do
     any_can_update? = Enum.any?(domain.permissions, &(&1.action == :can_update))
     any_can_delete? = Enum.any?(domain.permissions, &(&1.action == :can_delete))
     any_on_delete? = Enum.any?(domain.hooks, &(&1.action == :on_delete))
-    any_policies? = Enum.any?(entities, &(&1.has_policy_scope or &1.has_policy_fields or &1.has_policy_actions))
+
+    any_policies? =
+      Enum.any?(entities, &(&1.has_policy_scope or &1.has_policy_fields or &1.has_policy_actions))
+
     any_policy_fields? = Enum.any?(entities, & &1.has_policy_fields)
     any_policy_actions? = Enum.any?(entities, & &1.has_policy_actions)
 
@@ -112,7 +115,8 @@ defmodule Caravela.Gen.Context do
   # Public fields are the fields that survive tenant + auth filtering
   # on the way to the client. We reuse the Svelte generator's helper to
   # stay consistent.
-  defp public_field_names(entity), do: Enum.map(Caravela.Gen.Svelte.public_fields_for(entity), & &1.name)
+  defp public_field_names(entity),
+    do: Enum.map(Caravela.Gen.Svelte.public_fields_for(entity), & &1.name)
 
   # For each public field, build the source expression rendered into
   # `compute_field_access/2`. Arity-1 rules resolve to a boolean call;

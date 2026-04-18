@@ -55,7 +55,8 @@ defmodule Caravela.Gen.Auth do
     if Keyword.get(opts, :skip_ui, false) do
       core
     else
-      core ++ Caravela.Gen.AuthSvelte.render_all(domain, opts) ++
+      core ++
+        Caravela.Gen.AuthSvelte.render_all(domain, opts) ++
         Caravela.Gen.AuthLive.render_all(domain, opts)
     end
   end
@@ -449,6 +450,7 @@ defmodule Caravela.Gen.Auth do
   defp ttl_days(_, default), do: default
 
   defp ttl_hours(nil, default), do: default
+
   defp ttl_hours(opts, default) when is_list(opts) do
     case Keyword.get(opts, :token_ttl) do
       nil -> default

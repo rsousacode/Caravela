@@ -75,6 +75,7 @@ defmodule Caravela.Phase7AuthDslTest do
 
           entity :users do
             field :email, :string, required: true
+
             authenticatable do
             end
           end
@@ -176,6 +177,7 @@ defmodule Caravela.Phase7AuthDslTest do
     test "on_register / on_login default clauses exist on the domain module" do
       assert function_exported?(MyApp.Domains.Identity, :__caravela_auth_hook__, 3)
       changeset = %{foo: :bar}
+
       assert MyApp.Domains.Identity.__caravela_auth_hook__(:on_register, changeset, %{}) ==
                changeset
 

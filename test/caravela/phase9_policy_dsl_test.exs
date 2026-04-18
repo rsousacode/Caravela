@@ -135,11 +135,17 @@ defmodule Caravela.Phase9PolicyDslTest do
       viewer = %{id: "v", role: :viewer, author_id: nil}
 
       assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(:books, :create, admin) == true
-      assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(:books, :create, editor) == true
-      assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(:books, :create, viewer) == false
+
+      assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(:books, :create, editor) ==
+               true
+
+      assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(:books, :create, viewer) ==
+               false
 
       assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(:books, :delete, admin) == true
-      assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(:books, :delete, editor) == false
+
+      assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(:books, :delete, editor) ==
+               false
 
       # Update is arity-2, needs the record
       assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(
@@ -254,4 +260,3 @@ defmodule Caravela.Phase9PolicyDslTest do
     end
   end
 end
-

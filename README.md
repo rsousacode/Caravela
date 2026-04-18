@@ -40,6 +40,9 @@ mix caravela.gen.live MyApp.Domains.Library
 
 ## Documentation
 
+- 📘 **HexDocs**: <https://hexdocs.pm/caravela>
+- 🌐 **Site**: <https://rsousacode.github.io/Caravela>
+
 Full guides live under `docs/` and ship with the Hex package.
 
 - [Getting started](docs/getting_started.md)
