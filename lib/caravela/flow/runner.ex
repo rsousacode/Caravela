@@ -145,8 +145,7 @@ defmodule Caravela.Flow.Runner do
     if state.flow_state == state.debounce_snapshot do
       send(self(), :advance)
 
-      {:noreply,
-       %{state | mode: :running, debounce_snapshot: nil, debounce_ms: nil}}
+      {:noreply, %{state | mode: :running, debounce_snapshot: nil, debounce_ms: nil}}
     else
       # A cast already rescheduled a fresh check with the new snapshot;
       # this old one is stale — drop it.

@@ -69,7 +69,8 @@ defmodule Caravela.Flow do
   If `Caravela.Flow.Supervisor` is running, the runner starts as a
   supervised child; otherwise it starts unsupervised (useful in tests).
   """
-  def start(flow_module, flow_name, opts \\ []) when is_atom(flow_module) and is_atom(flow_name) do
+  def start(flow_module, flow_name, opts \\ [])
+      when is_atom(flow_module) and is_atom(flow_name) do
     tree = flow_module.__caravela_flow__(flow_name)
 
     if is_nil(tree) do

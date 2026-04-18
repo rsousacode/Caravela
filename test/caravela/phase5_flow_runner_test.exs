@@ -26,14 +26,14 @@ defmodule Caravela.Phase5FlowRunnerTest do
 
     flow :retry_flow, initial_state: %{attempts: 0} do
       run fn s ->
-        new = %{s | attempts: s.attempts + 1}
+            new = %{s | attempts: s.attempts + 1}
 
-        if new.attempts >= 3 do
-          {:ok, new}
-        else
-          {:retry, new}
-        end
-      end, retries: 5, backoff: :linear, base_delay: 5
+            if new.attempts >= 3 do
+              {:ok, new}
+            else
+              {:retry, new}
+            end
+          end, retries: 5, backoff: :linear, base_delay: 5
     end
 
     flow :error_flow, initial_state: %{} do

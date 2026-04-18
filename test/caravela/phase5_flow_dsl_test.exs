@@ -21,8 +21,8 @@ defmodule Caravela.Phase5FlowDSLTest do
 
       flow :retry_flow, initial_state: %{tries: 0} do
         run fn state ->
-          {:ok, %{state | tries: state.tries + 1}}
-        end, retries: 2, backoff: :exponential, base_delay: 50
+              {:ok, %{state | tries: state.tries + 1}}
+            end, retries: 2, backoff: :exponential, base_delay: 50
       end
 
       flow :each_flow, initial_state: %{items: [1, 2, 3], sum: 0} do

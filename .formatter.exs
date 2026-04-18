@@ -16,7 +16,27 @@ locals_without_parens = [
   state: 1,
   updater: 2,
   on_event: 2,
-  on_info: 2
+  on_info: 2,
+  # Caravela.Live.Form DSL
+  visible: 2,
+  validate_async: 2,
+  validate_async: 3,
+  # Caravela.Flow DSL
+  flow: 2,
+  flow: 3,
+  sequence: 1,
+  repeat: 1,
+  wait: 1,
+  wait_until: 1,
+  debounce: 1,
+  set_state: 1,
+  run: 1,
+  run: 2,
+  parallel: 1,
+  parallel: 2,
+  race: 1,
+  race: 2,
+  each: 2
 ]
 
 [

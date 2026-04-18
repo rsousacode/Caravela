@@ -138,7 +138,12 @@ defmodule Caravela.Gen.SvelteForm do
     Enum.reject(fields, &Tenant.injected?/1)
   end
 
-  defp form_input(%Field{name: name, type: type, opts: opts}, singular, visible_fields, async_fields) do
+  defp form_input(
+         %Field{name: name, type: type, opts: opts},
+         singular,
+         visible_fields,
+         async_fields
+       ) do
     required? = Keyword.get(opts || [], :required, false)
 
     %{
