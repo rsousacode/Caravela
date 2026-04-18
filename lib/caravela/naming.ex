@@ -381,7 +381,7 @@ defmodule Caravela.Naming do
 
   @doc """
   LiveSvelte component reference — the path string passed to
-  `<LiveSvelte.render name="..." />`. Matches the Svelte-file path
+  `<LiveSvelte.svelte name="..." />`. Matches the Svelte-file path
   relative to `assets/svelte/`, without the `.svelte` extension.
 
       svelte_component_ref(domain, :books, :index) #=> "library/BookIndex"

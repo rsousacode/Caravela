@@ -78,7 +78,7 @@ defmodule <%= inspect @module %> do
   @impl true
   def render(assigns) do
     ~H"""
-    <LiveSvelte.render
+    <LiveSvelte.svelte
       name="<%= @component_ref %>"
       props={%{
         <%= @singular %>: @attrs,
@@ -86,6 +86,7 @@ defmodule <%= inspect @module %> do
         saving: @saving,
         flash_message: @flash_message
       }}
+      socket={@socket}
     />
     """
   end
@@ -95,11 +96,24 @@ defmodule <%= inspect @module %> do
   defp load_initial(%{"id" => id}, context) do
     case <%= @context_short %>.<%= @get_fn %>(id, context) do
       nil -> {%<%= @entity_short %>{}, %{}}
-      entity -> {entity, Map.from_struct(entity) |> Map.drop([:__meta__])}
+      entity -> {entity, entity_attrs(entity)}
     end
   end
 
   defp load_initial(_params, _context), do: {%<%= @entity_short %>{}, %{}}
+
+  # Narrow the attrs map to the declared entity fields and normalise
+  # struct values to wire-friendly primitives so the Svelte form inputs
+  # don't receive `%Decimal{}` / `%DateTime{}` dumps.
+  defp entity_attrs(entity) do
+    <%= inspect @attrs_fields %>
+    |> Enum.reduce(%{}, fn field, acc ->
+      Map.put(acc, field, normalise_attr(Map.get(entity, field)))
+    end)
+  end
+<%= if @decimal_fields != [] do %>
+  defp normalise_attr(%Decimal{} = d), do: Decimal.to_string(d, :normal)<% end %>
+  defp normalise_attr(other), do: other
 
   defp new?(%<%= @entity_short %>{id: nil}), do: true
   defp new?(%<%= @entity_short %>{}), do: false

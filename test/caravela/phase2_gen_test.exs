@@ -68,6 +68,19 @@ defmodule Caravela.Phase2GenTest do
       {_path, source} = Context.render(domain)
       assert source =~ Custom.marker()
     end
+
+    test "read paths preload belongs_to associations declared on the entity",
+         %{domain: domain} do
+      # Regression for: raw `list_books` returned books with unpreloaded
+      # `:author` / `:publisher` fields. LiveSvelte then serialised the
+      # `%Ecto.Association.NotLoaded{}` sentinel to the browser, leaking
+      # internal module names and producing `undefined` on the Svelte
+      # side when a developer later dereferences `book.author`.
+      {_path, source} = Context.render(domain)
+
+      assert source =~ "import Ecto.Query, only: [preload: 2]"
+      assert source =~ "|> preload([:author, :publisher])"
+    end
   end
 
   describe "Caravela.Gen.Controller" do

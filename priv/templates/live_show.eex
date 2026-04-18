@@ -46,12 +46,13 @@ defmodule <%= inspect @module %> do
   @impl true
   def render(assigns) do
     ~H"""
-    <LiveSvelte.render
+    <LiveSvelte.svelte
       name="<%= @component_ref %>"
       props={%{
         <%= @singular %>: @<%= @singular %>,
         flash_message: @flash_message
       }}
+      socket={@socket}
     />
     """
   end

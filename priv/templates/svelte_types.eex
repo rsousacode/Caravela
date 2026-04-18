@@ -5,6 +5,25 @@
 //
 // Regenerate with `mix caravela.gen.live <%= @domain_module %>`.
 
+/**
+ * LiveSvelte hook handle injected as the `live` prop of every generated
+ * component. Call `live.pushEvent(name, payload)` to dispatch an event
+ * to the mounting LiveView.
+ */
+export interface LiveHandle {
+  pushEvent: (
+    event: string,
+    payload: object,
+    cb?: (reply: unknown) => void
+  ) => number;
+  pushEventTo: (
+    target: string,
+    event: string,
+    payload: object
+  ) => number;
+  handleEvent: (event: string, cb: (payload: unknown) => void) => void;
+}
+
 <%= for e <- @entities do %>export interface <%= e.ts_name %> {
   id: string;
 <%= for f <- e.ts_fields do %>  <%= f.name %><%= if f.optional, do: "?" %>: <%= f.ts_type %>;

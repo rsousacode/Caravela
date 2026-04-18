@@ -11,6 +11,7 @@ defmodule <%= inspect @context_module %> do
   """
 
 <%= if @multi_tenant do %>  import Ecto.Query, only: [where: 3]
+<% end %><%= if @any_preloads do %>  import Ecto.Query, only: [preload: 2]
 <% end %>
   alias <%= inspect @repo_module %>
 <%= for e <- @entities do %>  alias <%= inspect e.module %>
@@ -20,7 +21,8 @@ defmodule <%= inspect @context_module %> do
   def <%= e.list_fn %>(context \\ %{}) do
     <%= e.module_short %>
     |> scope_tenant(context)
-    |> apply_read_permission(<%= inspect e.entity_name %>, context)
+    |> apply_read_permission(<%= inspect e.entity_name %>, context)<%= if e.preloads != [] do %>
+    |> preload(<%= inspect e.preloads %>)<% end %>
     |> Repo.all()
   end
 
@@ -28,7 +30,8 @@ defmodule <%= inspect @context_module %> do
   def <%= e.get_fn %>(id, context \\ %{}) do
     <%= e.module_short %>
     |> scope_tenant(context)
-    |> apply_read_permission(<%= inspect e.entity_name %>, context)
+    |> apply_read_permission(<%= inspect e.entity_name %>, context)<%= if e.preloads != [] do %>
+    |> preload(<%= inspect e.preloads %>)<% end %>
     |> Repo.get(id)
   end
 
@@ -36,7 +39,8 @@ defmodule <%= inspect @context_module %> do
   def <%= e.get_bang_fn %>(id, context \\ %{}) do
     <%= e.module_short %>
     |> scope_tenant(context)
-    |> apply_read_permission(<%= inspect e.entity_name %>, context)
+    |> apply_read_permission(<%= inspect e.entity_name %>, context)<%= if e.preloads != [] do %>
+    |> preload(<%= inspect e.preloads %>)<% end %>
     |> Repo.get!(id)
   end
 

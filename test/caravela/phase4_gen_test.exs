@@ -87,7 +87,8 @@ defmodule Caravela.Phase4GenTest do
       assert src =~ "Library.list_books(context)"
       assert src =~ "Library.delete_book(entity, context)"
       assert src =~ ~s|name="library/BookIndex"|
-      assert src =~ "LiveSvelte.render"
+      assert src =~ "LiveSvelte.svelte"
+      assert src =~ "socket={@socket}"
     end
 
     test "index LiveView navigates to /new on the `new` event", %{plain: domain} do
@@ -111,6 +112,21 @@ defmodule Caravela.Phase4GenTest do
       assert src =~ "handle_event(\"validate\""
       assert src =~ "handle_event(\"save\""
       assert src =~ "handle_event(\"cancel\""
+    end
+
+    test "form load_initial narrows attrs to declared fields and normalises Decimal",
+         %{plain: domain} do
+      # Regression: the old template used `Map.from_struct(entity) |>
+      # Map.drop([:__meta__])` which preserved `%Decimal{}` / assoc
+      # structs / timestamps in the attrs map pushed to the Svelte form.
+      {_path, src} =
+        LiveView.render_all(domain)
+        |> Enum.find(fn {p, _} -> String.ends_with?(p, "book_live/form.ex") end)
+
+      refute src =~ "Map.from_struct(entity) |> Map.drop([:__meta__])"
+      assert src =~ "defp entity_attrs(entity)"
+      # The Book entity has a :price decimal field → Decimal clause emitted.
+      assert src =~ "defp normalise_attr(%Decimal{}"
     end
 
     test "multi-tenant LiveViews read conn.assigns[:tenant]", %{tenant: domain} do
@@ -290,6 +306,16 @@ defmodule Caravela.Phase4GenTest do
       {_path, src} = Svelte.render_types(domain)
       assert src =~ "// --- CUSTOM ---"
     end
+
+    test "exports the LiveHandle interface for every component's `live` prop",
+         %{plain: domain} do
+      {_path, src} = Svelte.render_types(domain)
+
+      assert src =~ "export interface LiveHandle {"
+      assert src =~ "pushEvent:"
+      assert src =~ "pushEventTo:"
+      assert src =~ "handleEvent:"
+    end
   end
 
   describe "Caravela.Gen.Svelte — components" do
@@ -312,10 +338,28 @@ defmodule Caravela.Phase4GenTest do
         |> Enum.find(fn {p, _} -> String.ends_with?(p, "BookIndex.svelte") end)
 
       assert src =~ "import type { Book } from '../types/library';"
+      assert src =~ "import type { LiveHandle } from '../types/library';"
       assert src =~ "books?: Book[];"
       assert src =~ "= $props();"
       assert src =~ "{#each books as book (book.id)}"
-      assert src =~ "pushEvent('delete', { id });"
+      assert src =~ "live.pushEvent('delete', { id });"
+    end
+
+    test "components destructure the live hook instead of pushEvent", %{plain: domain} do
+      # Regression for \"pushEvent is not a function\" on every button: in
+      # LiveSvelte \u2265 0.18 the hook injects `live`, not `pushEvent`.
+      for kind <- [:index, :show, :form] do
+        {_path, src} =
+          Svelte.render_components(domain)
+          |> Enum.find(fn {p, _} ->
+            String.ends_with?(p, "Book#{kind |> Atom.to_string() |> String.capitalize()}.svelte")
+          end)
+
+        assert src =~ "live: LiveHandle;"
+        assert src =~ "live.pushEvent("
+        refute src =~ ~r/\bpushEvent: \(event/,
+               "component still declares the old `pushEvent` prop type"
+      end
     end
 
     test "form emits one input per public field, marked required when required", %{plain: domain} do

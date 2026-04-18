@@ -20,7 +20,7 @@ defmodule Caravela.Gen.LiveView do
   """
 
   alias Caravela.Schema.{Domain, Entity}
-  alias Caravela.{Gen, Naming}
+  alias Caravela.{Gen, Naming, Tenant}
 
   @index_template Path.expand("../../../priv/templates/live_index.eex", __DIR__)
   @show_template Path.expand("../../../priv/templates/live_show.eex", __DIR__)
@@ -140,6 +140,16 @@ defmodule Caravela.Gen.LiveView do
     edit_path = index_path <> "/"
     new_path = index_path <> "/new"
 
+    attrs_fields =
+      entity.fields
+      |> Enum.reject(&Tenant.injected?/1)
+      |> Enum.map(& &1.name)
+
+    decimal_fields =
+      entity.fields
+      |> Enum.filter(&(&1.type == :decimal))
+      |> Enum.map(& &1.name)
+
     [
       module: Naming.live_module(domain, entity.name, kind),
       domain_module: domain.module,
@@ -159,6 +169,8 @@ defmodule Caravela.Gen.LiveView do
       update_fn: "update_#{singular}",
       delete_fn: "delete_#{singular}",
       change_fn: "change_#{singular}",
+      attrs_fields: attrs_fields,
+      decimal_fields: decimal_fields,
       index_path: index_path,
       edit_path: edit_path,
       new_path: new_path,

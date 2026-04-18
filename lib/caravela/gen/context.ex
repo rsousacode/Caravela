@@ -17,11 +17,16 @@ defmodule Caravela.Gen.Context do
   `on_delete` hook and `can_*` permission declared on the domain.
   Reads scope through `can_read` automatically.
 
+  Read paths (`list_*`, `get_*`, `get_*!`) preload every `belongs_to`
+  association declared on the entity so the generated Svelte
+  components can follow `book.author.name` without tripping over
+  `%Ecto.Association.NotLoaded{}` structs on the wire.
+
   Returns a single `{path, source}` tuple. Regeneration preserves
   anything below the `# --- CUSTOM ---` marker.
   """
 
-  alias Caravela.Schema.Domain
+  alias Caravela.Schema.{Domain, Relation}
   alias Caravela.{Gen, Naming}
 
   @template_path Path.expand("../../../priv/templates/context.eex", __DIR__)
@@ -63,7 +68,8 @@ defmodule Caravela.Gen.Context do
           change_fn: String.to_atom("change_#{singular}"),
           create_fn: String.to_atom("create_#{singular}"),
           update_fn: String.to_atom("update_#{singular}"),
-          delete_fn: String.to_atom("delete_#{singular}")
+          delete_fn: String.to_atom("delete_#{singular}"),
+          preloads: belongs_to_preloads(domain, entity.name)
         }
       end)
 
@@ -71,6 +77,8 @@ defmodule Caravela.Gen.Context do
     any_can_update? = Enum.any?(domain.permissions, &(&1.action == :can_update))
     any_can_delete? = Enum.any?(domain.permissions, &(&1.action == :can_delete))
     any_on_delete? = Enum.any?(domain.hooks, &(&1.action == :on_delete))
+
+    any_preloads? = Enum.any?(entities, &(&1.preloads != []))
 
     [
       context_module: Naming.context_module(domain),
@@ -82,7 +90,27 @@ defmodule Caravela.Gen.Context do
       any_can_update: any_can_update?,
       any_can_delete: any_can_delete?,
       any_on_delete: any_on_delete?,
+      any_preloads: any_preloads?,
       custom_marker: Gen.Custom.marker_block()
     ]
+  end
+
+  # Returns the list of association atoms a `belongs_to` relation from
+  # `entity_name` points to. Read paths preload these so the Svelte
+  # components never see a `%Ecto.Association.NotLoaded{}` on the wire.
+  defp belongs_to_preloads(%Domain{relations: rels}, entity_name) do
+    rels
+    |> Enum.flat_map(fn
+      %Relation{from: ^entity_name, to: to, type: :belongs_to} ->
+        [Naming.belongs_to_name(to)]
+
+      %Relation{from: from, to: ^entity_name, type: type}
+      when type in [:has_many, :has_one] ->
+        [Naming.belongs_to_name(from)]
+
+      _ ->
+        []
+    end)
+    |> Enum.uniq()
   end
 end

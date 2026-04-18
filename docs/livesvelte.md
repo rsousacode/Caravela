@@ -65,9 +65,10 @@ defmodule MyAppWeb.Library.BookLive.Index do
 
   def render(assigns) do
     ~H"""
-    <LiveSvelte.render
+    <LiveSvelte.svelte
       name="library/BookIndex"
       props={%{books: @books, loading: @loading, flash_message: @flash_message}}
+      socket={@socket}
     />
     """
   end

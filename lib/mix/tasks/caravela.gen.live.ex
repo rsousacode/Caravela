@@ -14,7 +14,7 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
       assets/svelte/library/{BookIndex,BookShow,BookForm}.svelte
       assets/svelte/types/library.ts
 
-  Every LiveView mounts its Svelte component via `<LiveSvelte.render>`,
+  Every LiveView mounts its Svelte component via `<LiveSvelte.svelte>`,
   and delegates to the generated context module for CRUD calls —
   authorization, hooks, and multi-tenant scoping flow through for free.
 

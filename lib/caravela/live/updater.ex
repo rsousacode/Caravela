@@ -92,6 +92,13 @@ defmodule Caravela.Live.Updater do
   @doc false
   def apply(socket, updater, arg), do: run(socket, updater, arg)
 
+  # LiveView reserves a handful of assign keys (`:flash`, `:socket`,
+  # `:myself`, internal `:__changed__` etc.) that `Phoenix.Component.assign/2`
+  # rejects outright. Updaters work on the whole assigns map (`%{s | ...}`),
+  # so the returned map naturally includes those keys. Strip them before
+  # handing to Phoenix so the idiomatic updater shape still works.
+  @reserved_assigns ~w(flash socket myself live_action streams)a
+
   # Replace socket.assigns. For real LiveView sockets we route through
   # `Phoenix.Component.assign/2` so LiveView's change tracking fires
   # (required for LiveSvelte's prop diffing). For plain-map sockets
@@ -100,7 +107,13 @@ defmodule Caravela.Live.Updater do
   defp assign_all(%{assigns: _} = socket, new_assigns) when is_map(new_assigns) do
     if is_struct(socket) and Code.ensure_loaded?(Phoenix.LiveView.Socket) and
          socket.__struct__ == Phoenix.LiveView.Socket do
-      Phoenix.Component.assign(socket, new_assigns)
+      safe_assigns =
+        new_assigns
+        |> Map.drop(@reserved_assigns)
+        |> Enum.reject(fn {k, _} -> is_atom(k) and match?("__" <> _, Atom.to_string(k)) end)
+        |> Map.new()
+
+      Phoenix.Component.assign(socket, safe_assigns)
     else
       %{socket | assigns: new_assigns}
     end

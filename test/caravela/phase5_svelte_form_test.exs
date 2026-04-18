@@ -50,11 +50,12 @@ defmodule Caravela.Phase5SvelteFormTest do
       assert src =~ "import type { Book } from '../types/library';"
     end
 
-    test "declares field_visibility, async_errors, and pushEvent props", %{src: src} do
+    test "declares field_visibility, async_errors, and live props", %{src: src} do
       assert src =~ "= $props();"
       assert src =~ "field_visibility?: Record<string, boolean>;"
       assert src =~ "async_errors?: Record<string, string | null>;"
-      assert src =~ "pushEvent: (event: string, payload: object) => void;"
+      assert src =~ "live: LiveHandle;"
+      assert src =~ "live.pushEvent('validate', { field, value });"
     end
 
     test "declares a debounce timer for every async field", %{src: src} do

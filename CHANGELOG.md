@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Generated Svelte components now destructure the `live` hook handle
+  LiveSvelte ≥ 0.18 actually injects, and call `live.pushEvent(...)`.
+  Previously every generated component pulled `pushEvent` out of
+  `$props()` — which never existed — so every Edit / Delete / New /
+  Save / Cancel button silently threw `TypeError: pushEvent is not a
+  function` and the corresponding server event never fired.
+- `Caravela.Gen.Context` now emits `preload([:assoc, …])` on
+  `list_*` / `get_*` / `get_*!` for every `belongs_to` association
+  declared on the entity. Rows no longer ship the raw
+  `%Ecto.Association.NotLoaded{}` sentinel (with `__owner__` /
+  `__field__` / `__cardinality__` internals) to the browser, and
+  dereferencing `book.author.name` on the Svelte side now works
+  without a hand-written preload.
+- Generated `--with-domain` and plain form LiveViews replace the
+  `Map.from_struct(entity) |> Map.drop([:__meta__])` attrs seed with a
+  narrow `entity_attrs/1` helper that keeps only the declared entity
+  fields and normalises `%Decimal{}` values to their string form. Form
+  inputs on an Edit screen no longer render `[object Object]` for
+  decimal / money fields, and the attrs map has stable types across
+  validate round-trips.
+
+### Changed
+
+- Generated LiveView `render/1` now calls `<LiveSvelte.svelte>`
+  (passing `socket={@socket}`) instead of the deprecated
+  `<LiveSvelte.render>` component. Silences the deprecation warning
+  on every request and re-enables SSR for connected sockets.
+- New `Caravela.Live.Encoders` module provides `LiveSvelte.Encoder`
+  protocol implementations for `Decimal` (→ normalised string) and
+  `Ecto.Association.NotLoaded` (→ `nil`), guarded so the file compiles
+  even when LiveSvelte < 0.18 is in use (the protocol is absent there).
+- Generated TypeScript types file now exports a `LiveHandle` interface
+  describing `live.pushEvent` / `pushEventTo` / `handleEvent`, which
+  every generated component imports for its `live` prop.
+
 ## [0.5.2] — 2026-04-18
 
 ### Changed
