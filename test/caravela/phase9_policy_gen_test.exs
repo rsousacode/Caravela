@@ -20,17 +20,19 @@ defmodule Caravela.Phase9PolicyGenTest do
       assert src =~ "|> project_field(:books, context)"
     end
 
-    test "compute_field_access emits per-entity maps with correct expressions", %{src: src} do
-      # Books: price is arity-1 boolean dispatch; author_email is :per_record.
+    test "compute_field_access routes every field through the domain dispatch", %{src: src} do
+      # Every field (policy-ruled or not) is funneled through
+      # `__caravela_policy_field_visible__`. The clause cascade in the
+      # domain module decides the result at runtime — arity-1 rules
+      # return a boolean, arity-2 rules return `:per_record`, unruled
+      # fields fall through to the per-entity or default_policy fallback.
       assert src =~ "defp compute_field_access(:books, actor) do"
 
-      # The formatter preserves `:key => expr` when the value is a call.
-      assert src =~
-               ":price =>\n        MyApp.Domains.PolicyLibrary.__caravela_policy_field_visible__"
-
-      assert src =~ ":author_email => :per_record"
-      # Fields without a policy rule default to `true`
-      assert src =~ ":title => true"
+      for field <- [:title, :price, :author_email, :internal_notes, :cost_basis] do
+        assert src =~
+                 ~r/#{inspect(field)} =>\s*MyApp\.Domains\.PolicyLibrary\.__caravela_policy_field_visible__/,
+               "expected field_access dispatch call for #{inspect(field)}"
+      end
     end
 
     test "exposes a public field_access/2 function", %{src: src} do

@@ -1,11 +1,12 @@
 defmodule MyApp.Domains.PolicyLibrary do
   @moduledoc """
-  Test-only domain exercising Phase 9 triple-target policies.
+  Test-only domain exercising Phase 9 triple-target policies, including
+  the new deny-by-default fallback (no `default_policy` option set here
+  → `:deny`). The `:widgets` entity has no `policy` block to exercise
+  that fallback path.
   """
 
   use Caravela.Domain
-
-  import Ecto.Query, only: [where: 3]
 
   entity :books do
     field :title, :string, required: true
@@ -20,6 +21,12 @@ defmodule MyApp.Domains.PolicyLibrary do
   entity :authors do
     field :name, :string, required: true
     field :email, :string, required: true
+  end
+
+  entity :widgets do
+    # Intentionally no `policy` block — under `default_policy: :deny`
+    # every rule falls through to the deny fallback.
+    field :name, :string, required: true
   end
 
   relation :authors, :books, type: :has_many

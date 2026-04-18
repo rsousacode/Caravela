@@ -164,11 +164,44 @@ are wrapped in `{#if field_access.<name>}`.
   `'per_record'` so the client knows the field is *sometimes* present,
   *sometimes* null. Your Svelte code typically renders it with a
   fallback (`{book.author_email ?? '—'}`).
-- **Defaults are safe on the client, permissive on the server.** A
-  component mounted without LiveView wiring (e.g. in a Storybook
-  scenario) renders every field — the default prop is all-true. The
-  server-side fallback in the domain module is also all-true, so
-  entities without any declared policy behave as before.
+- **Deny-by-default.** Domains default to `default_policy: :deny`: any
+  entity without a declared `policy` block has its scope filtered to
+  zero rows, every field marked invisible, and every write denied.
+  Forgetting to add a policy on a new entity can never silently leak
+  data.
+
+## `default_policy: :deny | :allow`
+
+```elixir
+# strict (default): entities without a policy block are fully denied
+use Caravela.Domain
+
+# explicit strict
+use Caravela.Domain, default_policy: :deny
+
+# opt out to permissive — entities without a policy block behave as
+# if every field were visible and every action allowed
+use Caravela.Domain, default_policy: :allow
+```
+
+Regardless of the domain default, **any entity that declares a policy
+block is implicitly permissive for rule types it didn't declare**.
+Writing `policy :books do field :price, visible: … end` grants full
+scope + allow access for `:books` — only `:price` is gated. This keeps
+policy blocks additive: you can start with a single field rule and
+grow into scope/allow over time without accidentally locking the
+entity out.
+
+The decision tree for any (entity, rule) pair:
+
+```
+┌─ entity has a declared rule for this exact (action|field)? ──┐
+│            ├── yes → use the declared rule                   │
+│            └── no → entity has any `policy` block?           │
+│                    ├── yes → permissive (true / pass-through)│
+│                    └── no  → domain-level `default_policy`   │
+└──────────────────────────────────────────────────────────────┘
+```
 
 ## Authorization model
 

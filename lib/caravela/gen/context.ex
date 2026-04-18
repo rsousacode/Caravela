@@ -27,7 +27,6 @@ defmodule Caravela.Gen.Context do
   """
 
   alias Caravela.Schema.{Domain, Relation}
-  alias Caravela.Policy.Entry, as: PolicyEntry
   alias Caravela.{Gen, Naming}
 
   @template_path Path.expand("../../../priv/templates/context.eex", __DIR__)
@@ -100,32 +99,23 @@ defmodule Caravela.Gen.Context do
     do: Enum.map(Caravela.Gen.Svelte.public_fields_for(entity), & &1.name)
 
   # For each public field, build the source expression rendered into
-  # `compute_field_access/2`. Arity-1 rules resolve to a boolean call;
-  # arity-2 rules resolve to `:per_record` so the caller evaluates per
-  # row. Fields without a rule default to `true`.
-  defp field_access_exprs(%Domain{module: mod}, entity_name, public, policy) do
-    rules = rules_map(policy)
-
+  # `compute_field_access/2`. Every field goes through the dispatch
+  # function so the compiler's clause cascade decides the result:
+  #
+  #   1. Arity-1 rules emit a clause returning a boolean.
+  #   2. Arity-2 rules emit an arity-3 clause returning `:per_record`.
+  #   3. Un-ruled fields fall through to the per-entity permissive
+  #      fallback (for entities with ANY policy block) or the
+  #      module-level fallback governed by `default_policy`.
+  defp field_access_exprs(%Domain{module: mod}, entity_name, public, _policy) do
     Enum.map(public, fn field ->
       expr =
-        case Map.get(rules, field) do
-          nil ->
-            "true"
-
-          1 ->
-            "#{inspect(mod)}.__caravela_policy_field_visible__(" <>
-              "#{inspect(entity_name)}, #{inspect(field)}, actor)"
-
-          2 ->
-            ":per_record"
-        end
+        "#{inspect(mod)}.__caravela_policy_field_visible__(" <>
+          "#{inspect(entity_name)}, #{inspect(field)}, actor)"
 
       %{name: field, expr: expr}
     end)
   end
-
-  defp rules_map(nil), do: %{}
-  defp rules_map(%PolicyEntry{fields: rules}), do: Map.new(rules, fn r -> {r.field, r.arity} end)
 
   # Returns the list of association atoms a `belongs_to` relation from
   # `entity_name` points to. Read paths preload these so the Svelte

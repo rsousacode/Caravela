@@ -46,7 +46,21 @@ defmodule Caravela.Domain do
   def hook_arity(action), do: Map.fetch!(@hook_arity, action)
 
   defmacro __using__(opts) do
+    opts = Keyword.update(opts, :default_policy, :deny, & &1)
+
+    unless Keyword.get(opts, :default_policy) in [:deny, :allow] do
+      raise ArgumentError,
+            "use Caravela.Domain, default_policy: … expects :deny or :allow, got: " <>
+              inspect(Keyword.get(opts, :default_policy))
+    end
+
     quote do
+      # Scoped Ecto.Query helpers so `scope fn q, actor -> where(q, …) end`
+      # works without every domain manually importing Ecto.Query. Under
+      # `default_policy: :deny` the generated deny-all scope fallback
+      # also uses `where/3`.
+      import Ecto.Query, only: [where: 3, from: 2]
+
       import Caravela.Domain,
         only: [
           entity: 2,

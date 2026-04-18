@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-04-18
+
+### Changed (breaking)
+
+- **Deny-by-default policy fallback.** Domains now default to
+  `default_policy: :deny`. Any entity without a declared `policy`
+  block has its scope filtered to zero rows, every field masked out,
+  and every write denied. The prior permissive behavior is still
+  available as `use Caravela.Domain, default_policy: :allow`.
+
+  Motivation: a forgotten policy on a new entity used to silently
+  ship unscoped data. With deny-by-default, the same forgetful moment
+  produces an obviously-empty list instead of a leak. If you want
+  per-entity control, add a minimal `policy :entity do scope fn q, _ ->
+  q end end` — declaring *any* policy block for an entity makes its
+  undeclared rule types permissive for that entity (the "per-entity
+  fallback" tier of the cascade).
+
+- **Generated `compute_field_access/2` routes every field through the
+  policy dispatch function.** Previously, unruled fields were hardcoded
+  to literal `true` in the generated context; the hardcoding hid the
+  domain-level `default_policy` from reaching them. Now every field
+  calls `__caravela_policy_field_visible__/3` and the clause cascade
+  on the domain module (specific rule → per-entity fallback →
+  module-level fallback) decides the result. No visible runtime
+  difference for domains without policies that stayed on `:allow`.
+
+### Added
+
+- `Caravela.Schema.Domain.default_policy/1` helper returning `:deny`
+  or `:allow`.
+- `use Caravela.Domain` now imports `Ecto.Query.where/3` and
+  `Ecto.Query.from/2` into the calling module, so `scope fn q, actor ->
+  where(q, [b], b.published) end` works without a manual
+  `import Ecto.Query` (previously a silent runtime failure).
+
+### Migration
+
+- If any of your domains rely on the old permissive fallback, add
+  `default_policy: :allow` to the `use Caravela.Domain` call.
+- If you want to tighten up an existing domain, remove the
+  `:allow` option and add a `policy :entity do …` block per entity.
+  Missing rule types inside the block stay permissive, so partial
+  declarations are safe.
+
 ## [0.7.0] — 2026-04-18
 
 ### Removed (breaking)

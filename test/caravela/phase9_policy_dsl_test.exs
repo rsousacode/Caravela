@@ -163,14 +163,108 @@ defmodule Caravela.Phase9PolicyDslTest do
              ) == false
     end
 
-    test "fallbacks are applied for unpolicied entities / fields / actions" do
-      # `:publishers` has no policy at all → all defaults.
+    test "permissive fallbacks for `default_policy: :allow` domains" do
+      # `:publishers` has no policy at all. Library is declared with
+      # `default_policy: :allow`, so the unpolicied fallback is
+      # permissive: query pass-through, fields visible, actions allowed.
       assert MyApp.Domains.Library.__caravela_policy_scope__(:publishers, :query, %{}) == :query
 
       assert MyApp.Domains.Library.__caravela_policy_field_visible__(:publishers, :name, %{}) ==
                true
 
       assert MyApp.Domains.Library.__caravela_policy_allow__(:publishers, :create, %{}) == true
+    end
+
+    test "deny-by-default scopes unpolicied entities to zero rows" do
+      import Ecto.Query, only: [from: 2]
+
+      base = from(w in "policy_library_widgets", select: w.id)
+
+      %Ecto.Query{wheres: wheres_after} =
+        MyApp.Domains.PolicyLibrary.__caravela_policy_scope__(:widgets, base, %{role: :admin})
+
+      assert length(wheres_after) == length(base.wheres) + 1
+    end
+
+    test "deny-by-default hides every field on an unpolicied entity" do
+      assert MyApp.Domains.PolicyLibrary.__caravela_policy_field_visible__(
+               :widgets,
+               :name,
+               %{role: :admin}
+             ) == false
+
+      assert MyApp.Domains.PolicyLibrary.__caravela_policy_field_visible__(
+               :widgets,
+               :name,
+               %{role: :admin},
+               %{}
+             ) == false
+    end
+
+    test "deny-by-default denies every write on an unpolicied entity" do
+      assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(
+               :widgets,
+               :create,
+               %{role: :admin}
+             ) == false
+
+      assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(
+               :widgets,
+               :delete,
+               %{role: :admin},
+               %{}
+             ) == false
+    end
+
+    test "per-entity permissive fallback fires for entities with a policy block" do
+      # `:authors` has a policy (only a field rule on :email) but no
+      # `scope` or `allow` rules. Under deny-by-default the module-level
+      # fallback would deny everything — but the per-entity permissive
+      # fallback kicks in first, so list/create/update/delete on an
+      # authenticated actor are allowed.
+      import Ecto.Query, only: [from: 2]
+
+      base = from(a in "policy_library_authors", select: a.id)
+
+      # Scope is a pass-through (per-entity fallback), not a deny filter.
+      assert MyApp.Domains.PolicyLibrary.__caravela_policy_scope__(
+               :authors,
+               base,
+               %{role: :viewer}
+             ) == base
+
+      # No allow rule declared → per-entity permissive fallback returns true.
+      assert MyApp.Domains.PolicyLibrary.__caravela_policy_allow__(
+               :authors,
+               :create,
+               %{role: :viewer}
+             ) == true
+
+      # No field rule on :name → per-entity permissive fallback returns true.
+      assert MyApp.Domains.PolicyLibrary.__caravela_policy_field_visible__(
+               :authors,
+               :name,
+               %{role: :viewer}
+             ) == true
+
+      # But the declared rule on :email still wins — viewers can't see it.
+      assert MyApp.Domains.PolicyLibrary.__caravela_policy_field_visible__(
+               :authors,
+               :email,
+               %{role: :viewer}
+             ) == false
+    end
+
+    test "rejects an invalid default_policy value at compile time" do
+      assert_raise ArgumentError, ~r/default_policy/, fn ->
+        defmodule BadDefaultPolicy do
+          use Caravela.Domain, default_policy: :maybe
+
+          entity :things do
+            field :name, :string
+          end
+        end
+      end
     end
   end
 

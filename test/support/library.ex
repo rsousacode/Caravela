@@ -1,5 +1,8 @@
 defmodule MyApp.Domains.Library do
-  use Caravela.Domain
+  # This fixture predates `default_policy: :deny` — keep the legacy
+  # permissive fallback so the generic CRUD tests (which don't declare
+  # policies on every entity) still list/create records freely.
+  use Caravela.Domain, default_policy: :allow
 
   entity :authors do
     field :name, :string, required: true

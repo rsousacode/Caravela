@@ -5,7 +5,7 @@ defmodule MyApp.Domains.TenantLibrary do
   Phase 1/2 tests continue to exercise a plain single-tenant domain.
   """
 
-  use Caravela.Domain, multi_tenant: true
+  use Caravela.Domain, multi_tenant: true, default_policy: :allow
 
   version "v1"
 

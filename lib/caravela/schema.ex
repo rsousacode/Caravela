@@ -162,6 +162,15 @@ defmodule Caravela.Schema do
     end
 
     @doc """
+    The fallback policy for entities without a declared `policy` block.
+    `:deny` (default): scope filters to zero rows, every field hidden,
+    every write gate denies. `:allow`: legacy permissive behavior.
+    """
+    def default_policy(%__MODULE__{opts: opts}) do
+      Keyword.get(opts || [], :default_policy, :deny)
+    end
+
+    @doc """
     The first entity that declares an `authenticatable` block, or `nil`
     if none do. Caravela currently supports a single authenticatable
     entity per domain.

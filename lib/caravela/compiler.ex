@@ -40,6 +40,9 @@ defmodule Caravela.Compiler do
 
     Module.put_attribute(env.module, :caravela_domain_compiled, domain)
 
+    per_entity_policy_fallbacks = per_entity_policy_fallbacks(domain)
+    module_level_policy_fallbacks = module_level_policy_fallbacks(domain)
+
     quote do
       @doc false
       def __caravela_domain__ do
@@ -59,20 +62,103 @@ defmodule Caravela.Compiler do
 
       # --- Policy dispatch fallbacks (Phase 9) ---------------------------
       #
-      # These come AFTER the per-entity clauses emitted by the `policy`
-      # macro, so each one acts as a "no policy declared" default.
-
-      @doc false
-      def __caravela_policy_scope__(_entity, query, _actor), do: query
-
-      @doc false
-      def __caravela_policy_field_visible__(_entity, _field, _actor), do: true
-      def __caravela_policy_field_visible__(_entity, _field, _actor, _record), do: true
-
-      @doc false
-      def __caravela_policy_allow__(_entity, _action, _actor), do: true
-      def __caravela_policy_allow__(_entity, _action, _actor, _record), do: true
+      # Clause ordering matters. In order:
+      #
+      #   1. Specific clauses emitted by the `policy` macro (per rule).
+      #   2. Per-entity permissive fallbacks (below) — for each entity
+      #      that declared ANY policy block. These make undeclared rule
+      #      types within a `policy` block default to "permissive for
+      #      this entity" regardless of the domain-level default.
+      #   3. Module-level fallback (last) — governed by the
+      #      `default_policy` domain option. Only fires for entities
+      #      that have NO `policy` block at all.
+      unquote_splicing(per_entity_policy_fallbacks)
+      unquote_splicing(module_level_policy_fallbacks)
     end
+  end
+
+  # For each entity with a declared policy, emit a permissive fallback
+  # covering undeclared rule types. These sit between the specific
+  # per-rule clauses and the module-level default.
+  defp per_entity_policy_fallbacks(%Domain{policies: policies}) do
+    policies
+    |> Enum.flat_map(fn %{entity: entity} ->
+      [
+        quote do
+          def __caravela_policy_scope__(unquote(entity), query, _actor), do: query
+        end,
+        quote do
+          def __caravela_policy_field_visible__(unquote(entity), _field, _actor), do: true
+        end,
+        quote do
+          def __caravela_policy_field_visible__(
+                unquote(entity),
+                _field,
+                _actor,
+                _record
+              ),
+              do: true
+        end,
+        quote do
+          def __caravela_policy_allow__(unquote(entity), _action, _actor), do: true
+        end,
+        quote do
+          def __caravela_policy_allow__(unquote(entity), _action, _actor, _record),
+            do: true
+        end
+      ]
+    end)
+  end
+
+  defp module_level_policy_fallbacks(%Domain{} = domain) do
+    case Domain.default_policy(domain) do
+      :deny -> deny_fallbacks()
+      :allow -> allow_fallbacks()
+    end
+  end
+
+  defp allow_fallbacks do
+    [
+      quote do
+        def __caravela_policy_scope__(_entity, query, _actor), do: query
+      end,
+      quote do
+        def __caravela_policy_field_visible__(_entity, _field, _actor), do: true
+      end,
+      quote do
+        def __caravela_policy_field_visible__(_entity, _field, _actor, _record), do: true
+      end,
+      quote do
+        def __caravela_policy_allow__(_entity, _action, _actor), do: true
+      end,
+      quote do
+        def __caravela_policy_allow__(_entity, _action, _actor, _record), do: true
+      end
+    ]
+  end
+
+  defp deny_fallbacks do
+    [
+      quote do
+        # Deny-all scope: force zero rows via `WHERE false`. `where/3`
+        # is imported in `use Caravela.Domain`, so it resolves here.
+        def __caravela_policy_scope__(_entity, query, _actor) do
+          where(query, [_q], false)
+        end
+      end,
+      quote do
+        def __caravela_policy_field_visible__(_entity, _field, _actor), do: false
+      end,
+      quote do
+        def __caravela_policy_field_visible__(_entity, _field, _actor, _record), do: false
+      end,
+      quote do
+        def __caravela_policy_allow__(_entity, _action, _actor), do: false
+      end,
+      quote do
+        def __caravela_policy_allow__(_entity, _action, _actor, _record), do: false
+      end
+    ]
   end
 
   @doc """

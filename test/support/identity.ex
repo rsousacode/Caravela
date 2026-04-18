@@ -5,7 +5,7 @@ defmodule MyApp.Domains.Identity do
   config, confirm/reset, and both `on_register` / `on_login` hooks.
   """
 
-  use Caravela.Domain, multi_tenant: true
+  use Caravela.Domain, multi_tenant: true, default_policy: :allow
 
   version "v1"
 

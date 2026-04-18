@@ -115,7 +115,6 @@ defmodule <%= inspect @context_module %> do
   end
 
 <%= for e <- @entities do %>  defp compute_field_access(<%= inspect e.entity_name %>, actor) do
-    _ = actor
     %{
 <%= for f <- e.field_access_exprs do %>      <%= inspect f.name %> => <%= f.expr %>,
 <% end %>    }
