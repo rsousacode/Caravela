@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-04-18
+
 Phase 5 — dynamic Svelte forms with server-driven visibility and
 async validation, plus the `Caravela.Flow` GenServer runtime for
 composable async workflows.
