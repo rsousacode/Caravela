@@ -383,6 +383,7 @@ defmodule Caravela.Phase4GenTest do
 
         assert src =~ "live: LiveHandle;"
         assert src =~ "live.pushEvent("
+
         refute src =~ ~r/\bpushEvent: \(event/,
                "component still declares the old `pushEvent` prop type"
       end
