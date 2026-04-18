@@ -2,10 +2,15 @@
 <script lang="ts">
   import type { <%= @entity_ts %> } from '<%= @types_import %>';
 
-  export let <%= @singular %>: <%= @entity_ts %>;
-  export let flash_message: string | null = null;
-
-  export let pushEvent: (event: string, payload: object) => void;
+  let {
+    <%= @singular %>,
+    flash_message = null,
+    pushEvent
+  }: {
+    <%= @singular %>: <%= @entity_ts %>;
+    flash_message?: string | null;
+    pushEvent: (event: string, payload: object) => void;
+  } = $props();
 </script>
 
 {#if flash_message}

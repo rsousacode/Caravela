@@ -2,13 +2,19 @@
 <script lang="ts">
   import type { <%= @entity_ts %> } from '<%= @types_import %>';
 
-  // Props pushed from LiveView via LiveSvelte
-  export let <%= @plural %>: <%= @entity_ts %>[] = [];
-  export let loading: boolean = false;
-  export let flash_message: string | null = null;
-
-  // Dispatch events back to LiveView
-  export let pushEvent: (event: string, payload: object) => void;
+  // Props pushed from LiveView via LiveSvelte.
+  // `pushEvent` dispatches events back to LiveView.
+  let {
+    <%= @plural %> = [],
+    loading = false,
+    flash_message = null,
+    pushEvent
+  }: {
+    <%= @plural %>?: <%= @entity_ts %>[];
+    loading?: boolean;
+    flash_message?: string | null;
+    pushEvent: (event: string, payload: object) => void;
+  } = $props();
 
   function handleDelete(id: string) {
     if (confirm('Delete this <%= @singular %>?')) {

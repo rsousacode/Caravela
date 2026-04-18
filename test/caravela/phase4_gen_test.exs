@@ -312,7 +312,8 @@ defmodule Caravela.Phase4GenTest do
         |> Enum.find(fn {p, _} -> String.ends_with?(p, "BookIndex.svelte") end)
 
       assert src =~ "import type { Book } from '../types/library';"
-      assert src =~ "export let books: Book[] = [];"
+      assert src =~ "books?: Book[];"
+      assert src =~ "= $props();"
       assert src =~ "{#each books as book (book.id)}"
       assert src =~ "pushEvent('delete', { id });"
     end

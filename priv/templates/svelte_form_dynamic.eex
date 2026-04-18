@@ -3,12 +3,21 @@
   import type { <%= @entity_ts %> } from '<%= @types_import %>';
 
   // Props from LiveView (server state)
-  export let <%= @singular %>: Partial<<%= @entity_ts %>> = {};
-  export let errors: Record<string, string[]> = {};
-  export let saving: boolean = false;
-  export let field_visibility: Record<string, boolean> = {};
-  export let async_errors: Record<string, string | null> = {};
-  export let pushEvent: (event: string, payload: object) => void;
+  let {
+    <%= @singular %> = {},
+    errors = {},
+    saving = false,
+    field_visibility = {},
+    async_errors = {},
+    pushEvent
+  }: {
+    <%= @singular %>?: Partial<<%= @entity_ts %>>;
+    errors?: Record<string, string[]>;
+    saving?: boolean;
+    field_visibility?: Record<string, boolean>;
+    async_errors?: Record<string, string | null>;
+    pushEvent: (event: string, payload: object) => void;
+  } = $props();
 <%= for {field, _debounce} <- @async_fields do %>  let <%= field %>Timer: ReturnType<typeof setTimeout>;
 <% end %>
   function handleChange(field: string, value: unknown) {

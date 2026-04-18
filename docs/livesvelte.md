@@ -122,19 +122,33 @@ survives regeneration (see [regeneration](regeneration.md)).
 For `BookIndex.svelte`:
 
 ```ts
-export let books: Book[] = [];
-export let loading: boolean = false;
-export let flash_message: string | null = null;
-export let pushEvent: (event: string, payload: object) => void;
+let {
+  books = [],
+  loading = false,
+  flash_message = null,
+  pushEvent
+}: {
+  books?: Book[];
+  loading?: boolean;
+  flash_message?: string | null;
+  pushEvent: (event: string, payload: object) => void;
+} = $props();
 ```
 
 For `BookForm.svelte`:
 
 ```ts
-export let book: Partial<Book> = {};
-export let errors: Record<string, string[]> = {};
-export let saving: boolean = false;
-export let pushEvent: (event: string, payload: object) => void;
+let {
+  book = {},
+  errors = {},
+  saving = false,
+  pushEvent
+}: {
+  book?: Partial<Book>;
+  errors?: Record<string, string[]>;
+  saving?: boolean;
+  pushEvent: (event: string, payload: object) => void;
+} = $props();
 ```
 
 The TypeScript interfaces are regenerated from the domain IR — changes

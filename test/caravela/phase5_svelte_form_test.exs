@@ -51,9 +51,10 @@ defmodule Caravela.Phase5SvelteFormTest do
     end
 
     test "declares field_visibility, async_errors, and pushEvent props", %{src: src} do
-      assert src =~ "export let field_visibility: Record<string, boolean> = {};"
-      assert src =~ "export let async_errors: Record<string, string | null> = {};"
-      assert src =~ "export let pushEvent:"
+      assert src =~ "= $props();"
+      assert src =~ "field_visibility?: Record<string, boolean>;"
+      assert src =~ "async_errors?: Record<string, string | null>;"
+      assert src =~ "pushEvent: (event: string, payload: object) => void;"
     end
 
     test "declares a debounce timer for every async field", %{src: src} do

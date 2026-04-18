@@ -2,11 +2,17 @@
 <script lang="ts">
   import type { <%= @entity_ts %> } from '<%= @types_import %>';
 
-  export let <%= @singular %>: Partial<<%= @entity_ts %>> = {};
-  export let errors: Record<string, string[]> = {};
-  export let saving: boolean = false;
-
-  export let pushEvent: (event: string, payload: object) => void;
+  let {
+    <%= @singular %> = {},
+    errors = {},
+    saving = false,
+    pushEvent
+  }: {
+    <%= @singular %>?: Partial<<%= @entity_ts %>>;
+    errors?: Record<string, string[]>;
+    saving?: boolean;
+    pushEvent: (event: string, payload: object) => void;
+  } = $props();
 
   function handleChange(field: string, value: unknown) {
     pushEvent('validate', { field, value });

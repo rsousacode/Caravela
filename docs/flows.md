@@ -145,8 +145,8 @@ LiveView (handle_info)
   │ LiveSvelte auto-pushes the prop change
   ▼
 Svelte Component
-  │ export let sync_status: string;
-  │ $: statusLabel = derive(sync_status);
+  │ let { sync_status } = $props();
+  │ const statusLabel = $derived(derive(sync_status));
   ▼
   Reactive DOM update — no manual WebSocket code.
 ```
@@ -184,15 +184,16 @@ end
 
 ```svelte
 <script lang="ts">
-  export let sync_status: string | boolean = "idle";
+  let { sync_status = "idle" }: { sync_status?: string | boolean } = $props();
 
-  $: statusLabel =
+  const statusLabel = $derived(
     sync_status === "idle"       ? "Ready" :
-    sync_status === :processing  ? "Syncing…" :
-    sync_status === false        ? "Synced ✓" : "Unknown";
+    sync_status === "processing" ? "Syncing…" :
+    sync_status === false        ? "Synced ✓" : "Unknown"
+  );
 </script>
 
-<div class="sync-indicator" class:syncing={sync_status === :processing}>
+<div class="sync-indicator" class:syncing={sync_status === "processing"}>
   {statusLabel}
 </div>
 ```
