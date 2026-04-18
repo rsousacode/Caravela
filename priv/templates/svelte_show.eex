@@ -19,8 +19,8 @@
 <% end %>  </dl>
 
   <div class="actions">
-    <button on:click={() => pushEvent('edit', { id: <%= @singular %>.id })}>Edit</button>
-    <button on:click={() => pushEvent('back', {})}>Back</button>
+    <button onclick={() => pushEvent('edit', { id: <%= @singular %>.id })}>Edit</button>
+    <button onclick={() => pushEvent('back', {})}>Back</button>
   </div>
 </article>
 

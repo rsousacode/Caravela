@@ -140,3 +140,25 @@ export let pushEvent: (event: string, payload: object) => void;
 The TypeScript interfaces are regenerated from the domain IR — changes
 to `field :title, :string, required: true` in Elixir immediately flow
 to `title: string` (no `?`) in TypeScript on the next `mix caravela.gen.live`.
+
+## Known incompatibilities with LiveSvelte SSR
+
+LiveSvelte renders components server-side via Node by default. A few
+Svelte libraries load code lazily at runtime in a way the Node SSR
+bridge can't resolve:
+
+- **Shiki** (syntax highlighter) — dynamically imports per-language
+  grammar chunks. Under Node SSR the dynamic imports fail and the
+  render crashes. Workaround: disable SSR in your app config:
+
+  ```elixir
+  # config/config.exs
+  config :live_svelte, ssr: false
+  ```
+
+  Client-side hydration still works; only the initial server render
+  falls back to a blank placeholder until the Svelte runtime takes
+  over.
+
+If you hit a similar "works in the browser, crashes in SSR" pattern
+with another library, the same switch applies.

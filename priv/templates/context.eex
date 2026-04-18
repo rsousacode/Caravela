@@ -80,31 +80,40 @@ defmodule <%= inspect @context_module %> do
     <%= inspect @domain_module %>.__caravela_permission__(:can_read, entity, query, context)
   end
 
+<%= if @any_can_create do %>
   defp authorize_create(entity, context) do
     case <%= inspect @domain_module %>.__caravela_permission__(:can_create, entity, context) do
       true -> :ok
       false -> {:error, :unauthorized}
     end
   end
-
+<% else %>
+  defp authorize_create(_entity, _context), do: :ok
+<% end %>
+<%= if @any_can_update do %>
   defp authorize_update(entity, struct, context) do
     case <%= inspect @domain_module %>.__caravela_permission__(:can_update, entity, struct, context) do
       true -> :ok
       false -> {:error, :unauthorized}
     end
   end
-
+<% else %>
+  defp authorize_update(_entity, _struct, _context), do: :ok
+<% end %>
+<%= if @any_can_delete do %>
   defp authorize_delete(entity, struct, context) do
     case <%= inspect @domain_module %>.__caravela_permission__(:can_delete, entity, struct, context) do
       true -> :ok
       false -> {:error, :unauthorized}
     end
   end
-
+<% else %>
+  defp authorize_delete(_entity, _struct, _context), do: :ok
+<% end %>
   defp apply_changeset_hook(changeset, action, entity, context) do
     <%= inspect @domain_module %>.__caravela_hook__(action, entity, changeset, context)
   end
-
+<%= if @any_on_delete do %>
   defp run_delete_hook(entity, struct, context) do
     case <%= inspect @domain_module %>.__caravela_hook__(:on_delete, entity, struct, context) do
       :ok -> :ok
@@ -112,6 +121,9 @@ defmodule <%= inspect @context_module %> do
       other -> raise "on_delete hook must return :ok or {:error, reason}, got: " <> inspect(other)
     end
   end
+<% else %>
+  defp run_delete_hook(_entity, _struct, _context), do: :ok
+<% end %>
 
   # --- Internal: multi-tenant scoping --------------------------------------
 <%= if @multi_tenant do %>

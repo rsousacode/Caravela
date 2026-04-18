@@ -194,7 +194,7 @@ defmodule Caravela.Gen.Svelte do
     <input
         type="checkbox"
         checked={#{row_var}.#{name} ?? false}
-        on:change={(e) => handleChange('#{name}', e.currentTarget.checked)}
+        onchange={(e) => handleChange('#{name}', e.currentTarget.checked)}
       />\
     """
   end
@@ -203,7 +203,7 @@ defmodule Caravela.Gen.Svelte do
     """
     <textarea
         value={#{row_var}.#{name} ?? ''}
-        on:input={(e) => handleChange('#{name}', e.currentTarget.value)}
+        oninput={(e) => handleChange('#{name}', e.currentTarget.value)}
       />\
     """
   end
@@ -214,7 +214,7 @@ defmodule Caravela.Gen.Svelte do
     <input
         type="number"
         value={#{row_var}.#{name} ?? ''}
-        on:input={(e) => handleChange('#{name}', e.currentTarget.value)}
+        oninput={(e) => handleChange('#{name}', e.currentTarget.value)}
       />\
     """
   end
@@ -224,7 +224,7 @@ defmodule Caravela.Gen.Svelte do
     <input
         type="date"
         value={#{row_var}.#{name} ?? ''}
-        on:input={(e) => handleChange('#{name}', e.currentTarget.value)}
+        oninput={(e) => handleChange('#{name}', e.currentTarget.value)}
       />\
     """
   end
@@ -234,7 +234,7 @@ defmodule Caravela.Gen.Svelte do
     <input
         type="text"
         value={#{row_var}.#{name} ?? ''}
-        on:input={(e) => handleChange('#{name}', e.currentTarget.value)}
+        oninput={(e) => handleChange('#{name}', e.currentTarget.value)}
       />\
     """
   end

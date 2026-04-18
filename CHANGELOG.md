@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Generated `--with-domain` form LiveView no longer crashes with
+  `KeyError :errors` on mount. The template now seeds the domain's
+  default state (via `Caravela.Live.Template.__assign_defaults__/2`)
+  before the first `apply_updater(:load, ...)` call.
+- `Caravela.Flow.Runner` — `race` advances as soon as the first task
+  resolves instead of waiting the full timeout (was relying on
+  `Task.yield_many/2`'s "wait for all, take first").
+- `Caravela.Gen.Context` emits simplified `authorize_*` / `run_delete_hook`
+  functions when no corresponding `can_*` / `on_delete` rule is
+  declared, eliminating the "clause will never match" warnings that
+  appeared on every compile of a fresh CRUD generation.
+- `Caravela.Gen.SvelteForm` and `Caravela.Gen.Svelte` now emit Svelte 5
+  event attribute syntax (`onchange={...}`, `oninput={...}`,
+  `onclick={...}`, `onsubmit={...}`) instead of the deprecated
+  `on:event` directive form.
+
+### Added
+
+- `Caravela.Flow` — `:tag` start option. When set, every notification
+  is delivered wrapped as `{:caravela_flow, tag, original_msg}`,
+  letting a single listener driving many flows demultiplex without
+  forwarder processes.
+
+### Changed
+
+- `Caravela.Live.Domain` / `Caravela.Live.Form` — when the `updater` /
+  `on_event` / `visible` macros reject a value they can't arity-check
+  at compile time, the error message now points the reader at the
+  accepted shapes (`fn ... end` or `&Module.fun/N`) and the
+  wrap-it-in-`fn` workaround for bound function variables.
+- `Caravela.Gen.Migration` moduledoc now documents the `:timestamp`
+  option for deterministic output (snapshot tests / demo pages).
+  Behavior unchanged; only documentation.
+
 ## [0.5.0] — 2026-04-18
 
 Phase 5 — dynamic Svelte forms with server-driven visibility and

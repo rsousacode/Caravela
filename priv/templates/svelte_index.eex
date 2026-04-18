@@ -22,7 +22,7 @@
 {/if}
 
 <div class="toolbar">
-  <button on:click={() => pushEvent('new', {})}>New <%= @singular %></button>
+  <button onclick={() => pushEvent('new', {})}>New <%= @singular %></button>
 </div>
 
 {#if loading}
@@ -42,8 +42,8 @@
         <tr>
 <%= for col <- @columns do %>          <td><%= col.cell %></td>
 <% end %>          <td>
-            <button on:click={() => pushEvent('edit', { id: <%= @singular %>.id })}>Edit</button>
-            <button on:click={() => handleDelete(<%= @singular %>.id)}>Delete</button>
+            <button onclick={() => pushEvent('edit', { id: <%= @singular %>.id })}>Edit</button>
+            <button onclick={() => handleDelete(<%= @singular %>.id)}>Delete</button>
           </td>
         </tr>
       {/each}

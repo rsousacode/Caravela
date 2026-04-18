@@ -201,8 +201,12 @@ defmodule Caravela.Live.Form do
 
       :unknown ->
         raise ArgumentError,
-              "Caravela: #{macro_name} requires a function literal, got: " <>
-                Macro.to_string(fun)
+              "Caravela: #{macro_name} requires a literal `fn ... end` or " <>
+                "`&Module.fun/N` capture so arity can be checked at compile " <>
+                "time. Got: " <>
+                Macro.to_string(fun) <>
+                ". To pass a bound function variable, wrap it: " <>
+                "`fn arg -> my_fun.(arg) end`."
     end
   end
 

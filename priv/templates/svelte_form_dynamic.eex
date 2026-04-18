@@ -22,12 +22,13 @@
     }
 <% end %>  }
 
-  function handleSubmit() {
+  function handleSubmit(e: Event) {
+    e.preventDefault();
     pushEvent('save', {});
   }
 </script>
 
-<form on:submit|preventDefault={handleSubmit}>
+<form onsubmit={handleSubmit}>
 <%= for input <- @inputs do %><%= if input.visible? do %>  {#if field_visibility.<%= input.name %>}
     <label>
       <%= input.label %><%= if input.required, do: " *" %>
@@ -55,7 +56,7 @@
     <button type="submit" disabled={saving}>
       {saving ? 'Saving…' : 'Save'}
     </button>
-    <button type="button" on:click={() => pushEvent('cancel', {})} disabled={saving}>
+    <button type="button" onclick={() => pushEvent('cancel', {})} disabled={saving}>
       Cancel
     </button>
   </div>

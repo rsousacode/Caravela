@@ -65,6 +65,9 @@ defmodule Caravela.Flow do
     * `:initial_state` — overrides the flow's declared default state
     * `:notify` — a pid to receive `{:flow_state, ...}`,
       `{:flow_done, ...}`, `{:flow_error, ...}` messages
+    * `:tag` — when set, every notification arrives wrapped as
+      `{:caravela_flow, tag, original_msg}`. Use this to demultiplex
+      many flows sharing one listener without forwarder processes.
 
   If `Caravela.Flow.Supervisor` is running, the runner starts as a
   supervised child; otherwise it starts unsupervised (useful in tests).
@@ -82,8 +85,9 @@ defmodule Caravela.Flow do
     default_state = flow_module.__caravela_flow_initial_state__(flow_name)
     initial_state = Keyword.get(opts, :initial_state, default_state)
     notify = Keyword.get(opts, :notify)
+    tag = Keyword.get(opts, :tag)
 
-    args = %{step_tree: tree, state: initial_state, notify: notify}
+    args = %{step_tree: tree, state: initial_state, notify: notify, tag: tag}
 
     case Process.whereis(Supervisor) do
       nil -> Runner.start_link(args)

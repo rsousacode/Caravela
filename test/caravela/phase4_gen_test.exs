@@ -169,6 +169,29 @@ defmodule Caravela.Phase4GenTest do
       assert src =~ "apply_updater(socket, :set_errors,"
     end
 
+    test "generated mount/3 seeds defaults before apply_updater(:load, ...)",
+         %{plain: domain} do
+      # Regression for: "KeyError :errors" on first mount. The mount body
+      # must call __assign_defaults__ before the first apply_updater so
+      # every key from the domain's state block (e.g. :errors, :attrs)
+      # exists on socket.assigns.
+      {_path, src} =
+        LiveView.render_all(domain, with_domain: true)
+        |> Enum.find(fn {p, _} -> String.ends_with?(p, "book_live/form.ex") end)
+
+      assert src =~ "__caravela_live_state__"
+      assert src =~ "Caravela.Live.Template.__assign_defaults__"
+
+      [_, mount_body] = String.split(src, "def mount(params, _session, socket) do", parts: 2)
+      [mount_body, _] = String.split(mount_body, "\n  end\n", parts: 2)
+
+      assigns_idx = :binary.match(mount_body, "__assign_defaults__") |> elem(0)
+      updater_idx = :binary.match(mount_body, "apply_updater(:load") |> elem(0)
+
+      assert assigns_idx < updater_idx,
+             "defaults must be seeded before the :load updater runs"
+    end
+
     test "FormDomain uses Caravela.Live.Domain and declares the expected updaters",
          %{plain: domain} do
       {_path, src} =

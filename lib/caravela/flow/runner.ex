@@ -12,6 +12,11 @@ defmodule Caravela.Flow.Runner do
   time. Listeners typically use `handle_info/2` in a LiveView to
   re-assign socket state — LiveSvelte pushes the resulting prop diff
   to the Svelte component.
+
+  When `:tag` is supplied at start time, every notification is wrapped
+  as `{:caravela_flow, tag, original_msg}` so a single listener driving
+  multiple flows can demultiplex by tag without spawning forwarder
+  processes.
   """
 
   use GenServer
@@ -61,11 +66,13 @@ defmodule Caravela.Flow.Runner do
     step = Map.fetch!(args, :step_tree)
     flow_state = Map.get(args, :state, %{})
     notify = Map.get(args, :notify)
+    tag = Map.get(args, :tag)
 
     state = %{
       stack: [step],
       flow_state: flow_state,
       notify: notify,
+      tag: tag,
       mode: :running,
       debounce_snapshot: nil,
       debounce_ms: nil
@@ -269,7 +276,15 @@ defmodule Caravela.Flow.Runner do
   end
 
   defp notify(%{notify: nil}, _msg), do: :ok
-  defp notify(%{notify: pid}, msg) when is_pid(pid), do: send(pid, msg)
+
+  defp notify(%{notify: pid, tag: nil}, msg) when is_pid(pid) do
+    send(pid, msg)
+  end
+
+  defp notify(%{notify: pid, tag: tag}, msg) when is_pid(pid) do
+    send(pid, {:caravela_flow, tag, msg})
+  end
+
   defp notify(_state, _msg), do: :ok
 
   defp safe_call(fun, arg) do
@@ -298,20 +313,32 @@ defmodule Caravela.Flow.Runner do
 
   defp race_tasks(tasks, timeout) do
     async_tasks = Enum.map(tasks, &Task.async/1)
+    awaiting = Map.new(async_tasks, fn %Task{ref: ref} -> {ref, true} end)
+    deadline = System.monotonic_time(:millisecond) + timeout
 
-    result =
-      async_tasks
-      |> Task.yield_many(timeout)
-      |> Enum.find_value(fn
-        {_task, {:ok, value}} -> {:ok, value}
-        _ -> nil
-      end)
+    try do
+      wait_for_first(awaiting, deadline)
+    after
+      Enum.each(async_tasks, &Task.shutdown(&1, :brutal_kill))
+    end
+  end
 
-    Enum.each(async_tasks, &Task.shutdown(&1, :brutal_kill))
+  defp wait_for_first(awaiting, deadline) when map_size(awaiting) == 0 do
+    _ = deadline
+    {:error, :race_timeout}
+  end
 
-    case result do
-      nil -> {:error, :race_timeout}
-      {:ok, _value} = ok -> ok
+  defp wait_for_first(awaiting, deadline) do
+    remaining = max(deadline - System.monotonic_time(:millisecond), 0)
+
+    receive do
+      {ref, value} when is_map_key(awaiting, ref) ->
+        {:ok, value}
+
+      {:DOWN, ref, :process, _pid, _reason} when is_map_key(awaiting, ref) ->
+        wait_for_first(Map.delete(awaiting, ref), deadline)
+    after
+      remaining -> {:error, :race_timeout}
     end
   end
 

@@ -70,6 +70,21 @@ defmodule Caravela.Phase5FlowRunnerTest do
         end
       end
     end
+
+    flow :fast_race_flow, initial_state: %{} do
+      race [
+             fn ->
+               Process.sleep(10)
+               :fast
+             end,
+             fn ->
+               Process.sleep(400)
+               :slow
+             end
+           ],
+           collect_as: :winner,
+           timeout: 2000
+    end
   end
 
   defp start!(name, opts \\ []) do
@@ -171,5 +186,28 @@ defmodule Caravela.Phase5FlowRunnerTest do
 
     assert_receive {:flow_state, %{fired: true}}
     assert_receive {:flow_done, %{fired: true}}
+  end
+
+  test "race returns as soon as the first task finishes (not after slowest)" do
+    # Regression for: "yield_many waited for all tasks before picking a
+    # winner". fast task finishes in ~10ms; slow task in ~400ms. The
+    # flow must complete within a window well under the slow task's
+    # duration.
+    started_at = System.monotonic_time(:millisecond)
+    _pid = start!(:fast_race_flow)
+
+    assert_receive {:flow_done, %{winner: :fast}}, 300
+
+    elapsed = System.monotonic_time(:millisecond) - started_at
+    assert elapsed < 300, "race should resolve on first finish, took #{elapsed}ms"
+  end
+
+  test "tag option wraps every notification with {:caravela_flow, tag, msg}" do
+    # Regression for: notify messages carried no sender tag, forcing
+    # every multi-flow caller to duplicate forwarder boilerplate.
+    _pid = start!(:sequence_flow, tag: :my_tag)
+
+    assert_receive {:caravela_flow, :my_tag, {:flow_state, %{steps_done: [:a]}}}
+    assert_receive {:caravela_flow, :my_tag, {:flow_done, %{steps_done: [:c, :b, :a]}}}
   end
 end

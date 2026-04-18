@@ -91,3 +91,36 @@ end
 
 See the [regeneration](regeneration.md) page for the CUSTOM-marker
 semantics that make re-runs safe.
+
+## Render functions are pure
+
+Every `Caravela.Gen.*.render/1,2` function is a pure function of the
+compiled domain module — it builds a `{path, source}` tuple (or a list
+of them) in memory and never touches the filesystem or starts Mix. The
+mix tasks are thin CLI wrappers around these calls.
+
+That means you can invoke a generator anywhere you have the domain
+module loaded: from a test, from a Phoenix controller that previews
+generator output, from an IEx session. Nothing special about the mix
+entry point.
+
+```elixir
+domain = MyApp.Domains.Library.__caravela_domain__()
+{path, src} = Caravela.Gen.Context.render(domain)
+# `src` is the file contents; `path` is where the mix task *would*
+# write it. Up to you whether to write, diff, or render inline.
+```
+
+## Deterministic migration output
+
+`Caravela.Gen.Migration.render/2` stamps the current UTC time into the
+migration filename prefix by default, so two back-to-back runs produce
+different paths. For snapshot tests or demo pages that show generator
+output side-by-side with a committed baseline, pin the prefix:
+
+```elixir
+Caravela.Gen.Migration.render(domain, timestamp: "00000000000000")
+# → {"priv/repo/migrations/00000000000000_create_library_tables.exs", ...}
+```
+
+All other generators are already deterministic.

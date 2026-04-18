@@ -67,12 +67,21 @@ defmodule Caravela.Gen.Context do
         }
       end)
 
+    any_can_create? = Enum.any?(domain.permissions, &(&1.action == :can_create))
+    any_can_update? = Enum.any?(domain.permissions, &(&1.action == :can_update))
+    any_can_delete? = Enum.any?(domain.permissions, &(&1.action == :can_delete))
+    any_on_delete? = Enum.any?(domain.hooks, &(&1.action == :on_delete))
+
     [
       context_module: Naming.context_module(domain),
       domain_module: domain.module,
       repo_module: Naming.repo_module(domain),
       entities: entities,
       multi_tenant: Domain.multi_tenant?(domain),
+      any_can_create: any_can_create?,
+      any_can_update: any_can_update?,
+      any_can_delete: any_can_delete?,
+      any_on_delete: any_on_delete?,
       custom_marker: Gen.Custom.marker_block()
     ]
   end

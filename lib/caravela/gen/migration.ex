@@ -5,6 +5,17 @@ defmodule Caravela.Gen.Migration do
 
   Returns `{path, source}` — the caller writes the file. The migration
   file name is timestamped so subsequent runs produce a distinct file.
+
+  ## Deterministic output
+
+  By default the migration's filename prefix is `now()` in UTC. For
+  snapshot tests, demos, or any scenario where you want byte-stable
+  output across runs, pass `:timestamp`:
+
+      Caravela.Gen.Migration.render(domain, timestamp: "00000000000000")
+
+  Without this pin, every render produces a new path and snapshot diffs
+  always appear as "add + remove".
   """
 
   alias Caravela.Schema.Domain
