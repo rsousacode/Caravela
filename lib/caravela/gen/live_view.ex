@@ -153,6 +153,7 @@ defmodule Caravela.Gen.LiveView do
     [
       module: Naming.live_module(domain, entity.name, kind),
       domain_module: domain.module,
+      entity_name: entity.name,
       context_module: context_module,
       context_short: context_short,
       entity_module: entity_module,

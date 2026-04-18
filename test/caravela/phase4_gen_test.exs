@@ -363,8 +363,9 @@ defmodule Caravela.Phase4GenTest do
         Svelte.render_components(domain)
         |> Enum.find(fn {p, _} -> String.ends_with?(p, "BookIndex.svelte") end)
 
-      assert src =~ "import type { Book } from '../types/library';"
-      assert src =~ "import type { LiveHandle } from '../types/library';"
+      # Types are imported in a single combined import for brevity.
+      assert src =~ ~r/import type \{ [^}]*\bBook\b[^}]* \} from '\.\.\/types\/library';/
+      assert src =~ ~r/import type \{ [^}]*\bLiveHandle\b[^}]* \} from '\.\.\/types\/library';/
       assert src =~ "books?: Book[];"
       assert src =~ "= $props();"
       assert src =~ "{#each books as book (book.id)}"

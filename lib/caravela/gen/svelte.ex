@@ -45,7 +45,7 @@ defmodule Caravela.Gen.Svelte do
 
     assigns = [
       domain_module: inspect(domain.module),
-      entities: Enum.map(domain.entities, &ts_entity_assign/1),
+      entities: Enum.map(domain.entities, &ts_entity_assign(&1, domain)),
       authenticated: not is_nil(auth_entity),
       user_ts_name: auth_user_ts_name(auth_entity),
       api_token_scopes: auth_token_scopes_ts(auth_entity)
@@ -116,11 +116,11 @@ defmodule Caravela.Gen.Svelte do
 
   # --- TypeScript interface assigns --------------------------------------
 
-  defp ts_entity_assign(%Entity{} = entity) do
+  defp ts_entity_assign(%Entity{} = entity, %Domain{} = domain) do
+    public = public_fields(entity)
+
     fields =
-      entity
-      |> public_fields()
-      |> Enum.map(fn f ->
+      Enum.map(public, fn f ->
         %{
           name: f.name,
           optional: not Keyword.get(f.opts || [], :required, false),
@@ -128,52 +128,94 @@ defmodule Caravela.Gen.Svelte do
         }
       end)
 
-    %{ts_name: Naming.camelize(Naming.singularize(entity.name)), ts_fields: fields}
+    policy = Domain.policy_for(domain, entity.name)
+    rules = policy_field_rules(policy)
+
+    field_access =
+      Enum.map(public, fn f ->
+        %{name: f.name, ts_type: field_access_ts_type(Map.get(rules, f.name))}
+      end)
+
+    %{
+      ts_name: Naming.camelize(Naming.singularize(entity.name)),
+      ts_fields: fields,
+      field_access: field_access
+    }
   end
+
+  defp policy_field_rules(nil), do: %{}
+
+  defp policy_field_rules(%Caravela.Policy.Entry{fields: rules}),
+    do: Map.new(rules, fn r -> {r.field, r.arity} end)
+
+  # Field access TS type:
+  #   - no rule        -> just `true` (constant-true)
+  #   - arity-1 rule   -> `boolean`
+  #   - arity-2 rule   -> `'per_record'`
+  defp field_access_ts_type(nil), do: "true"
+  defp field_access_ts_type(1), do: "boolean"
+  defp field_access_ts_type(2), do: "'per_record'"
 
   # --- Component assigns --------------------------------------------------
 
   defp component_assigns(%Domain{} = domain, %Entity{} = entity, :index) do
     fields = public_fields(entity)
     singular = Naming.singular_string(entity.name)
+    rules = policy_field_rules(Domain.policy_for(domain, entity.name))
 
     base_assigns(domain, entity, :index) ++
       [
-        columns: Enum.map(fields, &index_column(&1, singular))
+        columns: Enum.map(fields, &index_column(&1, singular, rules))
       ]
   end
 
   defp component_assigns(%Domain{} = domain, %Entity{} = entity, :show) do
     fields = public_fields(entity)
     singular = Naming.singular_string(entity.name)
+    rules = policy_field_rules(Domain.policy_for(domain, entity.name))
 
     base_assigns(domain, entity, :show) ++
       [
-        fields: Enum.map(fields, &show_field(&1, singular))
+        fields: Enum.map(fields, &show_field(&1, singular, rules))
       ]
   end
 
   defp component_assigns(%Domain{} = domain, %Entity{} = entity, :form) do
     fields = public_fields(entity)
     singular = Naming.singular_string(entity.name)
+    rules = policy_field_rules(Domain.policy_for(domain, entity.name))
 
     base_assigns(domain, entity, :form) ++
       [
-        inputs: Enum.map(fields, &form_input(&1, singular))
+        inputs: Enum.map(fields, &form_input(&1, singular, rules))
       ]
   end
 
   defp base_assigns(%Domain{} = domain, %Entity{} = entity, _kind) do
     singular = Naming.singular_string(entity.name)
     plural = Naming.plural_string(entity.name)
+    entity_ts = Naming.camelize(Naming.singularize(entity.name))
+    public = public_fields(entity)
 
     [
       domain_module: inspect(domain.module),
-      entity_ts: Naming.camelize(Naming.singularize(entity.name)),
+      entity_ts: entity_ts,
+      field_access_ts: entity_ts <> "FieldAccess",
+      default_field_access: default_field_access_literal(public),
       singular: singular,
       plural: plural,
       types_import: types_import_path(domain)
     ]
+  end
+
+  # Typescript object literal with every public field set to `true`.
+  # Used as the default value for the `field_access` prop so a component
+  # mounted without the LiveView wiring still renders every field.
+  defp default_field_access_literal(public) do
+    public
+    |> Enum.map(fn f -> "#{f.name}: true" end)
+    |> Enum.join(", ")
+    |> then(&("{ " <> &1 <> " }"))
   end
 
   # Relative import from the Svelte file to the types file.
@@ -189,22 +231,33 @@ defmodule Caravela.Gen.Svelte do
 
   # --- Per-field rendering ------------------------------------------------
 
-  defp index_column(%Field{name: name, type: type}, row_var) do
-    %{label: humanize(name), cell: svelte_cell_expression(name, type, row_var)}
+  defp index_column(%Field{name: name, type: type}, row_var, rules) do
+    %{
+      name: name,
+      label: humanize(name),
+      cell: svelte_cell_expression(name, type, row_var),
+      gated: Map.has_key?(rules, name)
+    }
   end
 
-  defp show_field(%Field{name: name, type: type}, row_var) do
-    %{label: humanize(name), cell: svelte_cell_expression(name, type, row_var)}
+  defp show_field(%Field{name: name, type: type}, row_var, rules) do
+    %{
+      name: name,
+      label: humanize(name),
+      cell: svelte_cell_expression(name, type, row_var),
+      gated: Map.has_key?(rules, name)
+    }
   end
 
-  defp form_input(%Field{name: name, type: type, opts: opts}, row_var) do
+  defp form_input(%Field{name: name, type: type, opts: opts}, row_var, rules) do
     required? = Keyword.get(opts || [], :required, false)
 
     %{
       name: name,
       label: humanize(name),
       required: required?,
-      control: form_input_control(name, type, row_var)
+      control: form_input_control(name, type, row_var),
+      gated: Map.has_key?(rules, name)
     }
   end
 

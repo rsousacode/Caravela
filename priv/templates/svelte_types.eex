@@ -31,6 +31,17 @@ export interface LiveHandle {
   updated_at: string;
 }
 
+/**
+ * Policy-driven field access map for <%= e.ts_name %>. Generated from
+ * the `policy` block in the domain DSL. A literal `true` means the
+ * field is always visible. A `boolean` means visibility depends on the
+ * current actor. `'per_record'` means visibility varies per row — the
+ * field will simply be `null` on rows where access is denied.
+ */
+export interface <%= e.ts_name %>FieldAccess {
+<%= for fa <- e.field_access do %>  <%= fa.name %>: <%= fa.ts_type %>;
+<% end %>}
+
 <% end %><%= if @authenticated do %>/**
  * The authenticated user injected as `current_user` on every
  * authenticated LiveView / Svelte component. Null on public pages.

@@ -74,13 +74,15 @@ defmodule Caravela.Domain do
           reset: 1,
           reset: 2,
           on_register: 1,
-          on_login: 1
+          on_login: 1,
+          policy: 2
         ]
 
       Module.register_attribute(__MODULE__, :caravela_entities, accumulate: true)
       Module.register_attribute(__MODULE__, :caravela_relations, accumulate: true)
       Module.register_attribute(__MODULE__, :caravela_hooks, accumulate: true)
       Module.register_attribute(__MODULE__, :caravela_permissions, accumulate: true)
+      Module.register_attribute(__MODULE__, :caravela_policies, accumulate: true)
       Module.register_attribute(__MODULE__, :caravela_domain_opts, persist: false)
       Module.register_attribute(__MODULE__, :caravela_version, persist: false)
       Module.register_attribute(__MODULE__, :caravela_current_fields, persist: false)
@@ -249,6 +251,222 @@ defmodule Caravela.Domain do
   Authorize deletion of an entity. Same shape as `can_update/2`.
   """
   defmacro can_delete(entity, fun), do: define_permission(:can_delete, entity, fun, __CALLER__)
+
+  # --- Policies (Phase 9) -------------------------------------------------
+
+  @policy_actions [:create, :update, :delete]
+
+  @doc false
+  def policy_actions, do: @policy_actions
+
+  @doc """
+  Declare a triple-target policy for `entity`.
+
+      policy :books do
+        scope fn query, actor ->
+          case actor.role do
+            :admin -> query
+            _ -> where(query, [b], b.published == true)
+          end
+        end
+
+        field :internal_notes, visible: fn actor -> actor.role == :admin end
+        field :author_email,   visible: fn actor, record ->
+          actor.role == :admin or actor.id == record.author_id
+        end
+
+        allow :create, fn actor -> actor.role in [:admin, :editor] end
+        allow :update, fn actor, record ->
+          actor.role == :admin or actor.id == record.author_id
+        end
+        allow :delete, fn actor -> actor.role == :admin end
+      end
+
+  Each declared rule compiles into a clause of one of three dispatch
+  functions on the domain module:
+
+    * `__caravela_policy_scope__/3`          — `(entity, query, actor)`
+    * `__caravela_policy_field_visible__/3`  — `(entity, field, actor)`
+    * `__caravela_policy_field_visible__/4`  — `(entity, field, actor, record)`
+    * `__caravela_policy_allow__/3`          — `(entity, action, actor)`
+    * `__caravela_policy_allow__/4`          — `(entity, action, actor, record)`
+
+  The generated context, controller, GraphQL resolvers, and LiveView
+  modules then invoke these to produce (1) Ecto WHERE clauses, (2)
+  projected JSON responses with invisible fields removed, and (3) a
+  typed `field_access` prop flowing to Svelte components.
+  """
+  defmacro policy(entity, do: block) do
+    unless is_atom(entity) do
+      raise CompileError,
+        file: __CALLER__.file,
+        line: __CALLER__.line,
+        description: "Caravela: policy expects an entity atom, got: #{Macro.to_string(entity)}"
+    end
+
+    {clauses, field_rules, action_gates, has_scope?} =
+      compile_policy_block(block, entity, __CALLER__)
+
+    entry =
+      Macro.escape(%Caravela.Policy.Entry{
+        entity: entity,
+        has_scope?: has_scope?,
+        fields: field_rules,
+        actions: action_gates
+      })
+
+    quote do
+      @caravela_policies unquote(entry)
+      unquote_splicing(clauses)
+    end
+  end
+
+  # Walk the AST of a `policy do ... end` block, emitting per-directive
+  # def clauses and gathering IR metadata.
+  defp compile_policy_block(block, entity, caller) do
+    statements =
+      case block do
+        {:__block__, _, stmts} -> stmts
+        nil -> []
+        single -> [single]
+      end
+
+    Enum.reduce(statements, {[], [], [], false}, fn stmt, acc ->
+      compile_policy_stmt(stmt, entity, caller, acc)
+    end)
+  end
+
+  defp compile_policy_stmt({:scope, _meta, [fun]}, entity, caller, {cls, fields, actions, _had?}) do
+    validate_fun!(:scope, fun, 2, caller)
+
+    clause =
+      quote do
+        def __caravela_policy_scope__(unquote(entity), query, actor) do
+          unquote(fun).(query, actor)
+        end
+      end
+
+    {cls ++ [clause], fields, actions, true}
+  end
+
+  defp compile_policy_stmt(
+         {:field, _meta, [fname, [{:visible, fun} | _rest]]},
+         entity,
+         caller,
+         {cls, fields, actions, had?}
+       ) do
+    unless is_atom(fname) do
+      compile_error!(caller, "policy field name must be an atom, got: #{Macro.to_string(fname)}")
+    end
+
+    arity =
+      case fun_arity(fun) do
+        {:ok, n} when n in [1, 2] -> n
+        {:ok, n} -> compile_error!(caller, "policy field :#{fname} expects an fn of arity 1 or 2, got arity #{n}")
+        :unknown -> compile_error!(caller, "policy field :#{fname} requires a literal fn or capture, got: " <> Macro.to_string(fun))
+      end
+
+    clause = policy_field_clause(entity, fname, fun, arity)
+    rule = %Caravela.Policy.FieldRule{entity: entity, field: fname, arity: arity}
+    {cls ++ [clause], fields ++ [rule], actions, had?}
+  end
+
+  defp compile_policy_stmt(
+         {:allow, _meta, [action, fun]},
+         entity,
+         caller,
+         {cls, fields, actions, had?}
+       ) do
+    unless action in @policy_actions do
+      compile_error!(
+        caller,
+        "policy allow expects one of #{inspect(@policy_actions)}, got: #{inspect(action)}"
+      )
+    end
+
+    arity =
+      case fun_arity(fun) do
+        {:ok, n} when n in [1, 2] -> n
+        {:ok, n} -> compile_error!(caller, "policy allow :#{action} expects an fn of arity 1 or 2, got arity #{n}")
+        :unknown -> compile_error!(caller, "policy allow :#{action} requires a literal fn or capture, got: " <> Macro.to_string(fun))
+      end
+
+    clause = policy_allow_clause(entity, action, fun, arity)
+    gate = %Caravela.Policy.ActionGate{entity: entity, action: action, arity: arity}
+    {cls ++ [clause], fields, actions ++ [gate], had?}
+  end
+
+  defp compile_policy_stmt(other, _entity, caller, _acc) do
+    compile_error!(
+      caller,
+      "unsupported directive in `policy` block: #{Macro.to_string(other)}. " <>
+        "Expected `scope fn -> ... end`, `field :name, visible: fn -> ... end`, " <>
+        "or `allow :action, fn -> ... end`."
+    )
+  end
+
+  defp policy_field_clause(entity, fname, fun, 1) do
+    quote do
+      def __caravela_policy_field_visible__(unquote(entity), unquote(fname), actor) do
+        unquote(fun).(actor)
+      end
+
+      def __caravela_policy_field_visible__(
+            unquote(entity),
+            unquote(fname),
+            actor,
+            _record
+          ) do
+        unquote(fun).(actor)
+      end
+    end
+  end
+
+  defp policy_field_clause(entity, fname, fun, 2) do
+    quote do
+      def __caravela_policy_field_visible__(unquote(entity), unquote(fname), _actor) do
+        # Arity-2 rules depend on the record; without one they're
+        # flagged :per_record so the caller knows to evaluate per row.
+        :per_record
+      end
+
+      def __caravela_policy_field_visible__(
+            unquote(entity),
+            unquote(fname),
+            actor,
+            record
+          ) do
+        unquote(fun).(actor, record)
+      end
+    end
+  end
+
+  defp policy_allow_clause(entity, action, fun, 1) do
+    quote do
+      def __caravela_policy_allow__(unquote(entity), unquote(action), actor) do
+        unquote(fun).(actor)
+      end
+
+      def __caravela_policy_allow__(unquote(entity), unquote(action), actor, _record) do
+        unquote(fun).(actor)
+      end
+    end
+  end
+
+  defp policy_allow_clause(entity, action, fun, 2) do
+    quote do
+      def __caravela_policy_allow__(unquote(entity), unquote(action), actor) do
+        # Arity-2 gate without a record defaults to denying — the
+        # caller should pass the record for a real decision.
+        _ = actor
+        false
+      end
+
+      def __caravela_policy_allow__(unquote(entity), unquote(action), actor, record) do
+        unquote(fun).(actor, record)
+      end
+    end
+  end
 
   # --- Authentication (Phase 7) ------------------------------------------
 

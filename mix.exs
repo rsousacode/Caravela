@@ -38,6 +38,7 @@ defmodule Caravela.MixProject do
         "docs/flows.md": [title: "Flows"],
         "docs/regeneration.md": [title: "Regeneration"],
         "docs/auth.md": [title: "Authentication"],
+        "docs/policies.md": [title: "Policies"],
         "CHANGELOG.md": [title: "Changelog"],
         LICENSE: [title: "License"],
         NOTICE: [title: "Notice"]

@@ -17,6 +17,7 @@ defmodule Caravela.Compiler do
     relations = env.module |> Module.get_attribute(:caravela_relations) |> Enum.reverse()
     hooks = env.module |> Module.get_attribute(:caravela_hooks) |> Enum.reverse()
     permissions = env.module |> Module.get_attribute(:caravela_permissions) |> Enum.reverse()
+    policies = env.module |> Module.get_attribute(:caravela_policies) |> Enum.reverse()
     raw_opts = Module.get_attribute(env.module, :caravela_domain_opts) || []
     version = Module.get_attribute(env.module, :caravela_version)
 
@@ -32,6 +33,7 @@ defmodule Caravela.Compiler do
       relations: relations,
       hooks: hooks,
       permissions: permissions,
+      policies: policies,
       opts: opts
     }
 
@@ -62,6 +64,22 @@ defmodule Caravela.Compiler do
       @doc false
       def __caravela_auth_hook__(:on_register, changeset, _context), do: changeset
       def __caravela_auth_hook__(:on_login, _user, _context), do: :ok
+
+      # --- Policy dispatch fallbacks (Phase 9) ---------------------------
+      #
+      # These come AFTER the per-entity clauses emitted by the `policy`
+      # macro, so each one acts as a "no policy declared" default.
+
+      @doc false
+      def __caravela_policy_scope__(_entity, query, _actor), do: query
+
+      @doc false
+      def __caravela_policy_field_visible__(_entity, _field, _actor), do: true
+      def __caravela_policy_field_visible__(_entity, _field, _actor, _record), do: true
+
+      @doc false
+      def __caravela_policy_allow__(_entity, _action, _actor), do: true
+      def __caravela_policy_allow__(_entity, _action, _actor, _record), do: true
     end
   end
 
@@ -84,7 +102,8 @@ defmodule Caravela.Compiler do
          :ok <- validate_unique_hooks(domain, env),
          :ok <- validate_permission_entities(domain, env),
          :ok <- validate_unique_permissions(domain, env),
-         :ok <- validate_auth(domain, env) do
+         :ok <- validate_auth(domain, env),
+         :ok <- validate_policies(domain, env) do
       :ok
     end
   end
@@ -445,6 +464,53 @@ defmodule Caravela.Compiler do
               "by `authenticatable`. Remove the manual declaration."
           )
       end
+    end)
+
+    :ok
+  end
+
+  defp validate_policies(%Domain{entities: es, policies: ps}, env) do
+    entity_names = MapSet.new(es, & &1.name)
+    entity_fields = Map.new(es, fn e -> {e.name, MapSet.new(e.fields, & &1.name)} end)
+
+    with :ok <- validate_unique_policies(ps, env),
+         :ok <- validate_policy_entities(ps, entity_names, env),
+         :ok <- validate_policy_fields(ps, entity_fields, env) do
+      :ok
+    end
+  end
+
+  defp validate_unique_policies(policies, env) do
+    names = Enum.map(policies, & &1.entity)
+
+    case names -- Enum.uniq(names) do
+      [] -> :ok
+      [dup | _] -> compile_error!(env, "duplicate policy for entity #{inspect(dup)}")
+    end
+  end
+
+  defp validate_policy_entities(policies, entity_names, env) do
+    Enum.each(policies, fn %{entity: e} ->
+      unless MapSet.member?(entity_names, e) do
+        compile_error!(env, "policy references unknown entity #{inspect(e)}")
+      end
+    end)
+
+    :ok
+  end
+
+  defp validate_policy_fields(policies, entity_fields, env) do
+    Enum.each(policies, fn %{entity: entity, fields: rules} ->
+      fields = Map.get(entity_fields, entity, MapSet.new())
+
+      Enum.each(rules, fn %{field: f} ->
+        unless MapSet.member?(fields, f) do
+          compile_error!(
+            env,
+            "policy for #{inspect(entity)} references unknown field #{inspect(f)}"
+          )
+        end
+      end)
     end)
 
     :ok

@@ -143,7 +143,15 @@ defmodule Caravela.Schema do
 
   defmodule Domain do
     @moduledoc "A whole domain: the top-level IR produced by compilation."
-    defstruct [:module, entities: [], relations: [], hooks: [], permissions: [], opts: []]
+    defstruct [
+      :module,
+      entities: [],
+      relations: [],
+      hooks: [],
+      permissions: [],
+      policies: [],
+      opts: []
+    ]
 
     @type t :: %__MODULE__{
             module: module(),
@@ -151,6 +159,7 @@ defmodule Caravela.Schema do
             relations: [Relation.t()],
             hooks: [Hook.t()],
             permissions: [Permission.t()],
+            policies: [Caravela.Policy.Entry.t()],
             opts: keyword()
           }
 
@@ -167,6 +176,11 @@ defmodule Caravela.Schema do
     @doc "Does the domain declare a permission for `action` on `entity`?"
     def has_permission?(%__MODULE__{permissions: ps}, action, entity) do
       Enum.any?(ps, &(&1.action == action and &1.entity == entity))
+    end
+
+    @doc "Policy entry for `entity`, or `nil` if none was declared."
+    def policy_for(%__MODULE__{policies: ps}, entity) do
+      Enum.find(ps, &(&1.entity == entity))
     end
 
     @doc "Is the domain multi-tenant (row-level scoped by tenant_id)?"
