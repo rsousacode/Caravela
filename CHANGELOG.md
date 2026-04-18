@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Caravela.Error` — uniform error struct (`:unauthorized`,
+  `:not_found`, `:invalid`, `:internal`) so upstream code can pattern-
+  match once instead of threading the four shapes individually
+  generated contexts return today. `wrap/1` lifts a plain reason into
+  the struct; `message/1` renders a default flash phrase.
+- `Caravela.Live.OnMount` — `on_mount` callback that assigns a
+  `:context` map (`%{current_user, tenant}`) to the socket, so
+  LiveViews can read from `@context` instead of each re-rolling
+  `build_context/1`. `put/3` exposes a merge helper for downstream
+  hooks.
+- `Caravela.Gen.Context` now emits a `delete_<entity>(id, context)`
+  variant alongside the existing `(struct, context)` form, so
+  delete-from-index is one round trip (`get |> delete`). Returns
+  `{:error, :not_found}` when the id is missing or hidden. The
+  generated index LiveView uses the shorter path.
+
+### Changed
+
+- Generated `--with-domain` form LiveView now passes keyword args
+  (`apply_updater(:load, entity: e, attrs: a, errors: er)` and
+  `apply_updater(:put_attr, field: f, value: v)`) instead of anonymous
+  tuples. The emitted `FormDomain` matches with `Keyword.fetch!/2`.
+  Self-documenting and survives adding a new field without silently
+  shifting positional args.
+
 ### Fixed
 
 - Generated Svelte components now destructure the `live` hook handle

@@ -34,12 +34,19 @@ defmodule <%= inspect @module %> do
     %{s | saving: false, flash_message: msg}
   end
 
-  updater :put_attr, fn s, {field, value} ->
-    %{s | attrs: Map.put(s.attrs, field, value)}
+  updater :put_attr, fn s, opts ->
+    %{s | attrs: Map.put(s.attrs, Keyword.fetch!(opts, :field), Keyword.fetch!(opts, :value))}
   end
 
-  updater :load, fn s, {entity, attrs, errors} ->
-    %{s | book: entity, attrs: attrs, errors: errors, saving: false, flash_message: nil}
+  updater :load, fn s, opts ->
+    %{
+      s
+      | book: Keyword.fetch!(opts, :entity),
+        attrs: Keyword.fetch!(opts, :attrs),
+        errors: Keyword.fetch!(opts, :errors),
+        saving: false,
+        flash_message: nil
+    }
   end
 
   <%= @custom_marker %>

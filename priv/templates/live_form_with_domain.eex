@@ -29,13 +29,13 @@ defmodule <%= inspect @module %> do
     {:ok,
      socket
      |> assign(:context, context)
-     |> apply_updater(:load, {entity, attrs, errors})}
+     |> apply_updater(:load, entity: entity, attrs: attrs, errors: errors)}
   end
 
   @impl true
   def handle_event("validate", %{"field" => field, "value" => value}, socket) do
     key = String.to_existing_atom(field)
-    socket = apply_updater(socket, :put_attr, {key, value})
+    socket = apply_updater(socket, :put_attr, field: key, value: value)
 
     changeset =
       socket.assigns.book

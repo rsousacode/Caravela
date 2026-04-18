@@ -32,24 +32,21 @@ defmodule <%= inspect @module %> do
   def handle_event("delete", %{"id" => id}, socket) do
     context = socket.assigns.context
 
-    case <%= @context_short %>.<%= @get_fn %>(id, context) do
-      nil ->
+    case <%= @context_short %>.<%= @delete_fn %>(id, context) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> assign(:flash_message, "Deleted")
+         |> assign(:<%= @plural %>, <%= @context_short %>.<%= @list_fn %>(context))}
+
+      {:error, :not_found} ->
         {:noreply, assign(socket, :flash_message, "Not found")}
 
-      entity ->
-        case <%= @context_short %>.<%= @delete_fn %>(entity, context) do
-          {:ok, _} ->
-            {:noreply,
-             socket
-             |> assign(:flash_message, "Deleted")
-             |> assign(:<%= @plural %>, <%= @context_short %>.<%= @list_fn %>(context))}
+      {:error, :unauthorized} ->
+        {:noreply, assign(socket, :flash_message, "Not authorized")}
 
-          {:error, :unauthorized} ->
-            {:noreply, assign(socket, :flash_message, "Not authorized")}
-
-          {:error, reason} ->
-            {:noreply, assign(socket, :flash_message, "Error: " <> inspect(reason))}
-        end
+      {:error, reason} ->
+        {:noreply, assign(socket, :flash_message, "Error: " <> inspect(reason))}
     end
   end
 

@@ -85,7 +85,7 @@ defmodule Caravela.Phase4GenTest do
       assert src =~ "use MyAppWeb, :live_view"
       assert src =~ "alias MyApp.Library"
       assert src =~ "Library.list_books(context)"
-      assert src =~ "Library.delete_book(entity, context)"
+      assert src =~ "Library.delete_book(id, context)"
       assert src =~ ~s|name="library/BookIndex"|
       assert src =~ "LiveSvelte.svelte"
       assert src =~ "socket={@socket}"
@@ -127,6 +127,32 @@ defmodule Caravela.Phase4GenTest do
       assert src =~ "defp entity_attrs(entity)"
       # The Book entity has a :price decimal field → Decimal clause emitted.
       assert src =~ "defp normalise_attr(%Decimal{}"
+    end
+
+    test "--with-domain form uses keyword args for :load and :put_attr updaters",
+         %{plain: domain} do
+      # §2.1: three-tuple `{entity, attrs, errors}` → keyword list so
+      # call sites are self-documenting and surviving-refactors-friendly.
+      {_path, src} =
+        LiveView.render_all(domain, with_domain: true)
+        |> Enum.find(fn {p, _} -> String.ends_with?(p, "book_live/form.ex") end)
+
+      assert src =~ "apply_updater(:load, entity: entity, attrs: attrs, errors: errors)"
+      assert src =~ "apply_updater(socket, :put_attr, field: key, value: value)"
+      refute src =~ "apply_updater(:load, {entity, attrs, errors})"
+    end
+
+    test "--with-domain FormDomain's :load / :put_attr updaters read from keyword opts",
+         %{plain: domain} do
+      {_path, src} =
+        LiveView.render_all(domain, with_domain: true)
+        |> Enum.find(fn {p, _} -> String.ends_with?(p, "book_live/form_domain.ex") end)
+
+      assert src =~ "Keyword.fetch!(opts, :entity)"
+      assert src =~ "Keyword.fetch!(opts, :attrs)"
+      assert src =~ "Keyword.fetch!(opts, :errors)"
+      assert src =~ "Keyword.fetch!(opts, :field)"
+      assert src =~ "Keyword.fetch!(opts, :value)"
     end
 
     test "multi-tenant LiveViews read conn.assigns[:tenant]", %{tenant: domain} do

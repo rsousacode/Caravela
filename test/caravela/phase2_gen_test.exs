@@ -81,6 +81,18 @@ defmodule Caravela.Phase2GenTest do
       assert source =~ "import Ecto.Query, only: [preload: 2]"
       assert source =~ "|> preload([:author, :publisher])"
     end
+
+    test "delete_<entity> accepts both a struct and a primary-key id",
+         %{domain: domain} do
+      # §2.3: a single round-trip delete_book(id, context) variant,
+      # folded into one function head with the existing struct variant.
+      {_path, source} = Context.render(domain)
+
+      assert source =~ "def delete_book(struct_or_id, context \\\\ %{})"
+      assert source =~ "def delete_book(%Book{} = book, context)"
+      assert source =~ "def delete_book(id, context) when is_binary(id) or is_integer(id)"
+      assert source =~ "{:error, :not_found}"
+    end
   end
 
   describe "Caravela.Gen.Controller" do

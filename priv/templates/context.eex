@@ -70,11 +70,27 @@ defmodule <%= inspect @context_module %> do
     end
   end
 
-  @doc "Delete a `<%= e.singular %>`: authorize, run on_delete hook, delete."
-  def <%= e.delete_fn %>(%<%= e.module_short %>{} = <%= e.singular %>, context \\ %{}) do
+  @doc """
+  Delete a `<%= e.singular %>`: authorize, run on_delete hook, delete.
+
+  Accepts either the loaded struct (skipping the read round-trip) or
+  the primary-key id (one `get` + one `delete`). Returns
+  `{:error, :not_found}` when called by id and the row is invisible
+  or missing.
+  """
+  def <%= e.delete_fn %>(struct_or_id, context \\ %{})
+
+  def <%= e.delete_fn %>(%<%= e.module_short %>{} = <%= e.singular %>, context) do
     with :ok <- authorize_delete(<%= inspect e.entity_name %>, <%= e.singular %>, context),
          :ok <- run_delete_hook(<%= inspect e.entity_name %>, <%= e.singular %>, context) do
       Repo.delete(<%= e.singular %>)
+    end
+  end
+
+  def <%= e.delete_fn %>(id, context) when is_binary(id) or is_integer(id) do
+    case <%= e.get_fn %>(id, context) do
+      nil -> {:error, :not_found}
+      entity -> <%= e.delete_fn %>(entity, context)
     end
   end
 <% end %>
