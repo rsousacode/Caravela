@@ -35,7 +35,7 @@ mix caravela.gen.live MyApp.Domains.Library
 ## Install
 
 ```elixir
-{:caravela, "~> 0.5.3"}
+{:caravela, "~> 0.6.0"}
 ```
 
 ## Documentation

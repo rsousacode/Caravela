@@ -7,6 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-04-18
+
+### Added
+
+- **Phase 7 — `authenticatable` trait.** Declare `authenticatable` on
+  an entity and `mix caravela.gen.auth` emits the full email/password
+  + API-token server stack: auth context (register/login/logout,
+  sessions with TTL + `remember_me` + `max_sessions`, email
+  confirmation, password reset, scoped API tokens), session schema,
+  Plug pipeline (`fetch_current_user`, `require_auth`, `require_role`,
+  `require_scope`), LiveView `on_mount` hooks, auth controller, and a
+  session-tokens migration. `on_register` / `on_login` lifecycle
+  callbacks. Validated compile-time: one authenticatable entity per
+  domain, `:email` field required when `:password` strategy is used,
+  no collision with auto-injected `hashed_password` / `confirmed_at` /
+  `api_tokens`.
+- **Phase 8 — LiveSvelte auth UI.** `mix caravela.gen.auth` also
+  emits six Svelte components — `LoginForm`, `RegisterForm` (inputs
+  derived from the user entity's public fields), `ResetPasswordForm`
+  (two-phase: request + confirm), `ConfirmEmail`, `TokenManager`
+  (scopes + `max_tokens` reflected from the DSL), `SessionList` —
+  plus matching LiveView pages (`AuthLive.*`), and prints a ready-to-
+  paste router snippet (public auth routes + authenticated
+  `live_session` with `on_mount` hook + authenticated API scope).
+  Generated User schema gains `registration_changeset`,
+  `password_changeset`, `api_tokens_changeset`, `confirm_changeset`
+  with Argon2 password hashing. TS types add `CurrentUser`, `ApiToken`,
+  `Session`. Flags `--skip-ui` / `--skip-router` for server-only use.
+- **Phase 9 — Triple-target policies.** New `policy :entity do …
+  end` block in the domain DSL compiles a single declaration into
+  three simultaneous enforcement layers: (1) Ecto `WHERE` clauses via
+  `scope fn query, actor -> query end`, (2) field projection that
+  strips invisible fields from every `list_*` / `get_*` response via
+  `field :name, visible: fn actor[, record] -> bool end`, and (3) a
+  typed `field_access` Svelte prop (`<Entity>FieldAccess` TypeScript
+  interface) that the generated index/show/form components use to
+  gate ruled columns, fields, and inputs with `{#if field_access.*}`.
+  `allow :create | :update | :delete, fn actor[, record] -> bool end`
+  extends the Phase 2 permission check with record-aware gates.
+  Arity-1 rules resolve to booleans at request time; arity-2 rules
+  resolve to a `'per_record'` sentinel and evaluate per row, with
+  denied fields served as `null`. Unpolicied entities fall through to
+  permissive defaults — fully backward-compatible with existing
+  `can_*` hooks.
+- `Caravela.Policy` module with `Entry`, `Scope`, `FieldRule`,
+  `ActionGate` IR structs, and `Domain.policy_for/2` / `auth_entity/1`
+  lookups.
+- New guides: [docs/auth.md](docs/auth.md),
+  [docs/policies.md](docs/policies.md).
+
+### Changed
+
+- Generated TypeScript type imports are now combined
+  (`import type { Book, BookFieldAccess, LiveHandle } from '…'`)
+  instead of one line per type.
+- Generated `User` Ecto schema excludes `hashed_password`,
+  `confirmed_at`, `api_tokens` from the generic `cast` path — they
+  flow only through the specialised changesets above.
+- `Caravela.Gen.Svelte.public_fields_for/1` also strips credential
+  fields (`hashed_password`, `api_tokens`) from the Svelte-bound
+  representation, so they can never reach the browser through either
+  the typed TS interface or a CRUD form.
+
 ## [0.5.3] — 2026-04-18
 
 ### Added
