@@ -31,5 +31,28 @@ export interface LiveHandle {
   updated_at: string;
 }
 
+<% end %><%= if @authenticated do %>/**
+ * The authenticated user injected as `current_user` on every
+ * authenticated LiveView / Svelte component. Null on public pages.
+ */
+export type CurrentUser = <%= @user_ts_name %> | null;
+
+/** A scoped API token issued to a <%= @user_ts_name %>. */
+export interface ApiToken {
+  id: string;
+  scope: <%= @api_token_scopes || "string" %>;
+  inserted_at: string;
+  expires_at: string;
+}
+
+/** An active session for a <%= @user_ts_name %>. */
+export interface Session {
+  id: string;
+  context: string;
+  inserted_at: string;
+  expires_at: string;
+  is_current: boolean;
+}
+
 <% end %>// --- CUSTOM ---
 // Custom code below this line is preserved on regeneration.

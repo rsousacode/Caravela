@@ -31,5 +31,51 @@ defmodule <%= inspect @module %> do
 <%= for {line, _} <- @validation_lines do %>    |> <%= line %>
 <% end %><%= for r <- @belongs_to do %>    |> foreign_key_constraint(:<%= r.fk %>)
 <% end %>  end
+<%= if @auth_password? do %>
+  @doc """
+  Changeset for self-registration. Same casting rules as `changeset/2`,
+  plus reading a virtual `password` attr and writing its Argon2 hash.
+  """
+  def registration_changeset(user, attrs) do
+    user
+    |> changeset(attrs)
+    |> unique_constraint(:email)
+    |> put_hashed_password(attrs)
+  end
 
+  @doc "Changeset used by password reset / explicit password updates."
+  def password_changeset(user, attrs) do
+    user
+    |> cast(attrs, [])
+    |> put_hashed_password(attrs)
+  end
+
+  defp put_hashed_password(changeset, %{"password" => password})
+       when is_binary(password) and byte_size(password) > 0,
+       do: do_put_password(changeset, password)
+
+  defp put_hashed_password(changeset, %{password: password})
+       when is_binary(password) and byte_size(password) > 0,
+       do: do_put_password(changeset, password)
+
+  defp put_hashed_password(changeset, _), do: changeset
+
+  defp do_put_password(changeset, password) do
+    if Code.ensure_loaded?(Argon2) and function_exported?(Argon2, :hash_pwd_salt, 1) do
+      put_change(changeset, :hashed_password, apply(Argon2, :hash_pwd_salt, [password]))
+    else
+      add_error(changeset, :password, "argon2_elixir not available")
+    end
+  end
+<% end %><%= if @auth_confirm? do %>
+  @doc false
+  def confirm_changeset(user, attrs) do
+    cast(user, attrs, [:confirmed_at])
+  end
+<% end %><%= if @auth_api_token? do %>
+  @doc false
+  def api_tokens_changeset(user, attrs) do
+    cast(user, attrs, [:api_tokens])
+  end
+<% end %>
   <%= @custom_marker %>

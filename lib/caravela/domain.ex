@@ -63,7 +63,18 @@ defmodule Caravela.Domain do
           can_read: 2,
           can_create: 2,
           can_update: 2,
-          can_delete: 2
+          can_delete: 2,
+          authenticatable: 1,
+          strategy: 1,
+          strategy: 2,
+          session: 1,
+          session: 2,
+          confirm: 1,
+          confirm: 2,
+          reset: 1,
+          reset: 2,
+          on_register: 1,
+          on_login: 1
         ]
 
       Module.register_attribute(__MODULE__, :caravela_entities, accumulate: true)
@@ -73,6 +84,7 @@ defmodule Caravela.Domain do
       Module.register_attribute(__MODULE__, :caravela_domain_opts, persist: false)
       Module.register_attribute(__MODULE__, :caravela_version, persist: false)
       Module.register_attribute(__MODULE__, :caravela_current_fields, persist: false)
+      Module.register_attribute(__MODULE__, :caravela_current_auth, persist: false)
 
       @caravela_domain_opts unquote(opts)
       @caravela_version nil
@@ -109,15 +121,24 @@ defmodule Caravela.Domain do
   defmacro entity(name, do: block) do
     quote do
       @caravela_current_fields []
+      @caravela_current_auth {unquote(name), nil}
       unquote(block)
       fields = Enum.reverse(Module.get_attribute(__MODULE__, :caravela_current_fields))
 
+      auth =
+        case Module.get_attribute(__MODULE__, :caravela_current_auth) do
+          {_ename, nil} -> nil
+          {_ename, %Caravela.Schema.AuthConfig{} = cfg} -> cfg
+        end
+
       @caravela_entities %Caravela.Schema.Entity{
         name: unquote(name),
-        fields: fields
+        fields: fields,
+        auth: auth
       }
 
       Module.delete_attribute(__MODULE__, :caravela_current_fields)
+      Module.delete_attribute(__MODULE__, :caravela_current_auth)
     end
   end
 
@@ -228,6 +249,162 @@ defmodule Caravela.Domain do
   Authorize deletion of an entity. Same shape as `can_update/2`.
   """
   defmacro can_delete(entity, fun), do: define_permission(:can_delete, entity, fun, __CALLER__)
+
+  # --- Authentication (Phase 7) ------------------------------------------
+
+  @auth_hook_actions [:on_register, :on_login]
+  @auth_hook_arity %{on_register: 2, on_login: 2}
+
+  @doc false
+  def auth_hook_actions, do: @auth_hook_actions
+
+  @doc """
+  Declare the `authenticatable` trait on the enclosing `entity`.
+
+      entity :users do
+        field :email, :string, required: true, unique: true
+        field :name, :string, required: true
+
+        authenticatable do
+          strategy :password
+          strategy :api_token, scopes: [:read, :write], ttl: {90, :days}
+          session :token, ttl: {30, :days}, remember_me: {365, :days}
+          confirm :email, token_ttl: {24, :hours}
+          reset :password, token_ttl: {1, :hour}
+
+          on_register fn changeset, _ctx -> changeset end
+          on_login fn user, _ctx ->
+            if user.suspended, do: {:error, :suspended}, else: :ok
+          end
+        end
+      end
+
+  See `Caravela.Schema.AuthConfig` for the parsed IR.
+  """
+  defmacro authenticatable(do: block) do
+    quote do
+      case Module.get_attribute(__MODULE__, :caravela_current_auth) do
+        {ename, _} ->
+          @caravela_current_auth {ename, %Caravela.Schema.AuthConfig{}}
+          unquote(block)
+
+        _ ->
+          raise ArgumentError,
+                "authenticatable/1 must be called inside an entity do .. end block"
+      end
+    end
+  end
+
+  @doc "Declare a credential strategy inside an `authenticatable` block."
+  defmacro strategy(name, opts \\ []) do
+    quote bind_quoted: [name: name, opts: opts] do
+      unless name in [:password, :api_token] do
+        raise ArgumentError,
+              "unknown auth strategy #{inspect(name)} — expected :password or :api_token"
+      end
+
+      {ename, cfg} = Module.get_attribute(__MODULE__, :caravela_current_auth)
+
+      unless match?(%Caravela.Schema.AuthConfig{}, cfg) do
+        raise ArgumentError, "strategy/2 must be called inside an authenticatable do .. end block"
+      end
+
+      strategies = cfg.strategies ++ [{name, opts}]
+      @caravela_current_auth {ename, %{cfg | strategies: strategies}}
+    end
+  end
+
+  @doc "Configure session management inside an `authenticatable` block."
+  defmacro session(_kind, opts \\ []) do
+    quote bind_quoted: [opts: opts] do
+      {ename, cfg} = Module.get_attribute(__MODULE__, :caravela_current_auth)
+
+      unless match?(%Caravela.Schema.AuthConfig{}, cfg) do
+        raise ArgumentError, "session/2 must be called inside an authenticatable do .. end block"
+      end
+
+      @caravela_current_auth {ename, %{cfg | session: opts}}
+    end
+  end
+
+  @doc "Enable email confirmation inside an `authenticatable` block."
+  defmacro confirm(_kind, opts \\ []) do
+    quote bind_quoted: [opts: opts] do
+      {ename, cfg} = Module.get_attribute(__MODULE__, :caravela_current_auth)
+
+      unless match?(%Caravela.Schema.AuthConfig{}, cfg) do
+        raise ArgumentError, "confirm/2 must be called inside an authenticatable do .. end block"
+      end
+
+      @caravela_current_auth {ename, %{cfg | confirm: opts}}
+    end
+  end
+
+  @doc "Enable password reset inside an `authenticatable` block."
+  defmacro reset(_kind, opts \\ []) do
+    quote bind_quoted: [opts: opts] do
+      {ename, cfg} = Module.get_attribute(__MODULE__, :caravela_current_auth)
+
+      unless match?(%Caravela.Schema.AuthConfig{}, cfg) do
+        raise ArgumentError, "reset/2 must be called inside an authenticatable do .. end block"
+      end
+
+      @caravela_current_auth {ename, %{cfg | reset: opts}}
+    end
+  end
+
+  @doc """
+  Custom registration logic. Receives the changeset and the caller's
+  context map, returns the changeset.
+  """
+  defmacro on_register(fun), do: define_auth_hook(:on_register, fun, __CALLER__)
+
+  @doc """
+  Custom post-login logic. Receives the loaded user and the caller's
+  context, returns `:ok` or `{:error, reason}`.
+  """
+  defmacro on_login(fun), do: define_auth_hook(:on_login, fun, __CALLER__)
+
+  defp define_auth_hook(action, fun, caller) do
+    arity = Map.fetch!(@auth_hook_arity, action)
+    validate_fun!(action, fun, arity, caller)
+
+    mark =
+      case action do
+        :on_register -> quote do: %{cfg | on_register?: true}
+        :on_login -> quote do: %{cfg | on_login?: true}
+      end
+
+    hook_body =
+      case action do
+        :on_register ->
+          quote do
+            def __caravela_auth_hook__(:on_register, changeset, context) do
+              unquote(fun).(changeset, context)
+            end
+          end
+
+        :on_login ->
+          quote do
+            def __caravela_auth_hook__(:on_login, user, context) do
+              unquote(fun).(user, context)
+            end
+          end
+      end
+
+    quote do
+      {ename, cfg} = Module.get_attribute(__MODULE__, :caravela_current_auth)
+
+      unless match?(%Caravela.Schema.AuthConfig{}, cfg) do
+        raise ArgumentError,
+              "#{unquote(action)}/1 must be called inside an authenticatable do .. end block"
+      end
+
+      @caravela_current_auth {ename, unquote(mark)}
+
+      unquote(hook_body)
+    end
+  end
 
   # --- Internal helpers ---------------------------------------------------
 

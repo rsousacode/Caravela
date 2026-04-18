@@ -6,8 +6,8 @@ defmodule Caravela.Compiler do
   `use Caravela.Domain`.
   """
 
-  alias Caravela.Schema.{Domain, Entity, Field, Relation, Hook, Permission}
-  alias Caravela.{Tenant, Types}
+  alias Caravela.Schema.{AuthConfig, Domain, Entity, Field, Relation, Hook, Permission}
+  alias Caravela.{Auth, Tenant, Types}
 
   @relation_types ~w(has_many has_one belongs_to many_to_many)a
   @version_re ~r/^v\d+$/
@@ -36,7 +36,7 @@ defmodule Caravela.Compiler do
     }
 
     :ok = validate!(domain, env)
-    domain = Tenant.inject(domain)
+    domain = domain |> Tenant.inject() |> Auth.inject()
 
     Module.put_attribute(env.module, :caravela_domain_compiled, domain)
 
@@ -58,6 +58,10 @@ defmodule Caravela.Compiler do
       def __caravela_permission__(:can_create, _entity, _context), do: true
       def __caravela_permission__(:can_update, _entity, _entity_value, _context), do: true
       def __caravela_permission__(:can_delete, _entity, _entity_value, _context), do: true
+
+      @doc false
+      def __caravela_auth_hook__(:on_register, changeset, _context), do: changeset
+      def __caravela_auth_hook__(:on_login, _user, _context), do: :ok
     end
   end
 
@@ -79,7 +83,8 @@ defmodule Caravela.Compiler do
          :ok <- validate_hook_entities(domain, env),
          :ok <- validate_unique_hooks(domain, env),
          :ok <- validate_permission_entities(domain, env),
-         :ok <- validate_unique_permissions(domain, env) do
+         :ok <- validate_unique_permissions(domain, env),
+         :ok <- validate_auth(domain, env) do
       :ok
     end
   end
@@ -335,6 +340,114 @@ defmodule Caravela.Compiler do
       [{a, e} | _] ->
         compile_error!(env, "duplicate permission #{a} for entity #{inspect(e)}")
     end
+  end
+
+  defp validate_auth(%Domain{entities: es}, env) do
+    auth_entities = Enum.filter(es, fn %Entity{auth: a} -> not is_nil(a) end)
+
+    with :ok <- validate_single_auth_entity(auth_entities, env),
+         :ok <- validate_auth_strategies(auth_entities, env),
+         :ok <- validate_auth_email_field(auth_entities, env),
+         :ok <- validate_auth_no_collisions(auth_entities, env) do
+      :ok
+    end
+  end
+
+  defp validate_single_auth_entity([], _env), do: :ok
+  defp validate_single_auth_entity([_], _env), do: :ok
+
+  defp validate_single_auth_entity(entities, env) do
+    names = Enum.map(entities, & &1.name)
+
+    compile_error!(
+      env,
+      "multiple entities declare `authenticatable`: #{inspect(names)}. " <>
+        "Caravela supports at most one authenticatable entity per domain."
+    )
+  end
+
+  defp validate_auth_strategies(entities, env) do
+    Enum.each(entities, fn %Entity{name: n, auth: %AuthConfig{strategies: s}} ->
+      if s == [] do
+        compile_error!(
+          env,
+          "entity #{inspect(n)} has an authenticatable block but declares no strategies. " <>
+            "Add at least `strategy :password` or `strategy :api_token`."
+        )
+      end
+
+      Enum.each(s, fn
+        {:api_token, opts} ->
+          scopes = Keyword.get(opts, :scopes, [])
+
+          unless is_list(scopes) and Enum.all?(scopes, &is_atom/1) do
+            compile_error!(
+              env,
+              "api_token :scopes must be a list of atoms, got #{inspect(scopes)}"
+            )
+          end
+
+          case Keyword.get(opts, :ttl) do
+            nil ->
+              :ok
+
+            {n, unit} when is_integer(n) and unit in [:hours, :days] ->
+              :ok
+
+            other ->
+              compile_error!(
+                env,
+                "api_token :ttl must be {integer, :hours|:days}, got #{inspect(other)}"
+              )
+          end
+
+        {:password, _} ->
+          :ok
+      end)
+    end)
+
+    :ok
+  end
+
+  # The password strategy relies on an `:email` field for lookup. Enforce
+  # it at compile time so generated contexts always have a usable
+  # identifier.
+  defp validate_auth_email_field(entities, env) do
+    Enum.each(entities, fn %Entity{name: n, fields: fs, auth: %AuthConfig{} = cfg} ->
+      if AuthConfig.password?(cfg) do
+        unless Enum.any?(fs, &(&1.name == :email)) do
+          compile_error!(
+            env,
+            "entity #{inspect(n)} uses `strategy :password` but has no :email field. " <>
+              "Declare `field :email, :string, required: true` on the entity."
+          )
+        end
+      end
+    end)
+
+    :ok
+  end
+
+  # The compiler later injects `hashed_password`, `confirmed_at`,
+  # `api_tokens` — error early if the user declared any of them by hand.
+  defp validate_auth_no_collisions(entities, env) do
+    Enum.each(entities, fn %Entity{name: n, fields: fs} ->
+      injected = [:hashed_password, :confirmed_at, :api_tokens]
+
+      case Enum.find(fs, &(&1.name in injected)) do
+        nil ->
+          :ok
+
+        %{name: fname} ->
+          compile_error!(
+            env,
+            "entity #{inspect(n)} declares :#{fname}, but this field is auto-injected " <>
+              "by `authenticatable`. Remove the manual declaration."
+          )
+      end
+    end)
+
+    :ok
   end
 
   defp compile_error!(env, msg) do

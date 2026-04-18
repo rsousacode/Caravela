@@ -37,6 +37,7 @@ defmodule Caravela.MixProject do
         "docs/live_runtime.md": [title: "Live runtime"],
         "docs/flows.md": [title: "Flows"],
         "docs/regeneration.md": [title: "Regeneration"],
+        "docs/auth.md": [title: "Authentication"],
         "CHANGELOG.md": [title: "Changelog"],
         LICENSE: [title: "License"],
         NOTICE: [title: "Notice"]

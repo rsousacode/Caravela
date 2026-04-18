@@ -18,13 +18,67 @@ defmodule Caravela.Schema do
           }
   end
 
+  defmodule AuthConfig do
+    @moduledoc """
+    Authentication configuration attached to an entity via the
+    `authenticatable` DSL block.
+
+    Captures strategies, session/confirm/reset settings, and whether the
+    entity declares `on_register` / `on_login` hooks. The actual hook
+    functions are compiled into the domain module as clauses of
+    `__caravela_auth_hook__/4`.
+    """
+    defstruct strategies: [],
+              session: nil,
+              confirm: nil,
+              reset: nil,
+              on_register?: false,
+              on_login?: false
+
+    @type strategy ::
+            {:password, keyword()}
+            | {:api_token, keyword()}
+
+    @type t :: %__MODULE__{
+            strategies: [strategy()],
+            session: keyword() | nil,
+            confirm: keyword() | nil,
+            reset: keyword() | nil,
+            on_register?: boolean(),
+            on_login?: boolean()
+          }
+
+    @doc "True if the password strategy is enabled."
+    def password?(%__MODULE__{strategies: s}),
+      do: Enum.any?(s, fn {k, _} -> k == :password end)
+
+    @doc "True if the api_token strategy is enabled."
+    def api_token?(%__MODULE__{strategies: s}),
+      do: Enum.any?(s, fn {k, _} -> k == :api_token end)
+
+    @doc "True if email confirmation is enabled."
+    def confirm?(%__MODULE__{confirm: c}), do: not is_nil(c)
+
+    @doc "True if password reset is enabled."
+    def reset?(%__MODULE__{reset: r}), do: not is_nil(r)
+
+    @doc "Options for a strategy (or `nil` if disabled)."
+    def strategy_opts(%__MODULE__{strategies: s}, name) do
+      case Enum.find(s, fn {k, _} -> k == name end) do
+        {_, opts} -> opts
+        nil -> nil
+      end
+    end
+  end
+
   defmodule Entity do
     @moduledoc "A domain entity (table)."
-    defstruct [:name, fields: []]
+    defstruct [:name, :auth, fields: []]
 
     @type t :: %__MODULE__{
             name: atom(),
-            fields: [Field.t()]
+            fields: [Field.t()],
+            auth: AuthConfig.t() | nil
           }
   end
 
@@ -119,6 +173,18 @@ defmodule Caravela.Schema do
     def multi_tenant?(%__MODULE__{opts: opts}) do
       Keyword.get(opts || [], :multi_tenant, false) == true
     end
+
+    @doc """
+    The first entity that declares an `authenticatable` block, or `nil`
+    if none do. Caravela currently supports a single authenticatable
+    entity per domain.
+    """
+    def auth_entity(%__MODULE__{entities: es}) do
+      Enum.find(es, fn %{auth: auth} -> not is_nil(auth) end)
+    end
+
+    @doc "True if the domain has an authenticatable entity."
+    def authenticated?(%__MODULE__{} = d), do: not is_nil(auth_entity(d))
 
     @doc """
     Explicit API version declared via `version "v1"` in the DSL. Returns

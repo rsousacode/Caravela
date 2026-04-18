@@ -8,8 +8,8 @@ defmodule Caravela.Gen.EctoSchema do
   content below the `# --- CUSTOM ---` marker on regeneration.
   """
 
-  alias Caravela.Schema.Domain
-  alias Caravela.{Gen, Naming}
+  alias Caravela.Schema.{AuthConfig, Domain}
+  alias Caravela.{Auth, Gen, Naming}
 
   @template_path Path.expand("../../../priv/templates/ecto_schema.eex", __DIR__)
 
@@ -45,10 +45,14 @@ defmodule Caravela.Gen.EctoSchema do
     has_one = assocs |> Enum.filter(&(&1.kind == :has_one)) |> Enum.uniq_by(& &1.assoc_name)
     belongs_to = assocs |> Enum.filter(&(&1.kind == :belongs_to)) |> Enum.uniq_by(& &1.assoc_name)
 
-    # Tenant-injected fields are declared on the schema but kept out of
-    # the changeset cast — the generated context assigns `tenant_id` via
-    # `put_change` using the caller's context.
-    castable_fields = Enum.reject(entity.fields, &Caravela.Tenant.injected?/1)
+    # Tenant- and auth-injected fields are declared on the schema but
+    # kept out of the generic changeset cast. Tenant id is stamped by
+    # the context; auth fields flow through specialised changesets
+    # (`registration_changeset`, `password_changeset`, …).
+    castable_fields =
+      entity.fields
+      |> Enum.reject(&Caravela.Tenant.injected?/1)
+      |> Enum.reject(&Auth.injected?/1)
 
     required_plain =
       for f <- castable_fields, Keyword.get(f.opts || [], :required, false), do: f.name
@@ -57,6 +61,8 @@ defmodule Caravela.Gen.EctoSchema do
       for f <- castable_fields, not Keyword.get(f.opts || [], :required, false), do: f.name
 
     optional_fks = Enum.map(belongs_to, & &1.fk)
+
+    auth_cfg = entity.auth
 
     [
       module: Naming.entity_module(domain, entity.name),
@@ -69,6 +75,10 @@ defmodule Caravela.Gen.EctoSchema do
       required_fields: required_plain,
       optional_fields: optional_plain ++ optional_fks,
       validation_lines: build_validations(castable_fields),
+      auth: auth_cfg,
+      auth_password?: match?(%AuthConfig{}, auth_cfg) and AuthConfig.password?(auth_cfg),
+      auth_confirm?: match?(%AuthConfig{}, auth_cfg) and AuthConfig.confirm?(auth_cfg),
+      auth_api_token?: match?(%AuthConfig{}, auth_cfg) and AuthConfig.api_token?(auth_cfg),
       custom_marker: Gen.Custom.marker_block()
     ]
   end

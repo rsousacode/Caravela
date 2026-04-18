@@ -1,0 +1,19 @@
+defmodule <%= inspect @module %> do
+  use Ecto.Migration
+
+  def change do
+    create table(:<%= @table %>, primary_key: false) do
+      add :id, :binary_id, primary_key: true
+      add :user_id, references(:<%= @user_table %>, type: :binary_id, on_delete: :delete_all), null: false
+      add :token, :binary, null: false
+      add :context, :string, null: false, default: "session"
+      add :expires_at, :utc_datetime, null: false
+
+      timestamps(type: :utc_datetime)
+    end
+
+    create index(:<%= @table %>, [:token])
+    create index(:<%= @table %>, [:user_id])
+    create index(:<%= @table %>, [:context])
+  end
+end

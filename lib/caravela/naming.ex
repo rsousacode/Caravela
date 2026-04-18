@@ -418,6 +418,86 @@ defmodule Caravela.Naming do
   end
 
   @doc """
+  Filesystem path for a generated auth Svelte component.
+
+      svelte_auth_file_path(domain, "LoginForm")
+      #=> "assets/svelte/auth/LoginForm.svelte"
+      #=> "assets/svelte/v1/auth/LoginForm.svelte"  (when versioned)
+  """
+  def svelte_auth_file_path(%Domain{} = domain, component) when is_binary(component) do
+    segments =
+      case Domain.version(domain) do
+        nil -> ["assets", "svelte", "auth"]
+        v -> ["assets", "svelte", v, "auth"]
+      end
+
+    Path.join(segments ++ ["#{component}.svelte"])
+  end
+
+  @doc """
+  LiveSvelte component reference for an auth component (the string passed
+  to `<LiveSvelte.svelte name="..." />`).
+
+      svelte_auth_component_ref(domain, "LoginForm") #=> "auth/LoginForm"
+      #=> "v1/auth/LoginForm"                         (when versioned)
+  """
+  def svelte_auth_component_ref(%Domain{} = domain, component) when is_binary(component) do
+    case Domain.version(domain) do
+      nil -> "auth/#{component}"
+      v -> "#{v}/auth/#{component}"
+    end
+  end
+
+  @doc """
+  Import path used inside a generated auth Svelte component to reach the
+  domain's TypeScript interfaces file. Both sit under the same
+  `v<N>/` (or root) scope so the relative path is always `../types/<ctx>`.
+  """
+  def svelte_auth_types_import(%Domain{} = domain) do
+    "../types/#{context_short(domain)}"
+  end
+
+  @doc """
+  Module name for an auth LiveView page. `name` is a string like
+  `"Login"`, `"Register"`, `"TokenManager"`.
+
+      auth_live_module(domain, "Login")
+      #=> MyAppWeb.AuthLive.Login
+      #=> MyAppWeb.V1.AuthLive.Login  (when versioned)
+  """
+  def auth_live_module(%Domain{} = domain, name) when is_binary(name) do
+    web = web_module(domain)
+
+    web =
+      case Domain.version_segment(domain) do
+        nil -> web
+        seg -> Module.concat(web, seg)
+      end
+
+    Module.concat([web, AuthLive, name])
+  end
+
+  @doc """
+  Filesystem path for a generated auth LiveView module.
+
+      auth_live_file_path(domain, "Login")
+      #=> "lib/my_app_web/live/auth_live/login.ex"
+      #=> "lib/my_app_web/live/v1/auth_live/login.ex"  (when versioned)
+  """
+  def auth_live_file_path(%Domain{} = domain, name) when is_binary(name) do
+    web_root = web_module(domain) |> Module.split() |> List.first() |> Macro.underscore()
+    file = Macro.underscore(name) <> ".ex"
+
+    base =
+      case Domain.version(domain) do
+        nil -> ["lib", web_root, "live", "auth_live"]
+        v -> ["lib", web_root, "live", v, "auth_live"]
+      end
+
+    Path.join(base ++ [file])
+  end
+
+  @doc """
   Filesystem path for the generated TypeScript interfaces file.
 
       svelte_types_file_path(domain)

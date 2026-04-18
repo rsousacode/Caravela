@@ -41,9 +41,14 @@ defmodule Caravela.Gen.Svelte do
     path = Naming.svelte_types_file_path(domain)
     existing = existing_path(path, opts)
 
+    auth_entity = Domain.auth_entity(domain)
+
     assigns = [
       domain_module: inspect(domain.module),
-      entities: Enum.map(domain.entities, &ts_entity_assign/1)
+      entities: Enum.map(domain.entities, &ts_entity_assign/1),
+      authenticated: not is_nil(auth_entity),
+      user_ts_name: auth_user_ts_name(auth_entity),
+      api_token_scopes: auth_token_scopes_ts(auth_entity)
     ]
 
     source =
@@ -51,6 +56,26 @@ defmodule Caravela.Gen.Svelte do
       |> merge_ts(existing)
 
     {path, source}
+  end
+
+  defp auth_user_ts_name(nil), do: nil
+
+  defp auth_user_ts_name(%Entity{name: name}),
+    do: Naming.camelize(Naming.singularize(name))
+
+  defp auth_token_scopes_ts(nil), do: nil
+
+  defp auth_token_scopes_ts(%Entity{auth: cfg}) do
+    case Caravela.Schema.AuthConfig.strategy_opts(cfg, :api_token) do
+      nil ->
+        nil
+
+      opts ->
+        opts
+        |> Keyword.get(:scopes, [:read, :write])
+        |> Enum.map(&("'" <> Atom.to_string(&1) <> "'"))
+        |> Enum.join(" | ")
+    end
   end
 
   @doc "Render every Svelte component (index, show, form) for every entity."
@@ -256,9 +281,21 @@ defmodule Caravela.Gen.Svelte do
 
   # --- Utilities ----------------------------------------------------------
 
+  # Fields safe to send to the Svelte client: drop tenant_id and any
+  # auth-redacted credential field (hashed_password, api_tokens).
+  # `confirmed_at` is kept — it's useful for the UI to gate features on
+  # email confirmation.
   defp public_fields(%Entity{fields: fields}) do
-    Enum.reject(fields, &Tenant.injected?/1)
+    Enum.reject(fields, fn f -> Tenant.injected?(f) or auth_redacted?(f) end)
   end
+
+  defp auth_redacted?(%Field{opts: opts}) do
+    Keyword.get(opts || [], :auth) in [:password, :api_token] or
+      Keyword.get(opts || [], :redact, false) == true
+  end
+
+  @doc false
+  def public_fields_for(entity), do: public_fields(entity)
 
   defp humanize(atom) when is_atom(atom) do
     atom

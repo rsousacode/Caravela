@@ -1,0 +1,40 @@
+defmodule <%= inspect @module %> do
+  @moduledoc """
+  Generated session schema by Caravela from <%= inspect @domain_module %>.
+
+  Regenerate with `mix caravela.gen.auth <%= inspect @domain_module %>`.
+  Custom code placed below the `# --- CUSTOM ---` marker is preserved.
+  """
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @foreign_key_type :binary_id
+
+  @session_ttl_days <%= @session_ttl_days %>
+  @remember_me_ttl_days <%= @remember_me_ttl_days %>
+
+  schema "<%= @table %>" do
+    field :token, :binary
+    field :context, :string, default: "session"
+    field :expires_at, :utc_datetime
+
+    belongs_to :user, <%= inspect @user_module %>
+
+    timestamps(type: :utc_datetime)
+  end
+
+  @doc false
+  def changeset(session, attrs) do
+    session
+    |> cast(attrs, [:user_id, :token, :context, :expires_at])
+    |> validate_required([:user_id, :token, :context, :expires_at])
+  end
+
+  @doc "Session TTL in days for a normal login."
+  def session_ttl_days, do: @session_ttl_days
+
+  @doc "Session TTL in days when :remember_me is set."
+  def remember_me_ttl_days, do: @remember_me_ttl_days
+
+  <%= @custom_marker %>

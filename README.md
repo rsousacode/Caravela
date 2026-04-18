@@ -52,6 +52,7 @@ Full guides live under `docs/` and ship with the Hex package.
 - [Live runtime (`Caravela.Live.*`)](docs/live_runtime.md)
 - [Flows — async workflow orchestration](docs/flows.md)
 - [Regeneration & the CUSTOM marker](docs/regeneration.md)
+- [Authentication (`authenticatable`)](docs/auth.md)
 
 Run `mix docs` to build the full API reference locally (HexDocs-style).
 
@@ -62,7 +63,10 @@ hooks + permissions, Phoenix contexts, JSON API, Absinthe/GraphQL,
 multi-tenancy, API versioning, LiveSvelte generation, the
 `Caravela.Live.*` runtime, dynamic Svelte forms with visibility
 predicates + async validation, and a GenServer-backed flow runtime
-(`Caravela.Flow`) for composable async workflows.
+(`Caravela.Flow`) for composable async workflows. Phase 7 adds
+trait-based authentication — declare `authenticatable` on an entity
+and `mix caravela.gen.auth` emits the full email/password + API-token
+stack.
 
 ## License
 
