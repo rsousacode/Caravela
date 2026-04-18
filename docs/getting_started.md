@@ -7,7 +7,7 @@ Add `caravela` to your deps in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:caravela, "~> 0.5.2"}
+    {:caravela, "~> 0.5.3"}
   ]
 end
 ```

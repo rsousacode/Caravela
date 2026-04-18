@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] — 2026-04-18
+
 ### Added
 
 - `Caravela.Error` — uniform error struct (`:unauthorized`,
