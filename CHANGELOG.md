@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] — 2026-04-18
+
+### Changed
+
+- Generated Svelte components and doc examples now use Svelte 5's
+  `$props()` rune for prop declarations instead of the deprecated
+  `export let` syntax. LiveSvelte 0.19 ships with Svelte 5 runtime;
+  `export let` still worked but produced compile-time warnings.
+
 ## [0.5.1] — 2026-04-18
 
 ### Fixed
