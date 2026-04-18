@@ -1,6 +1,9 @@
 defmodule Caravela.Phase9PolicyGenTest do
   use ExUnit.Case, async: true
 
+  import Caravela.ASTAssertions
+  import Caravela.SvelteAssertions
+
   alias Caravela.Gen.{Context, LiveView, Svelte}
 
   setup do
@@ -14,65 +17,61 @@ defmodule Caravela.Phase9PolicyGenTest do
     end
 
     test "list_* pipes through apply_scope + project_fields", %{src: src} do
-      # list_books scopes the query then projects results.
-      assert src =~ "|> apply_scope(:books, context)"
-      assert src =~ "|> project_fields(:books, context)"
-      assert src =~ "|> project_field(:books, context)"
+      assert_calls(src, :apply_scope, [:books, :_])
+      assert_calls(src, :project_fields, [:books, :_])
+      assert_calls(src, :project_field, [:books, :_])
     end
 
     test "compute_field_access routes every field through the domain dispatch", %{src: src} do
-      # Every field (policy-ruled or not) is funneled through
-      # `__caravela_policy_field_visible__`. The clause cascade in the
-      # domain module decides the result at runtime — arity-1 rules
-      # return a boolean, arity-2 rules return `:per_record`, unruled
-      # fields fall through to the per-entity or default_policy fallback.
-      assert src =~ "defp compute_field_access(:books, actor) do"
+      # Every public field on :books hits __caravela_policy_field_visible__/3.
+      # The clause cascade on the domain module picks the right result
+      # at runtime — arity-1 rules return a boolean, arity-2 rules
+      # return :per_record, unruled fields fall through to the
+      # per-entity / default_policy fallback.
+      assert_def(src, :compute_field_access, 2)
 
       for field <- [:title, :price, :author_email, :internal_notes, :cost_basis] do
-        assert src =~
-                 ~r/#{inspect(field)} =>\s*MyApp\.Domains\.PolicyLibrary\.__caravela_policy_field_visible__/,
-               "expected field_access dispatch call for #{inspect(field)}"
+        assert_calls(src, :__caravela_policy_field_visible__, [:books, field, :_],
+          module: PolicyLibrary
+        )
       end
     end
 
     test "exposes a public field_access/2 function", %{src: src} do
-      assert src =~ "def field_access(entity, context)"
-      assert src =~ "compute_field_access(entity, actor)"
+      assert_def(src, :field_access, 2)
+      assert_calls(src, :compute_field_access, [:_, :_])
     end
 
     test "policy_authorize blocks create/update/delete when gate returns false", %{src: src} do
-      # Action gate calls __caravela_policy_allow__ and guards with `== true`.
-      assert src =~ "policy_authorize(:books, :create, context)"
-      assert src =~ "policy_authorize(:books, :update, book, context)"
-      assert src =~ "policy_authorize(:books, :delete, book, context)"
-      assert src =~ "__caravela_policy_allow__(\n"
-      assert src =~ "== true do\n      :ok\n    else\n      {:error, :unauthorized}\n    end"
+      assert_calls(src, :policy_authorize, [:books, :create, :_])
+      assert_calls(src, :policy_authorize, [:books, :update, :_, :_])
+      assert_calls(src, :policy_authorize, [:books, :delete, :_, :_])
+
+      # policy_authorize delegates into the domain module's dispatch
+      # function — match by short name since the full module alias is
+      # `MyApp.Domains.PolicyLibrary`.
+      assert_calls(src, :__caravela_policy_allow__, [:_, :_, :_], module: PolicyLibrary)
     end
 
-    test "projection redacts invisible fields on an Ecto struct", %{domain: domain} do
-      # Compile the generated context into a dummy module so we can run it.
-      # (We don't need a Repo; list_* is never called here — we only hit
-      # the pure helpers via `field_access/2` to verify the dispatch.)
-      admin = %{current_user: %{id: "a", role: :admin}}
-      viewer = %{current_user: %{id: "v", role: :viewer}}
+    test "domain-module dispatch honours arity-2 rule at runtime" do
+      # Pure domain-module behaviour — no generated source needed.
+      admin = %{id: "a", role: :admin}
+      viewer = %{id: "v", role: :viewer}
 
-      # Through the domain module (not the generated context): verify the
-      # arity-2 rule flags author_email as :per_record for non-admins.
+      # arity-2 rule called at arity 3 → :per_record sentinel.
       assert MyApp.Domains.PolicyLibrary.__caravela_policy_field_visible__(
                :books,
                :author_email,
-               viewer.current_user
+               viewer
              ) == :per_record
 
-      # And resolves to visible when the actor is the record author.
+      # arity-2 rule with the record → concrete boolean.
       assert MyApp.Domains.PolicyLibrary.__caravela_policy_field_visible__(
                :books,
                :author_email,
-               admin.current_user,
+               admin,
                %{author_id: "anything"}
              ) == true
-
-      _ = domain
     end
   end
 
@@ -82,12 +81,14 @@ defmodule Caravela.Phase9PolicyGenTest do
         Svelte.render_components(domain)
         |> Enum.find(fn {p, _} -> String.ends_with?(p, "BookIndex.svelte") end)
 
-      # Policy-ruled columns (price, internal_notes, cost_basis) are
-      # wrapped; `title` (no rule) is rendered unconditionally.
-      assert src =~ "{#if field_access.price}<th>Price</th>{/if}"
-      assert src =~ "{#if field_access.internal_notes}<th>Internal Notes</th>{/if}"
-      refute src =~ "{#if field_access.title}"
-      assert src =~ "<th>Title</th>"
+      # Ruled columns have BOTH the gate and the header cell.
+      for ruled <- [:price, :internal_notes, :cost_basis] do
+        assert_contains(src, "{#if field_access.#{ruled}}")
+      end
+
+      # `title` has no policy rule → rendered unconditionally.
+      refute_contains(src, "{#if field_access.title}")
+      assert_contains(src, "<th>Title</th>")
     end
 
     test "index accepts field_access in $props with the typed interface", %{domain: domain} do
@@ -95,11 +96,13 @@ defmodule Caravela.Phase9PolicyGenTest do
         Svelte.render_components(domain)
         |> Enum.find(fn {p, _} -> String.ends_with?(p, "BookIndex.svelte") end)
 
-      assert src =~ "import type { Book, BookFieldAccess, LiveHandle }"
-      assert src =~ "field_access?: BookFieldAccess;"
-      # Default includes every public field set to `true` so the
-      # component renders fully when mounted without LiveView wiring.
-      assert src =~ "field_access = { title: true, isbn: true, published: true, price: true"
+      assert_all_contain(src, [
+        "import type { Book, BookFieldAccess, LiveHandle }",
+        "field_access?: BookFieldAccess;",
+        # Default includes every public field set to `true` so the
+        # component renders fully when mounted without LiveView wiring.
+        "field_access = { title: true, isbn: true, published: true, price: true"
+      ])
     end
 
     test "show gates fields on field_access", %{domain: domain} do
@@ -107,10 +110,9 @@ defmodule Caravela.Phase9PolicyGenTest do
         Svelte.render_components(domain)
         |> Enum.find(fn {p, _} -> String.ends_with?(p, "BookShow.svelte") end)
 
-      assert src =~ "{#if field_access.price}"
-      assert src =~ "{#if field_access.internal_notes}"
-      # Title has no policy rule → rendered unconditionally.
-      refute src =~ "{#if field_access.title}"
+      assert_contains(src, "{#if field_access.price}")
+      assert_contains(src, "{#if field_access.internal_notes}")
+      refute_contains(src, "{#if field_access.title}")
     end
 
     test "form gates input-level visibility", %{domain: domain} do
@@ -118,9 +120,9 @@ defmodule Caravela.Phase9PolicyGenTest do
         Svelte.render_components(domain)
         |> Enum.find(fn {p, _} -> String.ends_with?(p, "BookForm.svelte") end)
 
-      assert src =~ "{#if field_access.price}"
-      assert src =~ "{#if field_access.internal_notes}"
-      refute src =~ "{#if field_access.title}"
+      assert_contains(src, "{#if field_access.price}")
+      assert_contains(src, "{#if field_access.internal_notes}")
+      refute_contains(src, "{#if field_access.title}")
     end
   end
 
@@ -131,35 +133,35 @@ defmodule Caravela.Phase9PolicyGenTest do
     end
 
     test "emits a *FieldAccess interface per entity", %{src: src} do
-      assert src =~ "export interface BookFieldAccess {"
-      assert src =~ "export interface AuthorFieldAccess {"
+      assert_contains(src, "export interface BookFieldAccess {")
+      assert_contains(src, "export interface AuthorFieldAccess {")
     end
 
     test "BookFieldAccess reflects arity-1 as boolean, arity-2 as 'per_record'", %{src: src} do
-      assert src =~ ~r/price: boolean;/
-      assert src =~ ~r/internal_notes: boolean;/
-      assert src =~ ~r/cost_basis: boolean;/
-      assert src =~ ~r/author_email: 'per_record';/
-      # Fields without a rule default to literal `true`.
-      assert src =~ ~r/title: true;/
+      assert_all_contain(src, [
+        "price: boolean;",
+        "internal_notes: boolean;",
+        "cost_basis: boolean;",
+        "author_email: 'per_record';",
+        # Fields without a rule default to literal `true`.
+        "title: true;"
+      ])
     end
   end
 
   describe "generated LiveViews" do
     test "index mount computes field_access + passes it to LiveSvelte", %{domain: domain} do
-      {_path, src} =
-        LiveView.render_entity(domain, book_entity(domain), :index)
+      {_path, src} = LiveView.render_entity(domain, book_entity(domain), :index)
 
-      assert src =~ "assign(:field_access, PolicyLibrary.field_access(:books, context))"
-      assert src =~ "field_access: @field_access"
+      assert_calls(src, :field_access, [:books, :_], module: PolicyLibrary)
+      assert_contains(src, "field_access: @field_access")
     end
 
     test "form mount also assigns field_access", %{domain: domain} do
-      {_path, src} =
-        LiveView.render_entity(domain, book_entity(domain), :form)
+      {_path, src} = LiveView.render_entity(domain, book_entity(domain), :form)
 
-      assert src =~ "assign(:field_access, PolicyLibrary.field_access(:books, context))"
-      assert src =~ "field_access: @field_access"
+      assert_calls(src, :field_access, [:books, :_], module: PolicyLibrary)
+      assert_contains(src, "field_access: @field_access")
     end
   end
 

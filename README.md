@@ -57,6 +57,7 @@ Full guides live under `docs/` and ship with the Hex package.
 - [Regeneration & the CUSTOM marker](docs/regeneration.md)
 - [Authentication (`authenticatable`)](docs/auth.md)
 - [Policies — triple-target authorization](docs/policies.md)
+- [Testing Caravela](docs/testing.md)
 
 Run `mix docs` to build the full API reference locally (HexDocs-style).
 

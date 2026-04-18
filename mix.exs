@@ -39,6 +39,7 @@ defmodule Caravela.MixProject do
         "docs/regeneration.md": [title: "Regeneration"],
         "docs/auth.md": [title: "Authentication"],
         "docs/policies.md": [title: "Policies"],
+        "docs/testing.md": [title: "Testing Caravela"],
         "CHANGELOG.md": [title: "Changelog"],
         LICENSE: [title: "License"],
         NOTICE: [title: "Notice"]

@@ -364,8 +364,14 @@ defmodule Caravela.Phase4GenTest do
         |> Enum.find(fn {p, _} -> String.ends_with?(p, "BookIndex.svelte") end)
 
       # Types are imported in a single combined import for brevity.
-      assert src =~ ~r/import type \{ [^}]*\bBook\b[^}]* \} from '\.\.\/types\/library';/
-      assert src =~ ~r/import type \{ [^}]*\bLiveHandle\b[^}]* \} from '\.\.\/types\/library';/
+      # Normalize whitespace so a formatter line-wrap can't break the
+      # assertion.
+      normalized = String.replace(src, ~r/\s+/, " ")
+      assert normalized =~ ~r/import type \{ [^}]*\bBook\b[^}]* \} from '\.\.\/types\/library';/
+
+      assert normalized =~
+               ~r/import type \{ [^}]*\bLiveHandle\b[^}]* \} from '\.\.\/types\/library';/
+
       assert src =~ "books?: Book[];"
       assert src =~ "= $props();"
       assert src =~ "{#each books as book (book.id)}"
