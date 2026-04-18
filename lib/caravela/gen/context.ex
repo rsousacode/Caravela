@@ -74,24 +74,11 @@ defmodule Caravela.Gen.Context do
           delete_fn: String.to_atom("delete_#{singular}"),
           preloads: belongs_to_preloads(domain, entity.name),
           public_fields: public,
-          field_access_exprs: field_access_exprs(domain, entity.name, public, policy),
-          has_policy_scope: not is_nil(policy) and policy.has_scope?,
-          has_policy_fields: not is_nil(policy) and policy.fields != [],
-          has_policy_actions: not is_nil(policy) and policy.actions != []
+          field_access_exprs: field_access_exprs(domain, entity.name, public, policy)
         }
       end)
 
-    any_can_create? = Enum.any?(domain.permissions, &(&1.action == :can_create))
-    any_can_update? = Enum.any?(domain.permissions, &(&1.action == :can_update))
-    any_can_delete? = Enum.any?(domain.permissions, &(&1.action == :can_delete))
     any_on_delete? = Enum.any?(domain.hooks, &(&1.action == :on_delete))
-
-    any_policies? =
-      Enum.any?(entities, &(&1.has_policy_scope or &1.has_policy_fields or &1.has_policy_actions))
-
-    any_policy_fields? = Enum.any?(entities, & &1.has_policy_fields)
-    any_policy_actions? = Enum.any?(entities, & &1.has_policy_actions)
-
     any_preloads? = Enum.any?(entities, &(&1.preloads != []))
 
     [
@@ -100,13 +87,7 @@ defmodule Caravela.Gen.Context do
       repo_module: Naming.repo_module(domain),
       entities: entities,
       multi_tenant: Domain.multi_tenant?(domain),
-      any_can_create: any_can_create?,
-      any_can_update: any_can_update?,
-      any_can_delete: any_can_delete?,
       any_on_delete: any_on_delete?,
-      any_policies: any_policies?,
-      any_policy_fields: any_policy_fields?,
-      any_policy_actions: any_policy_actions?,
       any_preloads: any_preloads?,
       custom_marker: Gen.Custom.marker_block()
     ]

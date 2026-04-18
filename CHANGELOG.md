@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-04-18
+
+### Removed (breaking)
+
+- `can_read` / `can_create` / `can_update` / `can_delete` macros and
+  the `__caravela_permission__/2,3,4` dispatch functions they emitted.
+  These ran in parallel with phase 9's `policy` blocks, producing an
+  implicit intersection of two authorization systems with no
+  documentation of the interaction. Since the library has no published
+  users yet, the simpler path was to delete outright instead of
+  deprecating.
+- `Caravela.Schema.Permission` struct and the `permissions` field on
+  `Caravela.Schema.Domain`.
+- Generated context helpers `apply_read_permission/3`,
+  `authorize_create/2`, `authorize_update/3`, `authorize_delete/3`.
+  Read paths now go through `apply_scope/3`; write paths go through
+  `policy_authorize/3,4`. Both resolve against the `policy` block's
+  compiled dispatch functions on the domain module.
+
+### Migration
+
+Port every `can_*` declaration into a `policy :entity do … end` block.
+Rule functions now receive the **actor** (`context.current_user`),
+not the raw context map:
+
+```elixir
+# before
+can_read   :books, fn q, ctx -> where(q, [b], b.published) end
+can_create :books, fn ctx -> ctx.current_user.role == :admin end
+can_update :books, fn b, ctx -> ctx.current_user.id == b.author_id end
+can_delete :books, fn _b, ctx -> ctx.current_user.role == :admin end
+
+# after
+policy :books do
+  scope fn q, actor -> if actor.role == :admin, do: q, else: where(q, [b], b.published) end
+
+  allow :create, fn actor -> actor.role == :admin end
+  allow :update, fn actor, record -> actor.id == record.author_id end
+  allow :delete, fn actor -> actor.role == :admin end
+end
+```
+
+The generated context is the one that did the dispatch, so the only
+runtime change is the shape of the predicate's first argument.
+
 ## [0.6.0] — 2026-04-18
 
 ### Added

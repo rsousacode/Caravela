@@ -84,21 +84,31 @@ generated controllers it defaults to `%{current_user: …, conn: conn}`
 If `{:error, reason}` is returned from `on_delete`, the delete is
 aborted and the tuple propagates back to the caller.
 
-## Permissions: `can_read`, `can_create`, `can_update`, `can_delete`
+## Authorization: `policy` blocks
+
+Caravela's authorization is declared via `policy :entity do … end`
+blocks. A single policy compiles into three enforcement targets —
+Ecto `WHERE` clauses, field-level projection on API responses, and a
+typed `field_access` Svelte prop — so UI, API, and database stay in
+sync automatically. See [Policies](policies.md) for the full guide.
 
 ```elixir
-can_read   :books, fn query, context -> query end        # → Ecto.Query
-can_create :books, fn context -> true end                # → boolean
-can_update :books, fn book, context -> true end          # → boolean
-can_delete :books, fn _book, context -> true end         # → boolean
+policy :books do
+  scope fn query, actor ->
+    if actor.role == :admin, do: query, else: where(query, [b], b.published)
+  end
+
+  field :price, visible: fn actor -> actor.role in [:admin, :editor] end
+
+  allow :create, fn actor -> actor.role in [:admin, :editor] end
+  allow :update, fn actor, record ->
+    actor.role == :admin or actor.id == record.author_id
+  end
+  allow :delete, fn actor -> actor.role == :admin end
+end
 ```
 
-`can_read` is applied as a query filter *before* `Repo.all`/`Repo.get`
-so restricted users never see forbidden rows. The other three return
-booleans; `false` short-circuits the context function with
-`{:error, :unauthorized}`.
-
-To use query macros like `where` / `from` inside `can_read`, add
+To use query macros like `where` / `from` inside `scope`, add
 `import Ecto.Query` at the top of your domain module.
 
 ## Compile-time validations
@@ -111,8 +121,8 @@ Every rule raises a `CompileError` pointing at the offending line:
 4. Relations referencing undeclared entities
 5. Incompatible cardinality (e.g. both sides `:has_many`)
 6. Circular chains of required `belongs_to` (unsatisfiable inserts)
-7. Hooks / permissions with the wrong function arity
-8. Hooks / permissions referring to unknown entities
-9. Duplicate hook / permission for the same (action, entity)
+7. Hooks / policy rules with the wrong function arity
+8. Hooks / policies referring to unknown entities or fields
+9. Duplicate hook for the same (action, entity), or duplicate `policy` block
 10. Version strings that don't match `~r/^v\d+$/`
 11. Manual `tenant_id` fields in a `multi_tenant: true` domain

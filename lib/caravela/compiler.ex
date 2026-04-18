@@ -6,7 +6,7 @@ defmodule Caravela.Compiler do
   `use Caravela.Domain`.
   """
 
-  alias Caravela.Schema.{AuthConfig, Domain, Entity, Field, Relation, Hook, Permission}
+  alias Caravela.Schema.{AuthConfig, Domain, Entity, Field, Relation, Hook}
   alias Caravela.{Auth, Tenant, Types}
 
   @relation_types ~w(has_many has_one belongs_to many_to_many)a
@@ -16,7 +16,6 @@ defmodule Caravela.Compiler do
     entities = env.module |> Module.get_attribute(:caravela_entities) |> Enum.reverse()
     relations = env.module |> Module.get_attribute(:caravela_relations) |> Enum.reverse()
     hooks = env.module |> Module.get_attribute(:caravela_hooks) |> Enum.reverse()
-    permissions = env.module |> Module.get_attribute(:caravela_permissions) |> Enum.reverse()
     policies = env.module |> Module.get_attribute(:caravela_policies) |> Enum.reverse()
     raw_opts = Module.get_attribute(env.module, :caravela_domain_opts) || []
     version = Module.get_attribute(env.module, :caravela_version)
@@ -32,7 +31,6 @@ defmodule Caravela.Compiler do
       entities: entities,
       relations: relations,
       hooks: hooks,
-      permissions: permissions,
       policies: policies,
       opts: opts
     }
@@ -49,17 +47,11 @@ defmodule Caravela.Compiler do
       end
 
       # Fallbacks. Must come after the specific clauses emitted by each
-      # on_* / can_* macro.
+      # on_* macro.
       @doc false
       def __caravela_hook__(:on_create, _entity, changeset, _context), do: changeset
       def __caravela_hook__(:on_update, _entity, changeset, _context), do: changeset
       def __caravela_hook__(:on_delete, _entity, _entity_value, _context), do: :ok
-
-      @doc false
-      def __caravela_permission__(:can_read, _entity, query, _context), do: query
-      def __caravela_permission__(:can_create, _entity, _context), do: true
-      def __caravela_permission__(:can_update, _entity, _entity_value, _context), do: true
-      def __caravela_permission__(:can_delete, _entity, _entity_value, _context), do: true
 
       @doc false
       def __caravela_auth_hook__(:on_register, changeset, _context), do: changeset
@@ -100,8 +92,6 @@ defmodule Caravela.Compiler do
          :ok <- validate_no_circular_required(domain, env),
          :ok <- validate_hook_entities(domain, env),
          :ok <- validate_unique_hooks(domain, env),
-         :ok <- validate_permission_entities(domain, env),
-         :ok <- validate_unique_permissions(domain, env),
          :ok <- validate_auth(domain, env),
          :ok <- validate_policies(domain, env) do
       :ok
@@ -334,30 +324,6 @@ defmodule Caravela.Compiler do
 
       [{a, e} | _] ->
         compile_error!(env, "duplicate hook #{a} for entity #{inspect(e)}")
-    end
-  end
-
-  defp validate_permission_entities(%Domain{entities: es, permissions: ps}, env) do
-    names = MapSet.new(es, & &1.name)
-
-    Enum.each(ps, fn %Permission{action: a, entity: e} ->
-      unless MapSet.member?(names, e) do
-        compile_error!(env, "permission #{a} references unknown entity #{inspect(e)}")
-      end
-    end)
-
-    :ok
-  end
-
-  defp validate_unique_permissions(%Domain{permissions: ps}, env) do
-    pairs = Enum.map(ps, &{&1.action, &1.entity})
-
-    case pairs -- Enum.uniq(pairs) do
-      [] ->
-        :ok
-
-      [{a, e} | _] ->
-        compile_error!(env, "duplicate permission #{a} for entity #{inspect(e)}")
     end
   end
 

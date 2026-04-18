@@ -170,15 +170,22 @@ are wrapped in `{#if field_access.<name>}`.
   server-side fallback in the domain module is also all-true, so
   entities without any declared policy behave as before.
 
-## Backward compatibility
+## Authorization model
 
-Existing `can_read :books, fn query, context -> ... end` hooks and
-`can_create` / `can_update` / `can_delete` from Phase 2 continue to
-work — they run **before** the policy scope/allow gates, not instead
-of them. Either subsystem alone is enough; combining both produces
-strictly-more-restrictive access (intersection of both rule sets),
-which is the safe direction to fail.
+`policy` is the **only** authorization primitive. Earlier versions
+shipped a separate `can_read` / `can_create` / `can_update` /
+`can_delete` set of hooks — those were removed in 0.7.0 because they
+ran alongside `policy` with no coordination (see the 0.7.0 changelog
+entry). If you're migrating from an earlier release, move every
+`can_*` rule into a `policy :entity do … end` block:
 
-Start with `can_*` when you only need row filtering; upgrade to
-`policy` when you need field masking or want the same rules enforced
-on your Svelte UI.
+| Old                                 | New                                         |
+|-------------------------------------|---------------------------------------------|
+| `can_read :books, fn q, ctx -> … end` | `policy :books do scope fn q, actor -> … end end` |
+| `can_create :books, fn ctx -> … end`  | `allow :create, fn actor -> … end`          |
+| `can_update :books, fn b, ctx -> … end` | `allow :update, fn actor, record -> … end` |
+| `can_delete :books, fn b, ctx -> … end` | `allow :delete, fn actor, record -> … end` |
+
+The rule function now receives the **actor** (`context.current_user`)
+directly instead of the raw context map, so references to
+`context.current_user.role` become just `actor.role`.

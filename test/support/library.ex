@@ -42,24 +42,14 @@ defmodule MyApp.Domains.Library do
     end
   end
 
-  # Permissions
+  # Policies (the authorization model — replaces the legacy
+  # `can_read` / `can_create` / `can_update` / `can_delete` hooks).
 
-  can_read :books, fn query, context ->
-    case Map.get(context || %{}, :role) do
-      :admin -> query
-      _ -> query
-    end
-  end
+  policy :books do
+    scope fn query, _actor -> query end
 
-  can_create :books, fn context ->
-    Map.get(context || %{}, :role) in [:admin, :editor]
-  end
-
-  can_update :books, fn _book, context ->
-    Map.get(context || %{}, :role) == :admin
-  end
-
-  can_delete :books, fn _book, context ->
-    Map.get(context || %{}, :role) == :admin
+    allow :create, fn actor -> Map.get(actor || %{}, :role) in [:admin, :editor] end
+    allow :update, fn actor, _record -> Map.get(actor || %{}, :role) == :admin end
+    allow :delete, fn actor, _record -> Map.get(actor || %{}, :role) == :admin end
   end
 end

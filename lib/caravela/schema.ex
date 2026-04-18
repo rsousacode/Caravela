@@ -121,26 +121,6 @@ defmodule Caravela.Schema do
           }
   end
 
-  defmodule Permission do
-    @moduledoc """
-    An authorization rule declared via `can_read`, `can_create`,
-    `can_update`, or `can_delete`.
-
-    Compiled into a clause of `__caravela_permission__` on the domain
-    module. This struct records the (action, entity) pair so generators
-    know which permission checks to wire into the context.
-    """
-    defstruct [:action, :entity, :arity]
-
-    @type action :: :can_read | :can_create | :can_update | :can_delete
-
-    @type t :: %__MODULE__{
-            action: action(),
-            entity: atom(),
-            arity: non_neg_integer()
-          }
-  end
-
   defmodule Domain do
     @moduledoc "A whole domain: the top-level IR produced by compilation."
     defstruct [
@@ -148,7 +128,6 @@ defmodule Caravela.Schema do
       entities: [],
       relations: [],
       hooks: [],
-      permissions: [],
       policies: [],
       opts: []
     ]
@@ -158,7 +137,6 @@ defmodule Caravela.Schema do
             entities: [Entity.t()],
             relations: [Relation.t()],
             hooks: [Hook.t()],
-            permissions: [Permission.t()],
             policies: [Caravela.Policy.Entry.t()],
             opts: keyword()
           }
@@ -171,11 +149,6 @@ defmodule Caravela.Schema do
     @doc "Does the domain declare a hook for `action` on `entity`?"
     def has_hook?(%__MODULE__{hooks: hs}, action, entity) do
       Enum.any?(hs, &(&1.action == action and &1.entity == entity))
-    end
-
-    @doc "Does the domain declare a permission for `action` on `entity`?"
-    def has_permission?(%__MODULE__{permissions: ps}, action, entity) do
-      Enum.any?(ps, &(&1.action == action and &1.entity == entity))
     end
 
     @doc "Policy entry for `entity`, or `nil` if none was declared."

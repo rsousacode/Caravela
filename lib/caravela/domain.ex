@@ -21,32 +21,29 @@ defmodule Caravela.Domain do
           Ecto.Changeset.validate_required(changeset, [:title])
         end
 
-        can_create :books, fn context ->
-          context.current_user.role in [:admin, :editor]
+        policy :books do
+          scope fn q, actor ->
+            if actor.role == :admin, do: q, else: where(q, [b], b.published)
+          end
+
+          allow :create, fn actor -> actor.role in [:admin, :editor] end
         end
       end
 
   After compilation the module exposes `__caravela_domain__/0`, returning
   the validated `Caravela.Schema.Domain` IR, plus `__caravela_hook__/4`
-  and `__caravela_permission__` clauses for every declared hook and
-  permission.
+  and the `__caravela_policy_*__` clauses emitted by each `policy` block.
   """
 
   @hook_actions [:on_create, :on_update, :on_delete]
-  @permission_actions [:can_read, :can_create, :can_update, :can_delete]
 
   # Expected function arity for each action.
   @hook_arity %{on_create: 2, on_update: 2, on_delete: 2}
-  @permission_arity %{can_read: 2, can_create: 1, can_update: 2, can_delete: 2}
 
   @doc false
   def hook_actions, do: @hook_actions
   @doc false
-  def permission_actions, do: @permission_actions
-  @doc false
   def hook_arity(action), do: Map.fetch!(@hook_arity, action)
-  @doc false
-  def permission_arity(action), do: Map.fetch!(@permission_arity, action)
 
   defmacro __using__(opts) do
     quote do
@@ -60,10 +57,6 @@ defmodule Caravela.Domain do
           on_create: 2,
           on_update: 2,
           on_delete: 2,
-          can_read: 2,
-          can_create: 2,
-          can_update: 2,
-          can_delete: 2,
           authenticatable: 1,
           strategy: 1,
           strategy: 2,
@@ -81,7 +74,6 @@ defmodule Caravela.Domain do
       Module.register_attribute(__MODULE__, :caravela_entities, accumulate: true)
       Module.register_attribute(__MODULE__, :caravela_relations, accumulate: true)
       Module.register_attribute(__MODULE__, :caravela_hooks, accumulate: true)
-      Module.register_attribute(__MODULE__, :caravela_permissions, accumulate: true)
       Module.register_attribute(__MODULE__, :caravela_policies, accumulate: true)
       Module.register_attribute(__MODULE__, :caravela_domain_opts, persist: false)
       Module.register_attribute(__MODULE__, :caravela_version, persist: false)
@@ -211,46 +203,6 @@ defmodule Caravela.Domain do
       end
   """
   defmacro on_delete(entity, fun), do: define_hook(:on_delete, entity, fun, __CALLER__)
-
-  # --- Permissions --------------------------------------------------------
-
-  @doc """
-  Filter a read query by authorization context. Must return an
-  `Ecto.Query`.
-
-      can_read :books, fn query, context ->
-        case context.current_user.role do
-          :admin -> query
-          _ -> where(query, [b], b.published == true)
-        end
-      end
-  """
-  defmacro can_read(entity, fun), do: define_permission(:can_read, entity, fun, __CALLER__)
-
-  @doc """
-  Authorize creation of an entity. Receives only the `context` and must
-  return a boolean.
-
-      can_create :books, fn context ->
-        context.current_user.role in [:admin, :editor]
-      end
-  """
-  defmacro can_create(entity, fun), do: define_permission(:can_create, entity, fun, __CALLER__)
-
-  @doc """
-  Authorize updating an entity. Receives the loaded entity and the
-  `context`. Must return a boolean.
-
-      can_update :books, fn book, context ->
-        context.current_user.role == :admin or book.author_id == context.current_user.author_id
-      end
-  """
-  defmacro can_update(entity, fun), do: define_permission(:can_update, entity, fun, __CALLER__)
-
-  @doc """
-  Authorize deletion of an entity. Same shape as `can_update/2`.
-  """
-  defmacro can_delete(entity, fun), do: define_permission(:can_delete, entity, fun, __CALLER__)
 
   # --- Policies (Phase 9) -------------------------------------------------
 
@@ -690,65 +642,6 @@ defmodule Caravela.Domain do
           }
 
           def __caravela_hook__(:on_delete, unquote(entity), entity_value, context) do
-            unquote(fun).(entity_value, context)
-          end
-        end
-    end
-  end
-
-  defp define_permission(action, entity, fun, caller) do
-    arity = Map.fetch!(@permission_arity, action)
-    validate_fun!(action, fun, arity, caller)
-
-    case action do
-      :can_read ->
-        quote do
-          @caravela_permissions %Caravela.Schema.Permission{
-            action: :can_read,
-            entity: unquote(entity),
-            arity: 2
-          }
-
-          def __caravela_permission__(:can_read, unquote(entity), query, context) do
-            unquote(fun).(query, context)
-          end
-        end
-
-      :can_create ->
-        quote do
-          @caravela_permissions %Caravela.Schema.Permission{
-            action: :can_create,
-            entity: unquote(entity),
-            arity: 1
-          }
-
-          def __caravela_permission__(:can_create, unquote(entity), context) do
-            unquote(fun).(context)
-          end
-        end
-
-      :can_update ->
-        quote do
-          @caravela_permissions %Caravela.Schema.Permission{
-            action: :can_update,
-            entity: unquote(entity),
-            arity: 2
-          }
-
-          def __caravela_permission__(:can_update, unquote(entity), entity_value, context) do
-            unquote(fun).(entity_value, context)
-          end
-        end
-
-      :can_delete ->
-        quote do
-          @caravela_permissions %Caravela.Schema.Permission{
-            action: :can_delete,
-            entity: unquote(entity),
-            arity: 2
-          }
-
-          def __caravela_permission__(:can_delete, unquote(entity), entity_value, context) do
             unquote(fun).(entity_value, context)
           end
         end

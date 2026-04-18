@@ -29,33 +29,34 @@ defmodule Caravela.Phase2GenTest do
       end
     end
 
-    test "read path applies can_read permission", %{domain: domain} do
+    test "read path applies the policy scope", %{domain: domain} do
       {_path, source} = Context.render(domain)
-      assert source =~ "apply_read_permission(:books, context)"
-      assert source =~ ~s|:can_read, entity, query, context|
+      assert source =~ "apply_scope(:books, context)"
+      assert source =~ "__caravela_policy_scope__(entity, query"
     end
 
-    test "create path authorizes and runs on_create hook", %{domain: domain} do
+    test "create path authorizes via the policy and runs on_create hook", %{domain: domain} do
       {_path, source} = Context.render(domain)
-      assert source =~ "authorize_create(:books, context)"
+      assert source =~ "policy_authorize(:books, :create, context)"
       assert source =~ "apply_changeset_hook(:on_create, :books, context)"
     end
 
     test "update path authorizes, applies changeset hook, updates", %{domain: domain} do
       {_path, source} = Context.render(domain)
-      assert source =~ "authorize_update(:books, book, context)"
+      assert source =~ "policy_authorize(:books, :update, book, context)"
       assert source =~ "apply_changeset_hook(:on_update, :books, context)"
     end
 
     test "delete path authorizes and runs on_delete hook", %{domain: domain} do
       {_path, source} = Context.render(domain)
-      assert source =~ "authorize_delete(:books, book, context)"
+      assert source =~ "policy_authorize(:books, :delete, book, context)"
       assert source =~ "run_delete_hook(:books, book, context)"
     end
 
-    test "aliases the domain module for dispatch", %{domain: domain} do
+    test "references the domain module for policy + hook dispatch", %{domain: domain} do
       {_path, source} = Context.render(domain)
-      assert source =~ "MyApp.Domains.Library.__caravela_permission__"
+      assert source =~ "MyApp.Domains.Library.__caravela_policy_scope__"
+      assert source =~ "MyApp.Domains.Library.__caravela_policy_allow__"
       assert source =~ "MyApp.Domains.Library.__caravela_hook__"
     end
 

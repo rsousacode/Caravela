@@ -23,5 +23,7 @@ defmodule MyApp.Domains.TenantLibrary do
 
   on_create :books, fn changeset, _context -> changeset end
 
-  can_read :books, fn query, _context -> query end
+  policy :books do
+    scope fn query, _actor -> query end
+  end
 end

@@ -45,8 +45,8 @@ defmodule MyApp.Domains.Library do
   relation :authors, :books, type: :has_many
   relation :books, :publishers, type: :belongs_to
 
-  can_create :books, fn context ->
-    context.current_user.role in [:admin, :editor]
+  policy :books do
+    allow :create, fn actor -> actor.role in [:admin, :editor] end
   end
 end
 ```
@@ -83,7 +83,7 @@ mix phx.server
 curl -X POST localhost:4000/api/books \
   -H "content-type: application/json" \
   -d '{"title":"Test Title"}'
-# → 201 Created on valid input, 403 if can_create denies,
+# → 201 Created on valid input, 403 if the policy denies create,
 #   422 if the changeset fails validation or the hook rejects it.
 ```
 

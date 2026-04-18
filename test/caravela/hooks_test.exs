@@ -1,7 +1,7 @@
-defmodule Caravela.HooksPermissionsTest do
+defmodule Caravela.HooksTest do
   use ExUnit.Case, async: true
 
-  describe "domain IR carries hooks and permissions" do
+  describe "domain IR carries hooks" do
     test "the Library fixture exposes hooks" do
       domain = MyApp.Domains.Library.__caravela_domain__()
 
@@ -11,19 +11,6 @@ defmodule Caravela.HooksPermissionsTest do
                {:on_create, :books},
                {:on_delete, :authors},
                {:on_update, :books}
-             ]
-    end
-
-    test "the Library fixture exposes permissions" do
-      domain = MyApp.Domains.Library.__caravela_domain__()
-
-      actions = Enum.map(domain.permissions, &{&1.action, &1.entity}) |> Enum.sort()
-
-      assert actions == [
-               {:can_create, :books},
-               {:can_delete, :books},
-               {:can_read, :books},
-               {:can_update, :books}
              ]
     end
   end
@@ -55,41 +42,6 @@ defmodule Caravela.HooksPermissionsTest do
 
       assert MyApp.Domains.Library.__caravela_hook__(:on_create, :authors, cs, %{}) == cs
     end
-
-    test "__caravela_permission__ uses declared rules" do
-      # can_create :books allows :admin and :editor only.
-      assert MyApp.Domains.Library.__caravela_permission__(:can_create, :books, %{role: :admin}) ==
-               true
-
-      assert MyApp.Domains.Library.__caravela_permission__(:can_create, :books, %{role: :editor}) ==
-               true
-
-      assert MyApp.Domains.Library.__caravela_permission__(:can_create, :books, %{role: :viewer}) ==
-               false
-    end
-
-    test "__caravela_permission__ falls back when no rule is declared" do
-      # No can_create :authors — fallback returns true.
-      assert MyApp.Domains.Library.__caravela_permission__(:can_create, :authors, %{}) == true
-
-      # No can_update :publishers — fallback returns true.
-      assert MyApp.Domains.Library.__caravela_permission__(
-               :can_update,
-               :publishers,
-               %{},
-               %{}
-             ) == true
-    end
-
-    test "can_read falls back to the query unchanged" do
-      # No can_read :authors — fallback returns the query arg as-is.
-      assert MyApp.Domains.Library.__caravela_permission__(
-               :can_read,
-               :authors,
-               :some_query,
-               %{}
-             ) == :some_query
-    end
   end
 
   describe "validation failures" do
@@ -103,20 +55,6 @@ defmodule Caravela.HooksPermissionsTest do
           end
 
           on_create :ghosts, fn changeset, _ -> changeset end
-        end
-      end
-    end
-
-    test "permission on unknown entity is rejected" do
-      assert_raise CompileError, ~r/permission can_read references unknown entity :ghosts/, fn ->
-        defmodule BadPermEntity do
-          use Caravela.Domain
-
-          entity :authors do
-            field :name, :string
-          end
-
-          can_read :ghosts, fn q, _ -> q end
         end
       end
     end
@@ -135,20 +73,6 @@ defmodule Caravela.HooksPermissionsTest do
       end
     end
 
-    test "permission with wrong arity is rejected" do
-      assert_raise CompileError, ~r/can_create expects a function of arity 1, got arity 2/, fn ->
-        defmodule BadPermArity do
-          use Caravela.Domain
-
-          entity :authors do
-            field :name, :string
-          end
-
-          can_create :authors, fn _a, _b -> true end
-        end
-      end
-    end
-
     test "duplicate hook for same (action, entity) is rejected" do
       assert_raise CompileError, ~r/duplicate hook on_create for entity :authors/, fn ->
         defmodule DupHook do
@@ -160,21 +84,6 @@ defmodule Caravela.HooksPermissionsTest do
 
           on_create :authors, fn cs, _ -> cs end
           on_create :authors, fn cs, _ -> cs end
-        end
-      end
-    end
-
-    test "duplicate permission for same (action, entity) is rejected" do
-      assert_raise CompileError, ~r/duplicate permission can_read for entity :authors/, fn ->
-        defmodule DupPerm do
-          use Caravela.Domain
-
-          entity :authors do
-            field :name, :string
-          end
-
-          can_read :authors, fn q, _ -> q end
-          can_read :authors, fn q, _ -> q end
         end
       end
     end
@@ -207,7 +116,7 @@ defmodule Caravela.HooksPermissionsTest do
           field :name, :string
         end
 
-        on_create :things, &Caravela.HooksPermissionsTest.CaptureHost.validate/2
+        on_create :things, &Caravela.HooksTest.CaptureHost.validate/2
       end
 
       assert %Caravela.Schema.Domain{} = CapturedOK.__caravela_domain__()

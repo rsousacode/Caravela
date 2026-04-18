@@ -76,7 +76,7 @@ defmodule Caravela.ContextIntegrationTest do
       context_mod: ctx,
       repo: repo
     } do
-      ctx.list_books(%{role: :admin})
+      ctx.list_books(%{current_user: %{role: :admin}})
       assert {:all, _q} = StubRepoServer.last_call(repo)
     end
   end
@@ -84,14 +84,20 @@ defmodule Caravela.ContextIntegrationTest do
   describe "create path" do
     test "blocks when can_create denies", %{context_mod: ctx, book_mod: book, repo: repo} do
       StubRepoServer.reset(repo)
-      assert {:error, :unauthorized} = ctx.create_book(%{"title" => "x"}, %{role: :viewer})
+
+      assert {:error, :unauthorized} =
+               ctx.create_book(%{"title" => "x"}, %{current_user: %{role: :viewer}})
+
       assert StubRepoServer.calls(repo) == []
       _ = book
     end
 
     test "inserts when can_create allows", %{context_mod: ctx, repo: repo} do
       StubRepoServer.reset(repo)
-      assert {:ok, :inserted} = ctx.create_book(%{"title" => "abc"}, %{role: :editor})
+
+      assert {:ok, :inserted} =
+               ctx.create_book(%{"title" => "abc"}, %{current_user: %{role: :editor}})
+
       assert {:insert, %Ecto.Changeset{}} = StubRepoServer.last_call(repo)
     end
   end
@@ -101,7 +107,8 @@ defmodule Caravela.ContextIntegrationTest do
       StubRepoServer.reset(repo)
       b = struct!(book, %{id: "b1", title: "a"})
 
-      assert {:error, :unauthorized} = ctx.update_book(b, %{"title" => "z"}, %{role: :editor})
+      assert {:error, :unauthorized} =
+               ctx.update_book(b, %{"title" => "z"}, %{current_user: %{role: :editor}})
 
       assert StubRepoServer.calls(repo) == []
     end
@@ -109,7 +116,10 @@ defmodule Caravela.ContextIntegrationTest do
     test "updates when can_update allows", %{context_mod: ctx, book_mod: book, repo: repo} do
       StubRepoServer.reset(repo)
       b = struct!(book, %{id: "b1", title: "a"})
-      assert {:ok, :updated} = ctx.update_book(b, %{"title" => "zed"}, %{role: :admin})
+
+      assert {:ok, :updated} =
+               ctx.update_book(b, %{"title" => "zed"}, %{current_user: %{role: :admin}})
+
       assert {:update, %Ecto.Changeset{}} = StubRepoServer.last_call(repo)
     end
   end
@@ -134,7 +144,7 @@ defmodule Caravela.ContextIntegrationTest do
       StubRepoServer.reset(repo)
       book_mod = Module.concat([ctx, "Book"])
       b = struct!(book_mod, %{id: "b1", title: "a"})
-      assert {:ok, :deleted} = ctx.delete_book(b, %{role: :admin})
+      assert {:ok, :deleted} = ctx.delete_book(b, %{current_user: %{role: :admin}})
       assert {:delete, _} = StubRepoServer.last_call(repo)
     end
 
@@ -142,7 +152,7 @@ defmodule Caravela.ContextIntegrationTest do
       StubRepoServer.reset(repo)
       book_mod = Module.concat([ctx, "Book"])
       b = struct!(book_mod, %{id: "b1", title: "a"})
-      assert {:error, :unauthorized} = ctx.delete_book(b, %{role: :editor})
+      assert {:error, :unauthorized} = ctx.delete_book(b, %{current_user: %{role: :editor}})
       assert StubRepoServer.calls(repo) == []
     end
   end
