@@ -16,7 +16,14 @@ defmodule Caravela.Compiler do
     entities = env.module |> Module.get_attribute(:caravela_entities) |> Enum.reverse()
     relations = env.module |> Module.get_attribute(:caravela_relations) |> Enum.reverse()
     hooks = env.module |> Module.get_attribute(:caravela_hooks) |> Enum.reverse()
-    policies = env.module |> Module.get_attribute(:caravela_policies) |> Enum.reverse()
+
+    # Raw per-rule tuples pushed by `scope/1`, `field/2` (policy), and
+    # `allow/2` during the `policy` block. The attribute accumulates
+    # newest-first, so reverse before building the IR so user order is
+    # preserved.
+    policy_rules = env.module |> Module.get_attribute(:caravela_policy_rules) |> Enum.reverse()
+    policies = build_policy_entries(policy_rules)
+
     raw_opts = Module.get_attribute(env.module, :caravela_domain_opts) || []
     version = Module.get_attribute(env.module, :caravela_version)
 
@@ -40,6 +47,7 @@ defmodule Caravela.Compiler do
 
     Module.put_attribute(env.module, :caravela_domain_compiled, domain)
 
+    specific_policy_clauses = specific_policy_clauses(policy_rules)
     per_entity_policy_fallbacks = per_entity_policy_fallbacks(domain)
     module_level_policy_fallbacks = module_level_policy_fallbacks(domain)
 
@@ -60,21 +68,146 @@ defmodule Caravela.Compiler do
       def __caravela_auth_hook__(:on_register, changeset, _context), do: changeset
       def __caravela_auth_hook__(:on_login, _user, _context), do: :ok
 
-      # --- Policy dispatch fallbacks (Phase 9) ---------------------------
+      # --- Policy dispatch clauses (Phase 9) -----------------------------
       #
       # Clause ordering matters. In order:
       #
-      #   1. Specific clauses emitted by the `policy` macro (per rule).
-      #   2. Per-entity permissive fallbacks (below) — for each entity
-      #      that declared ANY policy block. These make undeclared rule
-      #      types within a `policy` block default to "permissive for
-      #      this entity" regardless of the domain-level default.
-      #   3. Module-level fallback (last) — governed by the
-      #      `default_policy` domain option. Only fires for entities
-      #      that have NO `policy` block at all.
+      #   1. Specific clauses — one per `scope`, `field :_, visible: …`,
+      #      or `allow :_, …` declared in a `policy` block.
+      #   2. Per-entity permissive fallbacks — for each entity that
+      #      declared ANY policy block, undeclared rule types default
+      #      to "permissive for this entity" regardless of the
+      #      domain-level default.
+      #   3. Module-level fallbacks — governed by the `default_policy`
+      #      domain option. Only fires for entities with no `policy`
+      #      block at all.
+      unquote_splicing(specific_policy_clauses)
       unquote_splicing(per_entity_policy_fallbacks)
       unquote_splicing(module_level_policy_fallbacks)
     end
+  end
+
+  # Build the IR from raw rule tuples. Each `policy :entity do … end`
+  # block pushes a `{:block_declared, entity}` marker plus one tuple
+  # per `scope` / `field` / `allow` call. We group by entity here.
+  defp build_policy_entries(rules) do
+    rules
+    |> Enum.reduce(%{}, fn
+      {:block_declared, entity}, acc ->
+        Map.put_new(acc, entity, new_entry(entity))
+
+      {:scope, entity, _fun_ast}, acc ->
+        entry = Map.get(acc, entity, new_entry(entity))
+
+        if entry.has_scope? do
+          raise CompileError,
+            description: "Caravela: duplicate policy scope rule for #{inspect(entity)}"
+        end
+
+        Map.put(acc, entity, %{entry | has_scope?: true})
+
+      {:field, entity, fname, arity, _fun_ast}, acc ->
+        entry = Map.get(acc, entity, new_entry(entity))
+        rule = %Caravela.Policy.FieldRule{entity: entity, field: fname, arity: arity}
+        Map.put(acc, entity, %{entry | fields: entry.fields ++ [rule]})
+
+      {:allow, entity, action, arity, _fun_ast}, acc ->
+        entry = Map.get(acc, entity, new_entry(entity))
+        gate = %Caravela.Policy.ActionGate{entity: entity, action: action, arity: arity}
+        Map.put(acc, entity, %{entry | actions: entry.actions ++ [gate]})
+    end)
+    |> Map.values()
+  end
+
+  defp new_entry(entity) do
+    %Caravela.Policy.Entry{entity: entity, has_scope?: false, fields: [], actions: []}
+  end
+
+  # Emit one-or-more `def __caravela_policy_*__(…)` clauses per raw
+  # rule. The AST of each user-supplied fn was stored escaped in the
+  # module attribute; unquoting it inserts the literal fn back into
+  # the generated def.
+  defp specific_policy_clauses(rules) do
+    Enum.flat_map(rules, fn
+      {:block_declared, _entity} ->
+        []
+
+      {:scope, entity, fun_ast} ->
+        [
+          quote do
+            def __caravela_policy_scope__(unquote(entity), query, actor) do
+              unquote(fun_ast).(query, actor)
+            end
+          end
+        ]
+
+      {:field, entity, fname, 1, fun_ast} ->
+        [
+          quote do
+            def __caravela_policy_field_visible__(unquote(entity), unquote(fname), actor) do
+              unquote(fun_ast).(actor)
+            end
+          end,
+          quote do
+            def __caravela_policy_field_visible__(
+                  unquote(entity),
+                  unquote(fname),
+                  actor,
+                  _record
+                ) do
+              unquote(fun_ast).(actor)
+            end
+          end
+        ]
+
+      {:field, entity, fname, 2, fun_ast} ->
+        [
+          quote do
+            # Arity-2 rules depend on the record; without one they're
+            # flagged :per_record so the caller knows to evaluate per row.
+            def __caravela_policy_field_visible__(unquote(entity), unquote(fname), _actor),
+              do: :per_record
+          end,
+          quote do
+            def __caravela_policy_field_visible__(
+                  unquote(entity),
+                  unquote(fname),
+                  actor,
+                  record
+                ) do
+              unquote(fun_ast).(actor, record)
+            end
+          end
+        ]
+
+      {:allow, entity, action, 1, fun_ast} ->
+        [
+          quote do
+            def __caravela_policy_allow__(unquote(entity), unquote(action), actor) do
+              unquote(fun_ast).(actor)
+            end
+          end,
+          quote do
+            def __caravela_policy_allow__(unquote(entity), unquote(action), actor, _record) do
+              unquote(fun_ast).(actor)
+            end
+          end
+        ]
+
+      {:allow, entity, action, 2, fun_ast} ->
+        [
+          quote do
+            # Arity-2 gate without a record defaults to denying — the
+            # caller should pass the record for a real decision.
+            def __caravela_policy_allow__(unquote(entity), unquote(action), _actor), do: false
+          end,
+          quote do
+            def __caravela_policy_allow__(unquote(entity), unquote(action), actor, record) do
+              unquote(fun_ast).(actor, record)
+            end
+          end
+        ]
+    end)
   end
 
   # For each entity with a declared policy, emit a permissive fallback
@@ -525,19 +658,10 @@ defmodule Caravela.Compiler do
     entity_names = MapSet.new(es, & &1.name)
     entity_fields = Map.new(es, fn e -> {e.name, MapSet.new(e.fields, & &1.name)} end)
 
-    with :ok <- validate_unique_policies(ps, env),
-         :ok <- validate_policy_entities(ps, entity_names, env),
-         :ok <- validate_policy_fields(ps, entity_fields, env) do
+    with :ok <- validate_policy_entities(ps, entity_names, env),
+         :ok <- validate_policy_fields(ps, entity_fields, env),
+         :ok <- validate_unique_rules(ps, env) do
       :ok
-    end
-  end
-
-  defp validate_unique_policies(policies, env) do
-    names = Enum.map(policies, & &1.entity)
-
-    case names -- Enum.uniq(names) do
-      [] -> :ok
-      [dup | _] -> compile_error!(env, "duplicate policy for entity #{inspect(dup)}")
     end
   end
 
@@ -563,6 +687,46 @@ defmodule Caravela.Compiler do
           )
         end
       end)
+    end)
+
+    :ok
+  end
+
+  # With the context-setter `policy` macro, multiple `policy :entity do
+  # … end` blocks are additive (useful for conditional / split
+  # declarations). The duplication that still matters is within the
+  # same (entity, rule_kind[, field|action]) triple: two `scope`s for
+  # the same entity, two `field :x` rules, or two `allow :create`s
+  # would silently resolve by clause order, which is bewildering.
+  defp validate_unique_rules(policies, env) do
+    Enum.each(policies, fn %{entity: entity, fields: fields, actions: actions} ->
+      # field rules
+      field_names = Enum.map(fields, & &1.field)
+
+      case field_names -- Enum.uniq(field_names) do
+        [] ->
+          :ok
+
+        [dup | _] ->
+          compile_error!(
+            env,
+            "duplicate policy field rule for #{inspect(entity)}.#{dup}"
+          )
+      end
+
+      # action gates
+      gate_actions = Enum.map(actions, & &1.action)
+
+      case gate_actions -- Enum.uniq(gate_actions) do
+        [] ->
+          :ok
+
+        [dup | _] ->
+          compile_error!(
+            env,
+            "duplicate policy allow rule for #{inspect(entity)}.#{dup}"
+          )
+      end
     end)
 
     :ok

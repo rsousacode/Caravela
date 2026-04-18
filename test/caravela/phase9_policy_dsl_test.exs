@@ -301,40 +301,146 @@ defmodule Caravela.Phase9PolicyDslTest do
       end
     end
 
-    test "rejects duplicate policy blocks for the same entity" do
-      assert_raise CompileError, ~r/duplicate policy/, fn ->
-        defmodule DupPolicy do
+    test "multiple `policy` blocks for the same entity are additive" do
+      # Additive blocks are a deliberate feature — lets you split
+      # policy declarations across files / environments.
+      defmodule AdditivePolicy do
+        use Caravela.Domain
+
+        entity :books do
+          field :title, :string, required: true
+        end
+
+        policy :books do
+          allow :create, fn _ -> true end
+        end
+
+        policy :books do
+          allow :delete, fn _ -> false end
+        end
+      end
+
+      domain = AdditivePolicy.__caravela_domain__()
+      entry = Caravela.Schema.Domain.policy_for(domain, :books)
+      actions = Enum.map(entry.actions, & &1.action) |> Enum.sort()
+      assert actions == [:create, :delete]
+    end
+
+    test "duplicate `scope` / `field` / `allow` rules on the same entity are rejected" do
+      # Silent clause-ordering resolution would be bewildering, so we
+      # raise at compile time even when the rules are spread across
+      # multiple additive policy blocks.
+      assert_raise CompileError, ~r/duplicate policy scope/, fn ->
+        defmodule DupScope do
           use Caravela.Domain
 
           entity :books do
-            field :title, :string, required: true
+            field :title, :string
+          end
+
+          policy :books do
+            scope fn q, _ -> q end
+          end
+
+          policy :books do
+            scope fn q, _ -> q end
+          end
+        end
+      end
+
+      assert_raise CompileError, ~r/duplicate policy field rule/, fn ->
+        defmodule DupField do
+          use Caravela.Domain
+
+          entity :books do
+            field :title, :string
+          end
+
+          policy :books do
+            field :title, visible: fn _ -> true end
+            field :title, visible: fn _ -> false end
+          end
+        end
+      end
+
+      assert_raise CompileError, ~r/duplicate policy allow rule/, fn ->
+        defmodule DupAllow do
+          use Caravela.Domain
+
+          entity :books do
+            field :title, :string
           end
 
           policy :books do
             allow :create, fn _ -> true end
-          end
-
-          policy :books do
-            allow :delete, fn _ -> true end
+            allow :create, fn _ -> false end
           end
         end
       end
     end
 
-    test "rejects an unsupported directive inside a policy block" do
-      assert_raise CompileError, ~r/unsupported directive/, fn ->
-        defmodule WeirdPolicy do
+    test "module-attribute reference as field opts raises a helpful error" do
+      # AST dispatch can't see `@admin_opts` as a keyword list, so
+      # instead of silently misrouting we raise a pointed error that
+      # tells the user what shape to use.
+      assert_raise ArgumentError, ~r/literal keyword list with/, fn ->
+        defmodule OptsRef do
           use Caravela.Domain
 
+          @admin_opts [visible: fn _ -> true end]
+
           entity :books do
-            field :title, :string, required: true
+            field :title, :string
+            field :price, :decimal
           end
 
           policy :books do
-            IO.puts("hi")
+            field :price, @admin_opts
           end
         end
       end
+    end
+
+    test "arbitrary Elixir inside a policy block Just Works" do
+      # The policy block is plain Elixir — `for`, `if`, `@module_attr`
+      # expansions, helper calls all expand the same way they would
+      # at module top-level. This test defines a module dynamically
+      # and checks that the accumulated rules match what the source
+      # would suggest after expansion.
+      defmodule DynamicPolicy do
+        use Caravela.Domain
+
+        @admin_fields [:price, :cost_basis, :internal_notes]
+
+        entity :books do
+          field :title, :string, required: true
+          field :price, :decimal
+          field :cost_basis, :decimal
+          field :internal_notes, :text
+        end
+
+        policy :books do
+          scope fn q, _ -> q end
+
+          for f <- @admin_fields do
+            field f, visible: fn actor -> actor.role == :admin end
+          end
+
+          if Mix.env() == :test do
+            allow :delete, fn _ -> true end
+          end
+        end
+      end
+
+      domain = DynamicPolicy.__caravela_domain__()
+      entry = Caravela.Schema.Domain.policy_for(domain, :books)
+
+      # All three admin fields iterated by `for` got rules attached.
+      assert Enum.sort(Enum.map(entry.fields, & &1.field)) ==
+               [:cost_basis, :internal_notes, :price]
+
+      # The compile-time `if` branch ran, so :delete is gated.
+      assert Enum.any?(entry.actions, &(&1.action == :delete))
     end
 
     test "rejects an allow action outside of :create / :update / :delete" do

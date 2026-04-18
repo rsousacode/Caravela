@@ -77,6 +77,41 @@ end
 - `allow :create | :update | :delete, fn actor[, record] -> bool end`
   — gates the context's `create_*` / `update_*` / `delete_*` functions.
 
+### The block is plain Elixir
+
+The body of `policy :entity do … end` is a normal Elixir block, so
+`for`, `if`, helper function calls, and module-attribute splicing all
+work — the compiler expands them before our macros run:
+
+```elixir
+@admin_fields [:price, :cost_basis, :internal_notes]
+
+policy :books do
+  scope fn q, actor ->
+    if actor.role == :admin, do: q, else: where(q, [b], b.published)
+  end
+
+  for f <- @admin_fields do
+    field f, visible: fn actor -> actor.role == :admin end
+  end
+
+  if Mix.env() == :dev do
+    allow :delete, fn _ -> true end
+  end
+end
+```
+
+Multiple `policy :entity` blocks are additive — useful for splitting
+rules across files or wrapping one in an environment guard. Duplicate
+rules *within* the same entity (two `scope`s, two `field :x`s, two
+`allow :create`s) still raise at compile time, because silent
+clause-ordering resolution is bewildering.
+
+One limitation: `field :x, @some_opts` where `@some_opts` is a module
+attribute reference raises a pointed error. The macro dispatches on
+AST shape at compile time and can't see through the attribute. Either
+inline the kw list or iterate with `for` over field names.
+
 ### Actor lookup
 
 The actor is `context.current_user` (or the string key
