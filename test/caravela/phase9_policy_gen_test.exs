@@ -97,8 +97,15 @@ defmodule Caravela.Phase9PolicyGenTest do
         |> Enum.find(fn {p, _} -> String.ends_with?(p, "BookIndex.svelte") end)
 
       assert_all_contain(src, [
-        "import type { Book, BookFieldAccess, LiveHandle }",
+        # Imports now include the per-entity Actions type alongside
+        # the field-access interface. The assertion tolerates the
+        # multi-line import block the generator emits.
+        "Book,",
+        "BookFieldAccess,",
+        "BookActions,",
+        "LiveHandle",
         "field_access?: BookFieldAccess;",
+        "actions?: BookActions;",
         # Default includes every public field set to `true` so the
         # component renders fully when mounted without LiveView wiring.
         "field_access = { title: true, isbn: true, published: true, price: true"

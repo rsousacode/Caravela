@@ -140,10 +140,16 @@ defmodule Caravela.Gen.Svelte do
         %{name: f.name, ts_type: field_access_ts_type(Map.get(rules, f.name))}
       end)
 
+    actions =
+      Enum.map(Caravela.Policy.action_gate_actions(), fn action ->
+        %{name: action, ts_type: action_access_ts_type(policy, action)}
+      end)
+
     %{
       ts_name: Naming.camelize(Naming.singularize(entity.name)),
       ts_fields: fields,
-      field_access: field_access
+      field_access: field_access,
+      actions: actions
     }
   end
 
@@ -159,6 +165,24 @@ defmodule Caravela.Gen.Svelte do
   defp field_access_ts_type(nil), do: "true"
   defp field_access_ts_type(1), do: "boolean"
   defp field_access_ts_type(2), do: "'per_record'"
+
+  # Action access TS type, derived from whether a policy gate is
+  # declared and its arity. Mirrors `field_access_ts_type/1`:
+  #   - no policy block                -> `boolean` (default fallback)
+  #   - declared gate, arity-1         -> `boolean`
+  #   - declared gate, arity-2         -> `boolean | 'per_record'`
+  #     (the server emits `:per_record` from `action_access/2` and a
+  #     resolved boolean from `action_access/3`)
+  #   - no gate for this action        -> `boolean` (entity-level
+  #     fallback answers)
+  defp action_access_ts_type(nil, _action), do: "boolean"
+
+  defp action_access_ts_type(%Caravela.Policy.Entry{} = policy, action) do
+    case Caravela.Policy.Entry.action_gate(policy, action) do
+      %Caravela.Policy.ActionGate{arity: 2} -> "boolean | 'per_record'"
+      _ -> "boolean"
+    end
+  end
 
   # --- Component assigns --------------------------------------------------
 
@@ -206,11 +230,23 @@ defmodule Caravela.Gen.Svelte do
       entity_ts: entity_ts,
       field_access_ts: entity_ts <> "FieldAccess",
       default_field_access: default_field_access_literal(public),
+      default_actions: default_actions_literal(),
       singular: singular,
       plural: plural,
       types_import: types_import_path(domain),
       caravela_metadata: caravela_metadata_tags(entity)
     ]
+  end
+
+  # Default `actions` prop literal — permissive across the three
+  # action gates so a component mounted without the LiveView/
+  # controller wiring still renders every button. Real values
+  # arrive from `Caravela.*.action_access/2` at runtime.
+  defp default_actions_literal do
+    Caravela.Policy.action_gate_actions()
+    |> Enum.map(fn a -> "#{a}: true" end)
+    |> Enum.join(", ")
+    |> then(&("{ " <> &1 <> " }"))
   end
 
   # Emit the structured `@caravela-*` header the MCP tool

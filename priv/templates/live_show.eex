@@ -31,6 +31,7 @@ defmodule <%= inspect @module %> do
          |> assign(:context, context)
          |> assign(:<%= @singular %>, entity)
          |> assign(:field_access, <%= @context_short %>.field_access(<%= inspect @entity_name %>, context))
+         |> assign(:actions, <%= @context_short %>.action_access(<%= inspect @entity_name %>, entity, context))
          |> assign(:flash_message, nil)}
     end
   end
@@ -58,7 +59,8 @@ defmodule <%= inspect @module %> do
       props={%{
         <%= @singular %>: @<%= @singular %>,
         flash_message: @flash_message,
-        field_access: assigns[:field_access] || %{}
+        field_access: assigns[:field_access] || %{},
+        actions: assigns[:actions] || %{}
       }}
       socket={@socket}
     />

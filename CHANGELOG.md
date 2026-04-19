@@ -7,6 +7,82 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-04-19
+
+*Coverage + granularity. The generator now emits CI-ready test
+skeletons (ExUnit + Vitest) for every entity it scaffolds, and
+the frontend prop contract grows an `actions` channel so
+generated UIs can gate Delete / Edit / Create buttons on the
+policy engine — not just field visibility.*
+
+### Added
+
+- **`Caravela.Gen.LiveViewTest`** — emits one
+  `<entity>_live_test.exs` per `:live` entity, covering
+  Index / Show / Form with one `describe` per module and one
+  test per action. Carries `# TODO:` pointers where app fixtures
+  plug in.
+
+- **`Caravela.Gen.RestControllerTest`** — emits one
+  `<entity>_controller_test.exs` per `:rest` entity, covering
+  every HTTP action with happy + error-path tests. Assertions on
+  the structured-error shape from `Caravela.ChangesetTranslator`
+  are pre-wired.
+
+- **`Caravela.Gen.SvelteTest`** — Vitest +
+  `@testing-library/svelte` smoke tests colocated with every
+  generated Svelte file (`BookIndex.test.ts` next to
+  `BookIndex.svelte`). Tests mount the component with minimally
+  valid props and cover the structured-error prop shape.
+
+- **`--no-tests` flag on `mix caravela.gen.live`** — opt out of
+  test generation entirely. The default is to emit tests.
+
+- **`action_access/2` and `action_access/3` on the generated
+  context** — return `%{create: bool, update: bool |
+  :per_record, delete: bool | :per_record}` based on the policy
+  block. `/3` resolves `:per_record` gates against a specific
+  record for per-row decisions in index templates.
+
+- **`<Entity>Actions` TypeScript interface** — emitted in the
+  shared types file alongside `<Entity>FieldAccess`. Arity-2
+  gates type as `boolean | 'per_record'` so the frontend
+  knows when to call back per row.
+
+- **`actions` prop on every generated Svelte component** —
+  alongside `field_access`. `svelte_index.eex` now conditionally
+  renders the Delete / Edit / New buttons on
+  `actions.delete === true` / `actions.update === true` /
+  `actions.create !== false`. Users who want unconditional
+  rendering can remove the `{#if}` wrappers below the CUSTOM
+  marker.
+
+### Changed
+
+- **`mix caravela.gen.live` emits tests by default.** Running
+  against a domain now produces ~2× the files (tests +
+  implementation). Pass `--no-tests` to match pre-0.13 behavior.
+
+- **Generated LiveViews and REST controllers assign `:actions`**
+  alongside `:field_access` and pass both to the Svelte
+  component as separate props. Existing Svelte components that
+  only read `field_access` keep working; adding
+  `actions.delete === true` gating is opt-in.
+
+### Migration — v0.12 → v0.13
+
+- Re-running `mix caravela.gen.live` on an existing domain adds
+  the test files and rewrites the templates to thread
+  `actions`. The `# --- CUSTOM ---` markers are preserved, so
+  handwritten tweaks survive.
+- Add `vitest` and `@testing-library/svelte` as dev deps in
+  `assets/package.json` to run the generated Svelte tests —
+  Caravela doesn't manage `package.json` for you.
+- Existing Svelte components keep working without `actions`
+  (default is permissive). To gate buttons on policy, read
+  `actions.delete === true` / `actions.update === true` and
+  render conditionally.
+
 ## [0.12.0] — 2026-04-19
 
 *Two API-contract upgrades that make Caravela-generated frontends

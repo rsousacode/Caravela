@@ -137,6 +137,49 @@ defmodule <%= inspect @context_module %> do
 
 <% end %>  defp compute_field_access(_entity, _actor), do: %{}
 
+  @doc """
+  Returns the `action_access` map for `entity` — keys are
+  `:create`, `:update`, `:delete`; values are `true`, `false`, or
+  `:per_record` when the declared gate is arity-2
+  (record-dependent) and a specific record hasn't been supplied.
+
+  Frontends call this to decide whether to render action
+  affordances (Delete button, Edit link, etc.). For record-
+  dependent gates, call `action_access/3` with the record to
+  resolve `:per_record` into a concrete boolean.
+  """
+  def action_access(entity, context) do
+    actor = actor_from_context(context)
+    compute_action_access(entity, actor)
+  end
+
+  @doc """
+  Like `action_access/2` but also resolves `:per_record` gates
+  against a specific record. Use in index templates when the
+  frontend needs per-row action decisions.
+  """
+  def action_access(entity, record, context) do
+    actor = actor_from_context(context)
+    base = compute_action_access(entity, actor)
+
+    Enum.into(base, %{}, fn
+      {action, :per_record} ->
+        {action,
+         <%= inspect @domain_module %>.__caravela_policy_allow__(entity, action, actor, record)}
+
+      {action, bool} ->
+        {action, bool}
+    end)
+  end
+
+<%= for e <- @entities do %>  defp compute_action_access(<%= inspect e.entity_name %>, actor) do
+    %{
+<%= for a <- e.action_access_exprs do %>      <%= inspect a.name %> => <%= a.expr %>,
+<% end %>    }
+  end
+
+<% end %>  defp compute_action_access(_entity, _actor), do: %{}
+
   # --- Internal: policy + hook dispatch ------------------------------------
 
   defp apply_scope(query, entity, context) do

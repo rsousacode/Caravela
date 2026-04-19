@@ -31,6 +31,7 @@ defmodule <%= inspect @module %> do
      |> assign(:errors, changeset_errors(changeset))
      |> assign(:saving, false)
      |> assign(:field_access, <%= @context_short %>.field_access(<%= inspect @entity_name %>, context))
+     |> assign(:actions, <%= @context_short %>.action_access(<%= inspect @entity_name %>, entity, context))
      |> assign(:flash_message, nil)}
   end
 
@@ -110,7 +111,8 @@ defmodule <%= inspect @module %> do
         errors: @errors,
         saving: @saving,
         flash_message: @flash_message,
-        field_access: @field_access
+        field_access: @field_access,
+        actions: @actions
       }}
       socket={@socket}
     />

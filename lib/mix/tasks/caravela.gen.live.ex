@@ -38,6 +38,12 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
       WebSocket path) or `rest` (Inertia-style SSR via
       `caravela_svelte`). Without the flag, each entity's
       DSL-declared `frontend:` is used, defaulting to `:live`.
+    * `--no-tests` — skip generating ExUnit + Vitest test skeletons.
+      By default the generator emits one `<entity>_live_test.exs`,
+      one `<entity>_controller_test.exs`, and one `*.test.ts`
+      colocated next to each Svelte file. Tests use standard
+      Phoenix / Vitest idioms and carry `# TODO:` lines where
+      fixtures need to be filled in.
 
   Entities declared with `frontend: :rest` skip LiveView generation —
   Caravela prints a `caravela_rest` router snippet instead. Svelte
@@ -50,7 +56,15 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
 
   use Mix.Task
 
-  alias Caravela.Gen.{LiveView, RestController, Svelte}
+  alias Caravela.Gen.{
+    LiveView,
+    LiveViewTest,
+    RestController,
+    RestControllerTest,
+    Svelte,
+    SvelteTest
+  }
+
   alias Caravela.MixHelpers
   alias Caravela.Schema.{Domain, Entity}
 
@@ -59,7 +73,8 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
     output: :string,
     force: :boolean,
     with_domain: :boolean,
-    frontend: :string
+    frontend: :string,
+    no_tests: :boolean
   ]
 
   @impl Mix.Task
@@ -77,8 +92,17 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
     rest_files = RestController.render_all(domain, root: root, force: force?)
     svelte_files = Svelte.render_all(domain, root: root, force: force?)
 
+    test_files =
+      if Keyword.get(opts, :no_tests, false) do
+        []
+      else
+        LiveViewTest.render_all(domain, root: root, force: force?) ++
+          RestControllerTest.render_all(domain, root: root, force: force?) ++
+          SvelteTest.render_all(domain, root: root, force: force?)
+      end
+
     MixHelpers.write_files(
-      live_files ++ rest_files ++ svelte_files,
+      live_files ++ rest_files ++ svelte_files ++ test_files,
       root,
       force?,
       Keyword.get(opts, :dry_run, false)

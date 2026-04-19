@@ -42,6 +42,21 @@ export interface <%= e.ts_name %>FieldAccess {
 <%= for fa <- e.field_access do %>  <%= fa.name %>: <%= fa.ts_type %>;
 <% end %>}
 
+/**
+ * Policy-driven action gates for <%= e.ts_name %>. Generated from the
+ * `allow :action, fn …` entries in the domain DSL. Use these to
+ * decide whether to render action affordances (Delete button,
+ * Edit link, etc.) in the UI.
+ *
+ * `'per_record'` means the gate is record-dependent; the
+ * collection-level `actions` prop will carry `'per_record'`, and
+ * the server must resolve it for a specific row via the
+ * `action_access/3` context function.
+ */
+export interface <%= e.ts_name %>Actions {
+<%= for a <- e.actions do %>  <%= a.name %>: <%= a.ts_type %>;
+<% end %>}
+
 <% end %><%= if @authenticated do %>/**
  * The authenticated user injected as `current_user` on every
  * authenticated LiveView / Svelte component. Null on public pages.

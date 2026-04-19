@@ -25,6 +25,7 @@ defmodule <%= inspect @module %> do
       |> assign(:loading, false)
       |> assign(:flash_message, nil)
       |> assign(:field_access, <%= @context_short %>.field_access(<%= inspect @entity_name %>, context))
+      |> assign(:actions, <%= @context_short %>.action_access(<%= inspect @entity_name %>, context))
       |> assign(:<%= @plural %>, <%= @context_short %>.<%= @list_fn %>(context))
 
     {:ok, socket}
@@ -75,7 +76,8 @@ defmodule <%= inspect @module %> do
         <%= @plural %>: @<%= @plural %>,
         loading: @loading,
         flash_message: @flash_message,
-        field_access: @field_access
+        field_access: @field_access,
+        actions: @actions
       }}
       socket={@socket}
     />

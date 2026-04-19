@@ -74,7 +74,8 @@ defmodule Caravela.Gen.Context do
           delete_fn: String.to_atom("delete_#{singular}"),
           preloads: belongs_to_preloads(domain, entity.name),
           public_fields: public,
-          field_access_exprs: field_access_exprs(domain, entity.name, public, policy)
+          field_access_exprs: field_access_exprs(domain, entity.name, public, policy),
+          action_access_exprs: action_access_exprs(domain, entity.name, policy)
         }
       end)
 
@@ -116,6 +117,53 @@ defmodule Caravela.Gen.Context do
 
       %{name: field, expr: expr}
     end)
+  end
+
+  # For each of the three action gates (:create, :update, :delete)
+  # generate the right call expression for `action_access/2`:
+  #
+  #   * If no policy was declared on the entity, the domain's fallback
+  #     `__caravela_policy_allow__/3` answers (everything true under
+  #     `default_policy: :allow`, everything false under `:deny`).
+  #   * If an arity-1 gate exists (`allow :create, fn actor -> ... end`),
+  #     call arity-3 — the actor fully determines the answer.
+  #   * If an arity-2 gate exists (`allow :update, fn actor, record ->
+  #     ... end`), emit the literal atom `:per_record`. Action-level
+  #     access can't resolve without a record; the frontend gates per
+  #     row / per page using the custom code hook.
+  defp action_access_exprs(%Domain{module: mod}, entity_name, policy) do
+    Enum.map(Caravela.Policy.action_gate_actions(), fn action ->
+      expr = action_access_expr(mod, entity_name, action, policy)
+      %{name: action, expr: expr}
+    end)
+  end
+
+  defp action_access_expr(mod, entity_name, action, nil) do
+    # No policy block — the domain's arity-3 fallback is the
+    # source of truth (either permissive-everywhere or deny-
+    # everywhere under default_policy).
+    "#{inspect(mod)}.__caravela_policy_allow__(" <>
+      "#{inspect(entity_name)}, #{inspect(action)}, actor)"
+  end
+
+  defp action_access_expr(mod, entity_name, action, policy) do
+    case Caravela.Policy.Entry.action_gate(policy, action) do
+      %Caravela.Policy.ActionGate{arity: 1} ->
+        "#{inspect(mod)}.__caravela_policy_allow__(" <>
+          "#{inspect(entity_name)}, #{inspect(action)}, actor)"
+
+      %Caravela.Policy.ActionGate{arity: 2} ->
+        # Record-dependent gate; the global action_access/2 can't
+        # decide without knowing which record. Frontend gates per
+        # row via `action_access/3` (added alongside).
+        ":per_record"
+
+      nil ->
+        # The entity has a policy block but no gate for this action.
+        # The compiler's per-entity fallback decides — call arity-3.
+        "#{inspect(mod)}.__caravela_policy_allow__(" <>
+          "#{inspect(entity_name)}, #{inspect(action)}, actor)"
+    end
   end
 
   # Returns the list of association atoms a `belongs_to` relation from
