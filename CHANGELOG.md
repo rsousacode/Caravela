@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-04-19
+
+*Ships §9 of [llm_friendliness.md](https://github.com/rsousacode/caravela-plan/blob/main/phoenix/llm_friendliness.md) —
+the MCP server. An LLM host (Claude Code, Cursor, Zed) can now call
+Caravela tools directly instead of guessing DSL syntax. Shipped as
+part of the main `caravela` package (not a separate repo) because
+every tool is a thin wrapper over Caravela internals shipped in
+0.9.x.*
+
+### Added
+
+- **`Caravela.MCP`** — [Model Context Protocol](https://modelcontextprotocol.io)
+  server over stdio transport. JSON-RPC 2.0 framing, one message
+  per line. Protocol version `2024-11-05`.
+
+- **`mix caravela.mcp`** — launch the server in a Caravela project.
+  Compiles the project first (so domains are loadable for
+  introspection) and serves on stdin/stdout. Intended to be spawned
+  by an MCP host:
+
+      // Claude Code ~/.claude/claude_desktop_config.json
+      {
+        "mcpServers": {
+          "caravela": {
+            "command": "mix",
+            "args": ["caravela.mcp"],
+            "cwd": "/absolute/path/to/your/project"
+          }
+        }
+      }
+
+- **Four tools:**
+  - `caravela__describe_domain` — full IR for a domain module.
+  - `caravela__list_entities` — entity names (fast discovery).
+  - `caravela__describe_entity` — single entity + inbound / outbound
+    relations.
+  - `caravela__validate_dsl` — compile a candidate DSL source and
+    return either the resulting IR (on success) or a structured
+    `DSLError` / `GenError` / `CompileError` payload (on failure).
+    Rescues all exceptions — the tool never crashes the server.
+
+- **`Caravela.MCP.Tool`** behaviour. Third-party tools slot into the
+  same registry; shipped tools are all first-class citizens. See
+  `Caravela.MCP.Tool.ListEntities` for a minimal reference
+  implementation.
+
+- **`Caravela.MCP.Protocol`** — JSON-RPC 2.0 builders (`response/2`,
+  `error/4`, `method_not_found/2`, etc.) and encode / decode for
+  stdio framing.
+
+- **`Caravela.MCP.Router`** — pure method dispatch (map → map).
+  `Caravela.MCP.Server` wraps it with the stdio IO loop, split so
+  tests exercise the router without touching real IO.
+
+### Notes
+
+- **Stdio transport only in 0.10.** HTTP (for remote / team MCP)
+  and auth gating land in 1.1 per the plan.
+- **`caravela__validate_dsl` compiles arbitrary Elixir source.**
+  Safe on localhost stdio (the host supplying the source is the
+  user's own LLM client running on their machine). When HTTP
+  transport arrives, this tool MUST move behind auth + a proper
+  sandbox. Documented in the tool's moduledoc.
+- **Specs enforced.** All 10 new MCP modules (`Caravela.MCP`,
+  `Caravela.MCP.Protocol`, `Caravela.MCP.Tool`, `Caravela.MCP.Router`,
+  `Caravela.MCP.Server`, plus the 4 tool modules) are on the
+  `.credo.exs` allowlist — every public function carries a
+  `@spec`, enforced by CI.
+- **42 new tests**: protocol round-trip, router dispatch, each tool's
+  happy + error paths, full stdio handshake round-trip via
+  `StringIO`. 462 total now.
+
 ## [0.9.2] — 2026-04-19
 
 *Kicks off the §10 spec pass from

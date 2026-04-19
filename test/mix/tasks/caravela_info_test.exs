@@ -12,7 +12,7 @@ defmodule Mix.Tasks.Caravela.InfoTest do
     test "header mentions the domain module and Caravela version", %{ir: ir} do
       out = Info.render(ir, false)
       assert out =~ "MyApp.Domains.Library"
-      assert out =~ "Caravela 0.9"
+      assert out =~ ~r/Caravela \d+\.\d+\.\d+/
     end
 
     test "prints the domain flags block", %{ir: ir} do

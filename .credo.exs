@@ -179,7 +179,9 @@
                  "lib/caravela/auth.ex",
                  "lib/caravela/policy.ex",
                  "lib/caravela/schema.ex",
-                 "lib/caravela/gen/custom.ex"
+                 "lib/caravela/gen/custom.ex",
+                 "lib/caravela/mcp.ex",
+                 "lib/caravela/mcp/**/*.ex"
                ],
                excluded: []
              }
