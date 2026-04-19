@@ -87,8 +87,8 @@ defmodule Caravela.MCP.Tool.DescribeFrontendMode do
   # `caravela__describe_entity` for the full IR.
   defp notes_for(%{frontend: "live"}) do
     [
-      "Generator emits LiveView + CaravelaSvelte.svelte mount " <>
-        "(soon) — today still LiveSvelte.svelte.",
+      "Generator emits a LiveView trio (Index / Show / Form) per " <>
+        "entity, mounting `<CaravelaSvelte.svelte>`.",
       "Client-side interactivity dispatches via `live.pushEvent`."
     ]
   end

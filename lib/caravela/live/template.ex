@@ -15,7 +15,7 @@ defmodule Caravela.Live.Template do
 
         def render(assigns) do
           ~H\"\"\"
-          <LiveSvelte.svelte
+          <CaravelaSvelte.svelte
             name="library/BookEditor"
             props={%{book: @book, saving: @saving}}
             socket={@socket}

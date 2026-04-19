@@ -2,28 +2,42 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
   @shortdoc "Generate LiveView modules + typed Svelte components for a Caravela domain"
 
   @moduledoc """
-  Generates the frontend layer for a Caravela domain: a trio of LiveView
-  modules (index/show/form) per entity, plus typed Svelte components and
-  a TypeScript interfaces file.
+  Generates the full Svelte frontend layer for a Caravela domain:
 
-      mix caravela.gen.live MyApp.Domains.Library
+    * a trio of Phoenix LiveView modules (index / show / form) per
+      `frontend: :live` entity
+    * a Phoenix controller per `frontend: :rest` entity
+    * typed Svelte components for every entity (same component tree
+      under both render modes)
+    * a TypeScript interfaces file per domain
+    * ExUnit + Vitest test skeletons (opt out with `--no-tests`)
 
-  Generated files (single-version, non-tenant example):
+        mix caravela.gen.live MyApp.Domains.Library
+
+  Generated files (single-version, non-tenant example with one
+  `:live` entity and one `:rest` entity):
 
       lib/my_app_web/live/library/book_live/{index,show,form}.ex
+      lib/my_app_web/controllers/article_controller.ex
       assets/svelte/library/{BookIndex,BookShow,BookForm}.svelte
+      assets/svelte/library/{ArticleIndex,ArticleShow,ArticleForm}.svelte
+      assets/svelte/library/*.test.ts
       assets/svelte/types/library.ts
+      test/my_app_web/live/library/book_live_test.exs
+      test/my_app_web/controllers/article_controller_test.exs
 
-  Every LiveView mounts its Svelte component via `<LiveSvelte.svelte>`,
-  and delegates to the generated context module for CRUD calls —
-  authorization, hooks, and multi-tenant scoping flow through for free.
+  Every LiveView and controller mounts / renders its Svelte component
+  via `caravela_svelte` (both `<CaravelaSvelte.svelte>` for `:live`
+  and `CaravelaSvelte.render/3` for `:rest`), and delegates to the
+  generated context module for CRUD calls — authorization, hooks, and
+  multi-tenant scoping flow through for free.
 
-  Requires LiveSvelte in the consumer app:
+  Requires `caravela_svelte` in the consumer app:
 
-      {:live_svelte, "~> 0.19"}
+      {:caravela_svelte, "~> 0.1"}
 
-  After `mix deps.get`, follow the LiveSvelte docs to wire it into
-  `assets/js/app.js`.
+  After `mix deps.get`, follow the `caravela_svelte` docs to wire the
+  client runtime into `assets/js/app.js`.
 
   Flags:
 
@@ -31,24 +45,28 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
     * `--output DIR` — write under `DIR` instead of the project root
     * `--force`    — overwrite existing files without prompting
     * `--with-domain` — also emit a `Caravela.Live.Domain` companion
-      module per entity and generate `form.ex` from the Template-backed
-      variant. Useful as an onramp to the `Caravela.Live.*` runtime.
+      module per `:live` entity and generate `form.ex` from the
+      Template-backed variant. Useful as an onramp to the
+      `Caravela.Live.*` runtime.
     * `--frontend MODE` — override the render transport for every
-      entity in the domain. `MODE` is `live` (today's LiveView +
-      WebSocket path) or `rest` (Inertia-style SSR via
-      `caravela_svelte`). Without the flag, each entity's
-      DSL-declared `frontend:` is used, defaulting to `:live`.
+      entity in the domain. `MODE` is `live` (LiveView + WebSocket)
+      or `rest` (Inertia-style HTTP via `caravela_svelte`). Without
+      the flag, each entity's DSL-declared `frontend:` is used,
+      defaulting to `:live`.
     * `--no-tests` — skip generating ExUnit + Vitest test skeletons.
-      By default the generator emits one `<entity>_live_test.exs`,
-      one `<entity>_controller_test.exs`, and one `*.test.ts`
-      colocated next to each Svelte file. Tests use standard
-      Phoenix / Vitest idioms and carry `# TODO:` lines where
-      fixtures need to be filled in.
+      By default the generator emits one `<entity>_live_test.exs`
+      per `:live` entity, one `<entity>_controller_test.exs` per
+      `:rest` entity, and one `*.test.ts` colocated next to each
+      Svelte file. Tests use standard Phoenix / Vitest idioms and
+      carry `# TODO:` lines where fixtures need to be filled in.
 
-  Entities declared with `frontend: :rest` skip LiveView generation —
-  Caravela prints a `caravela_rest` router snippet instead. Svelte
-  components are emitted for both modes (the component contract is
-  mode-agnostic).
+  ## Router registration
+
+  The task prints a one-line hint pointing at `Caravela.Router`.
+  Drop `use Caravela.Router` + `caravela_routes MyApp.Domains.X`
+  into your router and every route for every entity expands at
+  compile time — no paste-snippet necessary. See `Caravela.Router`
+  for the full API.
 
   Regeneration preserves content below the `# --- CUSTOM ---` /
   `<!-- --- CUSTOM --- -->` marker in every file.
@@ -86,7 +104,7 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
     with_domain? = Keyword.get(opts, :with_domain, false)
     force? = Keyword.get(opts, :force, false)
 
-    warn_if_live_svelte_missing(domain)
+    warn_if_caravela_svelte_missing(domain)
 
     live_files = LiveView.render_all(domain, root: root, with_domain: with_domain?, force: force?)
     rest_files = RestController.render_all(domain, root: root, force: force?)
@@ -210,7 +228,7 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
   # caravela_svelte is the shared transport for both render modes. Warn
   # (don't fail) if the consumer app doesn't have it yet — they may be
   # adding it as part of running this task.
-  defp warn_if_live_svelte_missing(%Domain{} = _domain) do
+  defp warn_if_caravela_svelte_missing(%Domain{} = _domain) do
     unless Code.ensure_loaded?(CaravelaSvelte) do
       Mix.shell().info(
         "note: caravela_svelte not loaded. Add {:caravela_svelte, \"~> 0.1\"} " <>

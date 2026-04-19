@@ -1,31 +1,30 @@
 defmodule Caravela.Gen.LiveRoute do
   @moduledoc """
-  Renders router snippets for a Caravela domain's generated frontend
-  routes — one block per render mode:
+  Pure-string router-snippet renderer — a debugging / legacy helper.
 
-    * `:live` entities get `live` routes under the `:browser` pipeline
-      (today's LiveView + WebSocket path).
-    * `:rest` entities get `caravela_rest` routes under the `:browser`
-      pipeline, served via `caravela_svelte`'s Inertia-style HTTP
-      transport. The router macro is imported from
-      `CaravelaSvelte.Router`; this snippet prints the lines the
-      developer pastes, it doesn't require `caravela_svelte` to be
-      compiled at generation time.
+  > #### Superseded in v0.12 {: .warning}
+  >
+  > Caravela-generated apps register routes through the
+  > `Caravela.Router` macro (`caravela_routes/1`), which expands from
+  > the DSL at compile time. The `mix caravela.gen.live` task prints a
+  > one-line hint pointing at that macro instead of a paste-snippet.
+  >
+  > This module still renders the old paste-snippet string so scripts
+  > and introspection tools that want a textual representation of a
+  > domain's router shape can get one. New code should use
+  > `Caravela.Router` directly.
 
-  Caravela does not edit `router.ex` automatically — these snippets
-  are printed by `mix caravela.gen.live` for the developer to paste
-  into their app's composition root.
+  Emits one block per render mode:
 
-  Routes mirror the generator's own path convention:
+    * `:live` entities get `live "/<plural>", <Entity>Live.<Kind>`
+      lines under a `:browser` pipeline scope.
+    * `:rest` entities get `caravela_rest "/<plural>",
+      <Entity>Controller` (with `realtime: true` when the entity
+      opts in).
 
-      /library/books
-      /library/books/new
-      /library/books/:id
-      /library/books/:id/edit
-
-  When the domain declares `version "v1"`, the scope prefix shifts to
-  `/v1/library/...` and the web-module alias picks up the `V1.` segment,
-  matching `Caravela.Gen.LiveView`'s module layout.
+  When the domain declares `version "v1"`, the scope prefix shifts
+  to `/v1/<context>/...` and the web-module alias picks up the
+  `V1.` segment, matching `Caravela.Gen.LiveView`'s module layout.
   """
 
   alias Caravela.Schema.{Domain, Entity}

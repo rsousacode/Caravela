@@ -410,9 +410,9 @@ defmodule Caravela.Naming do
   end
 
   @doc """
-  LiveSvelte component reference — the path string passed to
-  `<LiveSvelte.svelte name="..." />`. Matches the Svelte-file path
-  relative to `assets/svelte/`, without the `.svelte` extension.
+  Svelte component reference — the path string passed to
+  `<CaravelaSvelte.svelte name="..." />`. Matches the Svelte-file
+  path relative to `assets/svelte/`, without the `.svelte` extension.
 
       svelte_component_ref(domain, :books, :index) #=> "library/BookIndex"
       #=> "v1/library/BookIndex"                   (when versioned)
@@ -468,8 +468,8 @@ defmodule Caravela.Naming do
   end
 
   @doc """
-  LiveSvelte component reference for an auth component (the string passed
-  to `<LiveSvelte.svelte name="..." />`).
+  Svelte component reference for an auth component (the string passed
+  to `<CaravelaSvelte.svelte name="..." />`).
 
       svelte_auth_component_ref(domain, "LoginForm") #=> "auth/LoginForm"
       #=> "v1/auth/LoginForm"                         (when versioned)

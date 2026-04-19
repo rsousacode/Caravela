@@ -5,7 +5,7 @@ DSL declares entities, relations, lifecycle hooks, and authorization
 rules; the compiler builds an IR and validates it before generators
 run.
 
-## `entity :<name> do ... end`
+## `entity :<name>, opts \\ [] do ... end`
 
 Declares one entity (one database table). The name is plural
 (`:books`); the generator derives a singular module name (`Book`), a
@@ -18,6 +18,41 @@ entity :books do
   field :isbn, :string
 end
 ```
+
+### Entity options
+
+The keyword list between the name and the `do` block selects render
+mode and real-time behaviour. Omit it and Caravela defaults to
+`frontend: :live, realtime: false`.
+
+| option       | values                 | effect                                                          |
+|--------------|------------------------|-----------------------------------------------------------------|
+| `:frontend`  | `:live` (default) / `:rest` | Which transport the generated UI uses. See [svelte frontend](livesvelte.md). |
+| `:realtime`  | `true` / `false` (default)  | SSE-driven live updates on top of `:rest`. Requires `frontend: :rest` — rejected on `:live` entities (LiveView already has a WebSocket). |
+
+```elixir
+# Classic LiveView + WebSocket.
+entity :authors do
+  field :name, :string, required: true
+end
+
+# Inertia-style HTTP transport via caravela_svelte.
+entity :books, frontend: :rest do
+  field :title, :string, required: true
+end
+
+# REST page with per-actor SSE updates on create / update / delete.
+entity :orders, frontend: :rest, realtime: true do
+  field :total, :decimal, precision: 10, scale: 2
+end
+```
+
+A single domain can mix both modes — `caravela_routes` in the router
+picks the right transport per entity automatically.
+
+Invalid option values (`frontend: :graphql`, non-boolean `realtime`,
+or unknown keys) raise `Caravela.DSLError` with actionable
+suggestions at compile time.
 
 ## `field :<name>, <type>, opts`
 

@@ -7,15 +7,18 @@ Add `caravela` to your deps in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:caravela, "~> 0.5.3"}
+    {:caravela, "~> 0.13"},
+    # Required for `mix caravela.gen.live` output (both `:live` and
+    # `:rest` render modes mount through this package).
+    {:caravela_svelte, "~> 0.1"}
   ]
 end
 ```
 
 Phoenix and `ecto_sql` are assumed to already be present in the host
 app; Caravela generates code against them. If you plan to generate
-GraphQL or LiveSvelte output, see [generators](generators.md) for the
-additional optional deps.
+GraphQL output, see [generators](generators.md) for the additional
+optional deps.
 
 ## 1. Declare a domain
 

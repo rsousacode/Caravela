@@ -119,7 +119,7 @@ defmodule MyAppWeb.BookEditorLive do
 
   def render(assigns) do
     ~H"""
-    <LiveSvelte.svelte
+    <CaravelaSvelte.svelte
       name="library/BookEditor"
       props={%{book: @book, saving: @saving, flash_message: @flash_message}}
       socket={@socket}

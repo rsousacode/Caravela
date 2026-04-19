@@ -174,7 +174,7 @@ defmodule MyAppWeb.Library.BookSyncLive do
 
   def render(assigns) do
     ~H"""
-    <LiveSvelte.svelte name="library/BookSync" props={%{sync_status: @sync_status}} socket={@socket} />
+    <CaravelaSvelte.svelte name="library/BookSync" props={%{sync_status: @sync_status}} socket={@socket} />
     """
   end
 end

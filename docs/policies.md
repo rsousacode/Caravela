@@ -136,43 +136,64 @@ policy never breaks existing call sites.
 
 The generated context then exposes:
 
-- `field_access(entity, context)` — the typed map passed to Svelte
-  via LiveSvelte.
+- `field_access(entity, context)` — per-field visibility map, passed
+  to Svelte as the `field_access` prop.
+- `action_access(entity, context)` — per-action map `%{create, update,
+  delete}` with values `true`, `false`, or `:per_record`.
+- `action_access(entity, record, context)` — same but resolves
+  `:per_record` gates against a specific row. Use in index templates
+  when the frontend needs per-row decisions.
 - `list_*` / `get_*` — read paths apply the scope *and* the field
   projection before returning.
-- `create_*` / `update_*` / `delete_*` — write paths hit both the
-  existing `can_*` check AND the new `allow` gate.
+- `create_*` / `update_*` / `delete_*` — write paths run the
+  corresponding `allow` gate before writing.
 
 ## TypeScript + Svelte shape
 
 Generated `assets/svelte/[v<N>/]types/<context>.ts`:
 
 ```ts
+// Field visibility — one entry per public field.
 export interface BookFieldAccess {
-  title: true;                // no rule → constant true
+  title: true;                 // no rule → constant true
   price: boolean;              // arity-1 → boolean
   internal_notes: boolean;
   cost_basis: boolean;
   author_email: 'per_record';  // arity-2 → per-row, field may be null
 }
+
+// Action gates — always the three standard actions.
+export interface BookActions {
+  create: boolean;                    // no gate or arity-1 → plain boolean
+  update: boolean | 'per_record';     // arity-2 → may be deferred per-row
+  delete: boolean;
+}
 ```
 
-Generated Svelte components accept it as a typed prop:
+Generated Svelte components accept both as typed props:
 
 ```svelte
 <script lang="ts">
-  import type { Book, BookFieldAccess, LiveHandle } from '../types/library';
+  import type { Book, BookFieldAccess, BookActions, LiveHandle } from '../types/library';
 
   let {
     books = [],
-    field_access = { title: true, isbn: true, published: true, price: true, ... },
+    field_access = { title: true, isbn: true, published: true, price: true, /* … */ },
+    actions = { create: true, update: true, delete: true },
     live
   }: {
     books?: Book[];
     field_access?: BookFieldAccess;
+    actions?: BookActions;
     live: LiveHandle;
   } = $props();
 </script>
+
+<div class="toolbar">
+  {#if actions.create !== false}
+    <button onclick={() => live.pushEvent('new', {})}>New book</button>
+  {/if}
+</div>
 
 <table>
   <thead>
@@ -180,11 +201,35 @@ Generated Svelte components accept it as a typed prop:
       <th>Title</th>
       {#if field_access.price}<th>Price</th>{/if}
       {#if field_access.internal_notes}<th>Notes</th>{/if}
+      <th></th>
     </tr>
   </thead>
-  <!-- ... -->
+  <tbody>
+    {#each books as book (book.id)}
+      <tr>
+        <td>{book.title}</td>
+        {#if field_access.price}<td>{book.price}</td>{/if}
+        {#if field_access.internal_notes}<td>{book.internal_notes}</td>{/if}
+        <td>
+          {#if actions.update === true}
+            <button onclick={() => live.pushEvent('edit', { id: book.id })}>Edit</button>
+          {/if}
+          {#if actions.delete === true}
+            <button onclick={() => live.pushEvent('delete', { id: book.id })}>Delete</button>
+          {/if}
+        </td>
+      </tr>
+    {/each}
+  </tbody>
 </table>
 ```
+
+**Arity-2 action gates** (`allow :update, fn actor, record -> … end`)
+can't resolve at the collection level — `actions.update` carries
+`'per_record'` in index views. Resolve it server-side per row via
+`action_access/3`, or skip the button and gate on
+`actions.update === true` (the strict-equality check above
+hides buttons unless the action is unconditionally allowed).
 
 Fields without a rule are rendered unconditionally; fields with a rule
 are wrapped in `{#if field_access.<name>}`.
