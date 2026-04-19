@@ -98,6 +98,7 @@ defmodule Caravela.IR do
       plural: Naming.plural_string(entity.name),
       module: inspect(Naming.entity_module(domain, entity.name)),
       table: Naming.table_name(domain, entity.name),
+      frontend: Atom.to_string(entity.frontend),
       fields: Enum.map(entity.fields, &field_ir/1),
       policy: policy_ir(Domain.policy_for(domain, entity.name)),
       auth: auth_ir(entity.auth)

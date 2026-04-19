@@ -33,6 +33,16 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
     * `--with-domain` — also emit a `Caravela.Live.Domain` companion
       module per entity and generate `form.ex` from the Template-backed
       variant. Useful as an onramp to the `Caravela.Live.*` runtime.
+    * `--frontend MODE` — override the render transport for every
+      entity in the domain. `MODE` is `live` (today's LiveView +
+      WebSocket path) or `rest` (Inertia-style SSR via
+      `caravela_svelte`). Without the flag, each entity's
+      DSL-declared `frontend:` is used, defaulting to `:live`.
+
+  Entities declared with `frontend: :rest` skip LiveView generation —
+  Caravela prints a `caravela_rest` router snippet instead. Svelte
+  components are emitted for both modes (the component contract is
+  mode-agnostic).
 
   Regeneration preserves content below the `# --- CUSTOM ---` /
   `<!-- --- CUSTOM --- -->` marker in every file.
@@ -42,23 +52,26 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
 
   alias Caravela.Gen.{LiveRoute, LiveView, Svelte}
   alias Caravela.MixHelpers
+  alias Caravela.Schema.{Domain, Entity}
 
   @switches [
     dry_run: :boolean,
     output: :string,
     force: :boolean,
-    with_domain: :boolean
+    with_domain: :boolean,
+    frontend: :string
   ]
 
   @impl Mix.Task
   def run(argv) do
     {opts, args, _} = OptionParser.parse(argv, switches: @switches)
     domain = MixHelpers.load_domain!(args)
+    domain = apply_frontend_override(domain, Keyword.get(opts, :frontend))
     root = Keyword.get(opts, :output, File.cwd!())
     with_domain? = Keyword.get(opts, :with_domain, false)
     force? = Keyword.get(opts, :force, false)
 
-    warn_if_live_svelte_missing()
+    warn_if_live_svelte_missing(domain)
 
     live_files = LiveView.render_all(domain, root: root, with_domain: with_domain?, force: force?)
     svelte_files = Svelte.render_all(domain, root: root, force: force?)
@@ -73,26 +86,75 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
     unless Keyword.get(opts, :dry_run, false) do
       Mix.shell().info("\n" <> LiveRoute.render(domain))
 
-      Mix.shell().info("""
-
-      Next steps:
-
-        1. Add {:live_svelte, "~> 0.19"} to mix.exs (if you haven't already).
-        2. Install deps:  mix deps.get && cd assets && npm install && cd ..
-        3. Wire LiveSvelte into assets/js/app.js (see LiveSvelte docs).
-        4. Paste the router snippet above into lib/<app>_web/router.ex.
-        5. Start the server: mix phx.server
-      """)
+      if Enum.any?(domain.entities, &(&1.frontend == :rest)) do
+        Mix.shell().info(rest_next_steps())
+      else
+        Mix.shell().info(live_next_steps())
+      end
     end
 
     :ok
   end
 
+  # Per-entity overrides keep `:rest` declarations even when the flag
+  # requests `:live`; the flag only wins for entities that didn't
+  # declare a mode explicitly. That way `--frontend rest` is a blanket
+  # opt-in for unconfigured entities, not a silent override of
+  # intentional declarations.
+  defp apply_frontend_override(%Domain{} = domain, nil), do: domain
+
+  defp apply_frontend_override(%Domain{} = domain, raw) when is_binary(raw) do
+    mode =
+      case raw do
+        "live" -> :live
+        "rest" -> :rest
+        other -> Mix.raise("--frontend expects \"live\" or \"rest\", got: #{inspect(other)}")
+      end
+
+    entities =
+      Enum.map(domain.entities, fn %Entity{} = entity -> %{entity | frontend: mode} end)
+
+    %{domain | entities: entities}
+  end
+
+  defp live_next_steps do
+    """
+
+    Next steps:
+
+      1. Add {:live_svelte, "~> 0.19"} to mix.exs (if you haven't already).
+      2. Install deps:  mix deps.get && cd assets && npm install && cd ..
+      3. Wire LiveSvelte into assets/js/app.js (see LiveSvelte docs).
+      4. Paste the router snippet above into lib/<app>_web/router.ex.
+      5. Start the server: mix phx.server
+    """
+  end
+
+  defp rest_next_steps do
+    """
+
+    Next steps:
+
+      1. Add {:caravela_svelte, "~> 0.1"} to mix.exs for `:rest` entities.
+         (`:live` entities still use {:live_svelte, "~> 0.19"}.)
+      2. Install deps:  mix deps.get && cd assets && npm install && cd ..
+      3. Wire CaravelaSvelte into assets/js/app.js (see caravela_svelte docs).
+      4. Paste the router snippet above into lib/<app>_web/router.ex.
+      5. REST controllers are not yet emitted by this generator —
+         scaffold them by hand using CaravelaSvelte.render/3 until
+         the Caravela C.1 enrichment phase lands.
+      6. Start the server: mix phx.server
+    """
+  end
+
   # LiveSvelte is an optional dep of Caravela. Warn (don't fail) if the
   # consumer app doesn't have it yet — they may be adding it as part of
-  # running this task.
-  defp warn_if_live_svelte_missing do
-    unless Code.ensure_loaded?(LiveSvelte) do
+  # running this task. Only warn when at least one entity actually
+  # needs LiveSvelte (i.e. stays on `:live`).
+  defp warn_if_live_svelte_missing(%Domain{} = domain) do
+    needs_live_svelte? = Enum.any?(domain.entities, fn %Entity{frontend: f} -> f == :live end)
+
+    if needs_live_svelte? and not Code.ensure_loaded?(LiveSvelte) do
       Mix.shell().info(
         "note: LiveSvelte not loaded. Add {:live_svelte, \"~> 0.19\"} to mix.exs " <>
           "and run `mix deps.get` before booting the generated LiveViews."

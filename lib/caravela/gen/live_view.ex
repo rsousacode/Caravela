@@ -42,7 +42,9 @@ defmodule Caravela.Gen.LiveView do
       Template-backed variant. Index and show stay plain regardless.
   """
   def render_all(%Domain{} = domain, opts \\ []) do
-    Enum.flat_map(domain.entities, fn entity ->
+    domain.entities
+    |> Enum.filter(&(&1.frontend == :live))
+    |> Enum.flat_map(fn entity ->
       base = [
         render_entity(domain, entity, :index, opts),
         render_entity(domain, entity, :show, opts),

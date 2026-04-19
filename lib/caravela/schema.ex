@@ -77,13 +77,22 @@ defmodule Caravela.Schema do
   end
 
   defmodule Entity do
-    @moduledoc "A domain entity (table)."
-    defstruct [:name, :auth, fields: []]
+    @moduledoc """
+    A domain entity (table).
+
+    `frontend` selects the render transport for generated UI:
+    `:live` (default) emits LiveView + WebSocket; `:rest` emits a
+    controller + Inertia-style HTTP response via `caravela_svelte`.
+    """
+    defstruct [:name, :auth, fields: [], frontend: :live]
+
+    @type frontend :: :live | :rest
 
     @type t :: %__MODULE__{
             name: atom(),
             fields: [Field.t()],
-            auth: AuthConfig.t() | nil
+            auth: AuthConfig.t() | nil,
+            frontend: frontend()
           }
   end
 

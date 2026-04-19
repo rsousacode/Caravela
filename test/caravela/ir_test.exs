@@ -64,6 +64,10 @@ defmodule Caravela.IRTest do
       assert e.table == "library_books"
     end
 
+    test "entity carries its render-mode frontend (defaults to \"live\")", %{books: e} do
+      assert e.frontend == "live"
+    end
+
     test "fields are maps with name, type, required, opts", %{books: e} do
       title = Enum.find(e.fields, &(&1.name == "title"))
       assert title.type == "string"

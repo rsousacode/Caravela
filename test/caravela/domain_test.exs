@@ -206,4 +206,64 @@ defmodule Caravela.DomainTest do
       assert %Caravela.Schema.Domain{} = SoftCycle.__caravela_domain__()
     end
   end
+
+  describe "entity frontend option" do
+    defmodule MixedFrontend do
+      use Caravela.Domain
+
+      entity :authors do
+        field :name, :string, required: true
+      end
+
+      entity :books, frontend: :rest do
+        field :title, :string, required: true
+      end
+
+      entity :chapters, frontend: :live do
+        field :number, :integer
+      end
+    end
+
+    test "defaults to :live when frontend is not declared" do
+      domain = MixedFrontend.__caravela_domain__()
+      authors = Enum.find(domain.entities, &(&1.name == :authors))
+      assert authors.frontend == :live
+    end
+
+    test "records :rest when declared" do
+      domain = MixedFrontend.__caravela_domain__()
+      books = Enum.find(domain.entities, &(&1.name == :books))
+      assert books.frontend == :rest
+    end
+
+    test "records :live when declared explicitly" do
+      domain = MixedFrontend.__caravela_domain__()
+      chapters = Enum.find(domain.entities, &(&1.name == :chapters))
+      assert chapters.frontend == :live
+    end
+
+    test "rejects unknown frontend values" do
+      assert_raise Caravela.DSLError, ~r/frontend: …` expects/, fn ->
+        defmodule BadFrontend do
+          use Caravela.Domain
+
+          entity :things, frontend: :graphql do
+            field :name, :string
+          end
+        end
+      end
+    end
+
+    test "rejects unknown entity options" do
+      assert_raise Caravela.DSLError, ~r/unknown options/, fn ->
+        defmodule UnknownOpt do
+          use Caravela.Domain
+
+          entity :things, bogus: true do
+            field :name, :string
+          end
+        end
+      end
+    end
+  end
 end

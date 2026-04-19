@@ -67,6 +67,7 @@ defmodule Caravela.Domain do
       import Caravela.Domain,
         only: [
           entity: 2,
+          entity: 3,
           field: 2,
           field: 3,
           relation: 3,
@@ -142,11 +143,30 @@ defmodule Caravela.Domain do
       entity :books do
         field :title, :string, required: true
       end
+
+  Entity-level options may be passed between the name and the `do`
+  block:
+
+      entity :books, frontend: :rest do
+        field :title, :string, required: true
+      end
+
+  Supported options:
+
+    * `:frontend` — render transport for generated UI. One of
+      `:live` (default — LiveView + WebSocket) or `:rest`
+      (Inertia-style HTTP via `caravela_svelte`). Entities stay on
+      `:live` when the option is omitted, so existing domains are
+      unaffected.
   """
-  defmacro entity(name, do: block) do
-    quote do
+  defmacro entity(name, opts \\ [], do: block) do
+    quote bind_quoted: [name: name, opts: opts, block: Macro.escape(block)],
+          unquote: true,
+          location: :keep do
+      Caravela.Domain.__validate_entity_opts__!(name, opts)
+
       @caravela_current_fields []
-      @caravela_current_auth {unquote(name), nil}
+      @caravela_current_auth {name, nil}
       unquote(block)
       fields = Enum.reverse(Module.get_attribute(__MODULE__, :caravela_current_fields))
 
@@ -157,14 +177,65 @@ defmodule Caravela.Domain do
         end
 
       @caravela_entities %Caravela.Schema.Entity{
-        name: unquote(name),
+        name: name,
         fields: fields,
-        auth: auth
+        auth: auth,
+        frontend: Keyword.get(opts, :frontend, :live)
       }
 
       Module.delete_attribute(__MODULE__, :caravela_current_fields)
       Module.delete_attribute(__MODULE__, :caravela_current_auth)
     end
+  end
+
+  @valid_frontends [:live, :rest]
+
+  @doc false
+  @spec __validate_entity_opts__!(atom(), keyword()) :: :ok
+  def __validate_entity_opts__!(name, opts) when is_list(opts) do
+    unless Keyword.keyword?(opts) do
+      raise Caravela.DSLError,
+        message: "`entity :#{name}, <opts>` expects a keyword list, got: #{inspect(opts)}",
+        suggestion: "entity :#{name}, frontend: :rest do\n  ...\nend",
+        docs_url: "https://hexdocs.pm/caravela/dsl.html#entities"
+    end
+
+    case Keyword.get(opts, :frontend, :live) do
+      value when value in @valid_frontends ->
+        :ok
+
+      other ->
+        raise Caravela.DSLError,
+          message:
+            "`entity :#{name}, frontend: …` expects one of #{inspect(@valid_frontends)}, " <>
+              "got: #{inspect(other)}",
+          suggestion:
+            "entity :#{name}, frontend: :rest do\n  ...\nend\n\n" <>
+              "# Or omit `frontend:` to default to :live.",
+          docs_url: "https://hexdocs.pm/caravela/render-modes.html"
+    end
+
+    unknown = Keyword.keys(opts) -- [:frontend]
+
+    if unknown != [] do
+      raise Caravela.DSLError,
+        message:
+          "`entity :#{name}, <opts>` received unknown options: " <>
+            inspect(unknown),
+        suggestion:
+          "Currently supported entity options: [:frontend].\n" <>
+            "Did you mean to declare these inside the `do` block instead?",
+        docs_url: "https://hexdocs.pm/caravela/dsl.html#entities"
+    end
+
+    :ok
+  end
+
+  def __validate_entity_opts__!(name, opts) do
+    raise Caravela.DSLError,
+      message: "`entity :#{name}, <opts>` expects a keyword list, got: #{inspect(opts)}",
+      suggestion: "entity :#{name}, frontend: :rest do\n  ...\nend",
+      docs_url: "https://hexdocs.pm/caravela/dsl.html#entities"
   end
 
   @doc """
