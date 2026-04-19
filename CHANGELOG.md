@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.2] — 2026-04-20
+
+*One-file regression fix caught while building the render-modes
+showcase in `caravela_demo`. First `mix caravela.gen.live` against
+a domain with any `frontend: :rest` entity emits a controller that
+fails to compile.*
+
+### Fixed
+
+- **`Caravela.Gen.RestController` emitted a stray trailing `end`**
+  under `defmodule … end`, producing
+  `(SyntaxError) unexpected reserved word: end`. The
+  `priv/templates/rest_controller.eex` template closed with
+  `<%= @custom_marker %>` **followed by** a hard-coded `end` — but
+  `@custom_marker` (via `Caravela.Gen.Custom.marker_block/0`)
+  already embeds the module-closing `end`, so the result was two
+  `end`s in a row. Every sibling Elixir template
+  (`controller.eex`, `context.eex`) correctly relies on
+  `@custom_marker` to close the module; the REST template was the
+  outlier. Trailing `end` line removed.
+
+  Affects every regeneration against a domain with
+  `entity :foo, frontend: :rest do … end` — so the 0.11 headline
+  feature was DOA on a fresh install. Masked in 0.11 / 0.13.0 /
+  0.13.1 because the `caravela_demo` regression suite only
+  exercised `:live` entities.
+
 ## [0.13.1] — 2026-04-19
 
 *Bug-fix roll-up from [bug_improvements_3.md](https://github.com/rsousacode/caravela-plan/blob/main/reviews/bug_improvements_3.md),

@@ -261,4 +261,3 @@ defmodule <%= inspect @controller_module %> do
     do: conn |> put_status(:unprocessable_entity) |> text(inspect(reason))
 
   <%= @custom_marker %>
-end

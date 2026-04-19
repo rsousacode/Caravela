@@ -116,6 +116,28 @@ defmodule Caravela.RenderModesGenTest do
       refute source =~ "broadcast_patch"
       refute source =~ "patch_ops"
     end
+
+    # Regression — 0.13.2 — a stray `end` after `<%= @custom_marker %>` in
+    # `priv/templates/rest_controller.eex` shipped a controller that failed
+    # to compile with `unexpected reserved word: end`. Every other test in
+    # this file only regex-matched the emitted source; none parsed it, so
+    # the bug landed unblocked. Keep this test whenever adding a new
+    # generator: if the output isn't valid Elixir, nothing downstream
+    # matters.
+    test "emits valid Elixir for every :rest entity / realtime combination" do
+      for {domain_module, label} <- [
+            {MixedDomain, "mixed"},
+            {AllRestDomain, "all_rest"},
+            {RealtimeDomain, "realtime"}
+          ] do
+        domain = domain_module.__caravela_domain__()
+
+        for {_path, source} <- RestController.render_all(domain, root: System.tmp_dir!()) do
+          assert {:ok, _} = Code.string_to_quoted(source),
+                 "#{label} domain emitted invalid Elixir:\n#{source}"
+        end
+      end
+    end
   end
 
   describe "Svelte @caravela-* metadata header" do
