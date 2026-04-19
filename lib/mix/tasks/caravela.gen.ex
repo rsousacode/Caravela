@@ -33,18 +33,20 @@ defmodule Mix.Tasks.Caravela.Gen do
     {opts, args, _} = OptionParser.parse(argv, switches: @switches)
     domain = MixHelpers.load_domain!(args)
     root = Keyword.get(opts, :output, File.cwd!())
+    force? = Keyword.get(opts, :force, false)
+    gen_opts = [root: root, force: force?]
 
-    schemas = EctoSchema.render_all(domain, root: root)
+    schemas = EctoSchema.render_all(domain, gen_opts)
     migration = Migration.render(domain)
-    context = Context.render(domain, root: root)
-    controllers = Controller.render_all(domain, root: root)
+    context = Context.render(domain, gen_opts)
+    controllers = Controller.render_all(domain, gen_opts)
 
     files = [migration | schemas] ++ [context] ++ controllers
 
     MixHelpers.write_files(
       files,
       root,
-      Keyword.get(opts, :force, false),
+      force?,
       Keyword.get(opts, :dry_run, false)
     )
 

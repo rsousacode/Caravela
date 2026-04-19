@@ -35,6 +35,9 @@ defmodule <%= inspect @module %> do
     end
   end
 
+  # --- CUSTOM :mount_<%= @singular %>_show ---
+  # --- END :mount_<%= @singular %>_show ---
+
   @impl true
   def handle_event("edit", %{"id" => id}, socket) do
     {:noreply, push_navigate(socket, to: "<%= @edit_path %>" <> id <> "/edit")}
@@ -43,6 +46,9 @@ defmodule <%= inspect @module %> do
   def handle_event("back", _params, socket) do
     {:noreply, push_navigate(socket, to: "<%= @index_path %>")}
   end
+
+  # --- CUSTOM :handle_event_<%= @singular %>_show ---
+  # --- END :handle_event_<%= @singular %>_show ---
 
   @impl true
   def render(assigns) do

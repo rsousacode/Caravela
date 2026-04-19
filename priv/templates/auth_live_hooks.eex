@@ -52,4 +52,7 @@ defmodule <%= inspect @module %> do
     end
   end
 
+  # --- CUSTOM :auth_live_hooks ---
+  # --- END :auth_live_hooks ---
+
   <%= @custom_marker %>

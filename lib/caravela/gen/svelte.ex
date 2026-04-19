@@ -24,7 +24,7 @@ defmodule Caravela.Gen.Svelte do
   """
 
   alias Caravela.Schema.{Domain, Entity, Field}
-  alias Caravela.{Naming, Tenant}
+  alias Caravela.{Gen, Naming, Tenant}
 
   @types_template Path.expand("../../../priv/templates/svelte_types.eex", __DIR__)
   @index_template Path.expand("../../../priv/templates/svelte_index.eex", __DIR__)
@@ -53,7 +53,8 @@ defmodule Caravela.Gen.Svelte do
 
     source =
       EEx.eval_file(@types_template, assigns: assigns, trim: true)
-      |> merge_ts(existing)
+      |> Gen.Custom.merge_with_file(existing, style: :ts, force: force?(opts))
+      |> Gen.Custom.stamp_header(style: :ts, generator: :svelte_types)
 
     {path, source}
   end
@@ -99,10 +100,13 @@ defmodule Caravela.Gen.Svelte do
 
     source =
       EEx.eval_file(template, assigns: assigns, trim: true)
-      |> merge_svelte(existing)
+      |> Gen.Custom.merge_with_file(existing, style: :svelte, force: force?(opts))
+      |> Gen.Custom.stamp_header(style: :svelte, generator: :"svelte_#{kind}")
 
     {path, source}
   end
+
+  defp force?(opts), do: Keyword.get(opts, :force, false)
 
   # --- Template selection -------------------------------------------------
 
@@ -356,38 +360,6 @@ defmodule Caravela.Gen.Svelte do
     |> String.split("_")
     |> Enum.map(&String.capitalize/1)
     |> Enum.join(" ")
-  end
-
-  # --- CUSTOM-marker merging ---------------------------------------------
-
-  @ts_marker "// --- CUSTOM ---"
-  @svelte_marker "<!-- --- CUSTOM --- -->"
-
-  defp merge_ts(new_source, path) do
-    case File.read(path) do
-      {:ok, existing} -> merge_marker(new_source, existing, @ts_marker)
-      {:error, _} -> new_source
-    end
-  end
-
-  defp merge_svelte(new_source, path) do
-    case File.read(path) do
-      {:ok, existing} -> merge_marker(new_source, existing, @svelte_marker)
-      {:error, _} -> new_source
-    end
-  end
-
-  defp merge_marker(new_source, existing_source, marker) do
-    case String.split(existing_source, marker, parts: 2) do
-      [_, rest] ->
-        case String.split(new_source, marker, parts: 2) do
-          [head, _] -> head <> marker <> rest
-          _ -> new_source
-        end
-
-      _ ->
-        new_source
-    end
   end
 
   defp existing_path(path, opts) do

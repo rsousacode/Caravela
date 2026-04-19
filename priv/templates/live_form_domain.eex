@@ -49,4 +49,7 @@ defmodule <%= inspect @module %> do
     }
   end
 
+  # --- CUSTOM :updaters_<%= @singular %> ---
+  # --- END :updaters_<%= @singular %> ---
+
   <%= @custom_marker %>

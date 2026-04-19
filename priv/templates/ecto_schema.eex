@@ -31,6 +31,9 @@ defmodule <%= inspect @module %> do
 <%= for {line, _} <- @validation_lines do %>    |> <%= line %>
 <% end %><%= for r <- @belongs_to do %>    |> foreign_key_constraint(:<%= r.fk %>)
 <% end %>  end
+
+  # --- CUSTOM :changeset ---
+  # --- END :changeset ---
 <%= if @auth_password? do %>
   @doc """
   Changeset for self-registration. Same casting rules as `changeset/2`,

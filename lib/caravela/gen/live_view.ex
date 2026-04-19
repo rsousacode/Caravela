@@ -67,8 +67,9 @@ defmodule Caravela.Gen.LiveView do
 
     source =
       EEx.eval_file(template_for(kind, opts), assigns: assigns, trim: true)
-      |> Gen.Custom.merge_with_file(existing)
+      |> Gen.Custom.merge_with_file(existing, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :"live_view_#{kind}")
 
     {path, source}
   end
@@ -88,8 +89,9 @@ defmodule Caravela.Gen.LiveView do
 
     source =
       EEx.eval_file(@form_domain_template, assigns: assigns, trim: true)
-      |> Gen.Custom.merge_with_file(existing)
+      |> Gen.Custom.merge_with_file(existing, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :live_view_form_domain)
 
     {path, source}
   end

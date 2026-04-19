@@ -38,13 +38,14 @@ defmodule Mix.Tasks.Caravela.Gen.Graphql do
     ensure_absinthe!()
     domain = MixHelpers.load_domain!(args)
     root = Keyword.get(opts, :output, File.cwd!())
+    force? = Keyword.get(opts, :force, false)
 
-    files = GraphQL.render_all(domain, root: root)
+    files = GraphQL.render_all(domain, root: root, force: force?)
 
     MixHelpers.write_files(
       files,
       root,
-      Keyword.get(opts, :force, false),
+      force?,
       Keyword.get(opts, :dry_run, false)
     )
   end

@@ -47,6 +47,9 @@ defmodule <%= inspect @module %> do
     {:noreply, assign(socket, :sessions, Auth.list_sessions(user, current))}
   end
 
+  # --- CUSTOM :auth_live_session_list ---
+  # --- END :auth_live_session_list ---
+
   @impl true
   def render(assigns) do
     ~H"""

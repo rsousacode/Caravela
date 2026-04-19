@@ -68,6 +68,9 @@ defmodule <%= inspect @module %> do
     end
   end
 
+  # --- CUSTOM :auth_plugs ---
+  # --- END :auth_plugs ---
+
   defp get_bearer_token(conn) do
     case get_req_header(conn, "authorization") do
       ["Bearer " <> token] -> token

@@ -37,4 +37,7 @@ defmodule <%= inspect @module %> do
   @doc "Session TTL in days when :remember_me is set."
   def remember_me_ttl_days, do: @remember_me_ttl_days
 
+  # --- CUSTOM :auth_session_schema ---
+  # --- END :auth_session_schema ---
+
   <%= @custom_marker %>

@@ -19,6 +19,9 @@ defmodule <%= inspect @controller_module %> do
     json(conn, %{data: Enum.map(items, &serialize/1)})
   end
 
+  # --- CUSTOM :index_<%= @singular %> ---
+  # --- END :index_<%= @singular %> ---
+
   def show(conn, %{"id" => id}) do
     context = build_context(conn)
 
@@ -27,6 +30,9 @@ defmodule <%= inspect @controller_module %> do
       entity -> json(conn, %{data: serialize(entity)})
     end
   end
+
+  # --- CUSTOM :show_<%= @singular %> ---
+  # --- END :show_<%= @singular %> ---
 
   def create(conn, params) do
     context = build_context(conn)
@@ -47,6 +53,9 @@ defmodule <%= inspect @controller_module %> do
     end
   end
 
+  # --- CUSTOM :create_<%= @singular %> ---
+  # --- END :create_<%= @singular %> ---
+
   def update(conn, %{"id" => id} = params) do
     context = build_context(conn)
     attrs = Map.get(params, "<%= @singular %>", Map.drop(params, ["id"]))
@@ -65,6 +74,9 @@ defmodule <%= inspect @controller_module %> do
     end
   end
 
+  # --- CUSTOM :update_<%= @singular %> ---
+  # --- END :update_<%= @singular %> ---
+
   def delete(conn, %{"id" => id}) do
     context = build_context(conn)
 
@@ -80,6 +92,9 @@ defmodule <%= inspect @controller_module %> do
         end
     end
   end
+
+  # --- CUSTOM :delete_<%= @singular %> ---
+  # --- END :delete_<%= @singular %> ---
 
   # --- Internal --------------------------------------------------------
 

@@ -57,8 +57,9 @@ defmodule Caravela.Gen.AuthLive do
 
     source =
       EEx.eval_file(template, assigns: assigns, trim: true)
-      |> Gen.Custom.merge_with_file(existing)
+      |> Gen.Custom.merge_with_file(existing, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :"auth_live_#{Macro.underscore(name)}")
 
     {path, source}
   end

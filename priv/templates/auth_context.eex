@@ -38,6 +38,9 @@ defmodule <%= inspect @module %> do
     |> Repo.insert()
   end
 
+  # --- CUSTOM :register ---
+  # --- END :register ---
+
   ## Login
 
   def login(email, password, context \\ %{}) do
@@ -48,6 +51,9 @@ defmodule <%= inspect @module %> do
       {:ok, user, create_session(user, context)}
     end
   end
+
+  # --- CUSTOM :login ---
+  # --- END :login ---
 
   ## Sessions
 
@@ -97,6 +103,9 @@ defmodule <%= inspect @module %> do
     Repo.delete_all(from s in <%= @session_short %>, where: s.token == ^token)
     :ok
   end
+
+  # --- CUSTOM :logout ---
+  # --- END :logout ---
 
   def logout_all(user) do
     Repo.delete_all(from s in <%= @session_short %>, where: s.user_id == ^user.id)
@@ -303,6 +312,9 @@ defmodule <%= inspect @module %> do
       {:ok, user}
     end
   end
+
+  # --- CUSTOM :reset_password ---
+  # --- END :reset_password ---
 <% end %>
 <%= if @confirm? do %>
   ## Email confirmation
@@ -337,6 +349,9 @@ defmodule <%= inspect @module %> do
       |> Repo.update()
     end
   end
+
+  # --- CUSTOM :confirm_email ---
+  # --- END :confirm_email ---
 <% end %>
   ## Internal helpers
 

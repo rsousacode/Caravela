@@ -28,6 +28,9 @@ defmodule <%= inspect @context_module %> do
     |> project_fields(<%= inspect e.entity_name %>, context)
   end
 
+  # --- CUSTOM :<%= e.list_fn %> ---
+  # --- END :<%= e.list_fn %> ---
+
   @doc "Fetch a single `<%= e.singular %>` by id. Returns `nil` if not found or not visible."
   def <%= e.get_fn %>(id, context \\ %{}) do
     <%= e.module_short %>
@@ -37,6 +40,9 @@ defmodule <%= inspect @context_module %> do
     |> Repo.get(id)
     |> project_field(<%= inspect e.entity_name %>, context)
   end
+
+  # --- CUSTOM :<%= e.get_fn %> ---
+  # --- END :<%= e.get_fn %> ---
 
   @doc "Fetch a single `<%= e.singular %>` by id. Raises if not found or not visible."
   def <%= e.get_bang_fn %>(id, context \\ %{}) do
@@ -64,6 +70,9 @@ defmodule <%= inspect @context_module %> do
     end
   end
 
+  # --- CUSTOM :<%= e.create_fn %> ---
+  # --- END :<%= e.create_fn %> ---
+
   @doc "Update a `<%= e.singular %>`: authorize, apply on_update hook, update."
   def <%= e.update_fn %>(%<%= e.module_short %>{} = <%= e.singular %>, attrs, context \\ %{}) do
     with :ok <- policy_authorize(<%= inspect e.entity_name %>, :update, <%= e.singular %>, context) do
@@ -73,6 +82,9 @@ defmodule <%= inspect @context_module %> do
       |> Repo.update()
     end
   end
+
+  # --- CUSTOM :<%= e.update_fn %> ---
+  # --- END :<%= e.update_fn %> ---
 
   @doc """
   Delete a `<%= e.singular %>`: authorize, run on_delete hook, delete.
@@ -97,6 +109,9 @@ defmodule <%= inspect @context_module %> do
       entity -> <%= e.delete_fn %>(entity, context)
     end
   end
+
+  # --- CUSTOM :<%= e.delete_fn %> ---
+  # --- END :<%= e.delete_fn %> ---
 <% end %>
   # --- Field access metadata -----------------------------------------------
   #

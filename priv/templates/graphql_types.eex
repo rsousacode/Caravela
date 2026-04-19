@@ -18,5 +18,8 @@ defmodule <%= inspect @types_module %> do
 <%= for f <- e.fields do %>    field <%= inspect f.gql_name %>, <%= f.gql_type %>
 <% end %><%= for a <- e.assocs do %>    field <%= inspect a.gql_name %>, <%= a.gql_type %>, resolve: dataloader(<%= inspect @context_module %>)
 <% end %>  end
+
+  # --- CUSTOM :type_<%= e.gql_name %> ---
+  # --- END :type_<%= e.gql_name %> ---
 <% end %>
   <%= @custom_marker %>

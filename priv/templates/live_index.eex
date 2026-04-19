@@ -29,6 +29,9 @@ defmodule <%= inspect @module %> do
     {:ok, socket}
   end
 
+  # --- CUSTOM :mount_<%= @plural %>_index ---
+  # --- END :mount_<%= @plural %>_index ---
+
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
     context = socket.assigns.context
@@ -58,6 +61,9 @@ defmodule <%= inspect @module %> do
   def handle_event("new", _params, socket) do
     {:noreply, push_navigate(socket, to: "<%= @new_path %>")}
   end
+
+  # --- CUSTOM :handle_event_<%= @plural %>_index ---
+  # --- END :handle_event_<%= @plural %>_index ---
 
   @impl true
   def render(assigns) do

@@ -32,8 +32,9 @@ defmodule Caravela.Gen.EctoSchema do
     rendered = EEx.eval_file(@template_path, assigns: assigns, trim: true)
 
     rendered
-    |> Gen.Custom.merge_with_file(existing_path)
+    |> Gen.Custom.merge_with_file(existing_path, opts)
     |> Caravela.Gen.Format.try_format()
+    |> Gen.Custom.stamp_header(generator: :ecto_schema)
   end
 
   # --- Assigns -----------------------------------------------------------

@@ -35,6 +35,9 @@ defmodule <%= inspect @queries_module %> do
       end
     end
 
+    # --- CUSTOM :queries_<%= e.singular %> ---
+    # --- END :queries_<%= e.singular %> ---
+
 <% end %>  end
 
   # --- Internal --------------------------------------------------------

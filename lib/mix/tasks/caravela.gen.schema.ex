@@ -27,7 +27,8 @@ defmodule Mix.Tasks.Caravela.Gen.Schema do
     domain = MixHelpers.load_domain!(args)
 
     root = Keyword.get(opts, :output, File.cwd!())
-    schemas = EctoSchema.render_all(domain, root: root)
+    force? = Keyword.get(opts, :force, false)
+    schemas = EctoSchema.render_all(domain, root: root, force: force?)
     migration = Migration.render(domain)
 
     files = [migration | schemas]
@@ -35,7 +36,7 @@ defmodule Mix.Tasks.Caravela.Gen.Schema do
     MixHelpers.write_files(
       files,
       root,
-      Keyword.get(opts, :force, false),
+      force?,
       Keyword.get(opts, :dry_run, false)
     )
   end

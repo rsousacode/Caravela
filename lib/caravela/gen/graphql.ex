@@ -45,8 +45,9 @@ defmodule Caravela.Gen.GraphQL do
 
     source =
       EEx.eval_file(@types_template, assigns: types_assigns(domain), trim: true)
-      |> Gen.Custom.merge_with_file(existing)
+      |> Gen.Custom.merge_with_file(existing, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :graphql_types)
 
     {path, source}
   end
@@ -58,8 +59,9 @@ defmodule Caravela.Gen.GraphQL do
 
     source =
       EEx.eval_file(@queries_template, assigns: queries_assigns(domain), trim: true)
-      |> Gen.Custom.merge_with_file(existing)
+      |> Gen.Custom.merge_with_file(existing, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :graphql_queries)
 
     {path, source}
   end
@@ -71,8 +73,9 @@ defmodule Caravela.Gen.GraphQL do
 
     source =
       EEx.eval_file(@mutations_template, assigns: mutations_assigns(domain), trim: true)
-      |> Gen.Custom.merge_with_file(existing)
+      |> Gen.Custom.merge_with_file(existing, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :graphql_mutations)
 
     {path, source}
   end

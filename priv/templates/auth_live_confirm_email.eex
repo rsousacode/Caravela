@@ -49,4 +49,7 @@ defmodule <%= inspect @module %> do
 
   defp humanize_error(other), do: inspect(other)
 
+  # --- CUSTOM :auth_live_confirm_email ---
+  # --- END :auth_live_confirm_email ---
+
   <%= @custom_marker %>

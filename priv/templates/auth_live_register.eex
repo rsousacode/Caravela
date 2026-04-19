@@ -20,6 +20,9 @@ defmodule <%= inspect @module %> do
      |> assign(:flash_message, nil)}
   end
 
+  # --- CUSTOM :auth_live_register_mount ---
+  # --- END :auth_live_register_mount ---
+
   @impl true
   def handle_event("register", params, socket) do
     socket = assign(socket, loading: true, errors: %{})
@@ -51,6 +54,9 @@ defmodule <%= inspect @module %> do
          |> assign(:errors, %{base: [to_string(reason)]})}
     end
   end
+
+  # --- CUSTOM :auth_live_register_handle_event ---
+  # --- END :auth_live_register_handle_event ---
 
   @impl true
   def render(assigns) do

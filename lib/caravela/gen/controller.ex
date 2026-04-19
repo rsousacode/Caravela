@@ -34,8 +34,9 @@ defmodule Caravela.Gen.Controller do
 
     source =
       rendered
-      |> Gen.Custom.merge_with_file(existing_path)
+      |> Gen.Custom.merge_with_file(existing_path, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :controller)
 
     {path, source}
   end

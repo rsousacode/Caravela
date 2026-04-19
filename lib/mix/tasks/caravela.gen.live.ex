@@ -56,16 +56,17 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
     domain = MixHelpers.load_domain!(args)
     root = Keyword.get(opts, :output, File.cwd!())
     with_domain? = Keyword.get(opts, :with_domain, false)
+    force? = Keyword.get(opts, :force, false)
 
     warn_if_live_svelte_missing()
 
-    live_files = LiveView.render_all(domain, root: root, with_domain: with_domain?)
-    svelte_files = Svelte.render_all(domain, root: root)
+    live_files = LiveView.render_all(domain, root: root, with_domain: with_domain?, force: force?)
+    svelte_files = Svelte.render_all(domain, root: root, force: force?)
 
     MixHelpers.write_files(
       live_files ++ svelte_files,
       root,
-      Keyword.get(opts, :force, false),
+      force?,
       Keyword.get(opts, :dry_run, false)
     )
 

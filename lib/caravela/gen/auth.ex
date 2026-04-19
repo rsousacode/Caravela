@@ -152,8 +152,9 @@ defmodule Caravela.Gen.Auth do
 
     source =
       EEx.eval_file(@context_template, assigns: context_assigns(domain), trim: true)
-      |> Gen.Custom.merge_with_file(existing)
+      |> Gen.Custom.merge_with_file(existing, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :auth_context)
 
     {path, source}
   end
@@ -166,8 +167,9 @@ defmodule Caravela.Gen.Auth do
 
     source =
       EEx.eval_file(@session_template, assigns: session_assigns(domain), trim: true)
-      |> Gen.Custom.merge_with_file(existing)
+      |> Gen.Custom.merge_with_file(existing, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :auth_session_schema)
 
     {path, source}
   end
@@ -180,8 +182,9 @@ defmodule Caravela.Gen.Auth do
 
     source =
       EEx.eval_file(@plugs_template, assigns: plugs_assigns(domain), trim: true)
-      |> Gen.Custom.merge_with_file(existing)
+      |> Gen.Custom.merge_with_file(existing, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :auth_plugs)
 
     {path, source}
   end
@@ -194,8 +197,9 @@ defmodule Caravela.Gen.Auth do
 
     source =
       EEx.eval_file(@live_hooks_template, assigns: live_hooks_assigns(domain), trim: true)
-      |> Gen.Custom.merge_with_file(existing)
+      |> Gen.Custom.merge_with_file(existing, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :auth_live_hooks)
 
     {path, source}
   end
@@ -208,8 +212,9 @@ defmodule Caravela.Gen.Auth do
 
     source =
       EEx.eval_file(@controller_template, assigns: controller_assigns(domain), trim: true)
-      |> Gen.Custom.merge_with_file(existing)
+      |> Gen.Custom.merge_with_file(existing, opts)
       |> Caravela.Gen.Format.try_format()
+      |> Gen.Custom.stamp_header(generator: :auth_controller)
 
     {path, source}
   end

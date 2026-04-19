@@ -7,6 +7,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] — 2026-04-19
+
+### Added
+
+- **Checksum header on every generated file.** Every regenerable file
+  now starts with a line of the form
+
+      # caravela-gen: generator=context version=0.8.1 above_sha256=<hex>
+
+  (or the `//`- / `<!-- -->`-wrapped equivalent for TS and Svelte
+  outputs). The sha256 covers the content above the `CUSTOM` marker.
+  On regeneration the hash is recomputed against what's on disk; if
+  the above-marker region was edited by hand, the generator aborts
+  via `Mix.raise/1` and points the user at three remediation steps
+  (move edits below the marker, re-run with `--force`, or `--dry-run`
+  to inspect). Named-block bodies are *excluded* from the hash, so
+  edits inside a per-function `# --- CUSTOM :name ---` block don't
+  trigger a mismatch.
+
+- **Per-function named CUSTOM blocks.** Every Elixir-style generator
+  now emits pairs like
+
+      # --- CUSTOM :list_books ---
+      # --- END :list_books ---
+
+  at natural extension points — after each CRUD function in the
+  context, after each action in the controller, around the changeset
+  in the Ecto schema, per entity in the GraphQL types/queries/
+  mutations, after `mount/3` and before `render/3` in LiveViews, and
+  around register/login/logout/reset/confirm in the auth context.
+  Regeneration merges content from these blocks by name: add user
+  code inside `:list_books`, regen freely, code is preserved.
+
+- **Orphan detection.** If a named block exists on disk but no
+  longer has a counterpart in the generator output (e.g. an entity
+  was renamed), regen emits a `Mix.shell/0` warning listing every
+  orphan name and discards the content. The file-tail `CUSTOM`
+  marker's contents still carry through for freeform user code.
+
+- **`--force` flag on every `mix caravela.gen.*` task** now threads
+  through to `Caravela.Gen.Custom.verify_existing!/2`, printing a
+  yellow warning with the stored/current hashes and proceeding to
+  overwrite. Previously the flag only controlled the file-exists
+  prompt.
+
+### Fixed
+
+- **Merge bug when the marker string appeared inside a docstring.**
+  The old `String.split(…, marker, parts: 2)` cut on the first
+  occurrence, which in Elixir templates was the moduledoc prose
+  (`Custom code placed below the \`# --- CUSTOM ---\` marker is
+  preserved.`). Regeneration then produced garbled output for any
+  template whose moduledoc mentioned the marker. `Gen.Custom.merge/3`
+  and the hash splitter now use `:binary.matches/2 |> List.last/1`
+  so they always latch onto the real tail marker.
+
+### Changed
+
+- `Caravela.Gen.Custom` rewritten from the file-tail-only merge
+  helper into a full verification + merge pipeline with pluggable
+  comment styles (`:elixir`, `:ts`, `:svelte`). Public API additions:
+  `named_empty/2`, `extract_named_blocks/1`, `merge_named/3`,
+  `stamp_header/2`, `verify_existing!/2`, `verify_contents/2`,
+  `parse_header_line/2`. `marker/1` now takes an optional style.
+
+- The ad-hoc `@ts_marker` / `@svelte_marker` / `merge_ts/2` /
+  `merge_svelte/2` duplicated across `Gen.Svelte`, `Gen.SvelteForm`,
+  and `Gen.AuthSvelte` has been removed — all three now delegate to
+  `Caravela.Gen.Custom.merge_with_file/3` with `style: :ts` or
+  `style: :svelte`.
+
+### Migration
+
+No source changes required. The first time you run any
+`mix caravela.gen.*` task after upgrading, Caravela treats existing
+files as "unheadered legacy" and silently stamps a header. Subsequent
+regens enforce the checksum. If you had been editing *above* the
+`# --- CUSTOM ---` marker, the first post-upgrade regen after that
+edit will abort with a clear message; re-run with `--force` (to
+overwrite) or move the edits below the marker (to keep them).
+
 ## [0.8.0] — 2026-04-18
 
 ### Changed (breaking)

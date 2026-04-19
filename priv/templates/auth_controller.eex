@@ -23,6 +23,9 @@ defmodule <%= inspect @module %> do
     end
   end
 
+  # --- CUSTOM :auth_controller_register ---
+  # --- END :auth_controller_register ---
+
   def login(conn, %{"email" => email, "password" => password}) do
     case Auth.login(email, password, request_context(conn)) do
       {:ok, _user, token} ->
@@ -37,6 +40,9 @@ defmodule <%= inspect @module %> do
     end
   end
 
+  # --- CUSTOM :auth_controller_login ---
+  # --- END :auth_controller_login ---
+
   def logout(conn, _params) do
     token = Plug.Conn.get_session(conn, :user_token)
     if token, do: Auth.logout(token)
@@ -45,6 +51,9 @@ defmodule <%= inspect @module %> do
     |> Plug.Conn.delete_session(:user_token)
     |> send_resp(:no_content, "")
   end
+
+  # --- CUSTOM :auth_controller_logout ---
+  # --- END :auth_controller_logout ---
 <%= if @reset? do %>
   def request_password_reset(conn, %{"email" => email}) do
     _ = Auth.request_password_reset(email, request_context(conn))

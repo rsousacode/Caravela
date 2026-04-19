@@ -63,6 +63,9 @@ defmodule <%= inspect @module %> do
     end
   end
 
+  # --- CUSTOM :auth_live_token_manager ---
+  # --- END :auth_live_token_manager ---
+
   @impl true
   def render(assigns) do
     ~H"""

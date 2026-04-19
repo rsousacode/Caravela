@@ -29,13 +29,14 @@ defmodule Mix.Tasks.Caravela.Gen.Context do
     {opts, args, _} = OptionParser.parse(argv, switches: @switches)
     domain = MixHelpers.load_domain!(args)
     root = Keyword.get(opts, :output, File.cwd!())
+    force? = Keyword.get(opts, :force, false)
 
-    file = Context.render(domain, root: root)
+    file = Context.render(domain, root: root, force: force?)
 
     MixHelpers.write_files(
       [file],
       root,
-      Keyword.get(opts, :force, false),
+      force?,
       Keyword.get(opts, :dry_run, false)
     )
   end

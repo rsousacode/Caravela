@@ -45,13 +45,14 @@ defmodule Mix.Tasks.Caravela.Gen.Auth do
 
     root = Keyword.get(opts, :output, File.cwd!())
     skip_ui? = Keyword.get(opts, :skip_ui, false)
+    force? = Keyword.get(opts, :force, false)
 
-    files = Auth.render_all(domain, root: root, skip_ui: skip_ui?)
+    files = Auth.render_all(domain, root: root, skip_ui: skip_ui?, force: force?)
 
     MixHelpers.write_files(
       files,
       root,
-      Keyword.get(opts, :force, false),
+      force?,
       Keyword.get(opts, :dry_run, false)
     )
 

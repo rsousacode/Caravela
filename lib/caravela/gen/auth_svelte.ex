@@ -20,7 +20,7 @@ defmodule Caravela.Gen.AuthSvelte do
   """
 
   alias Caravela.Schema.{AuthConfig, Domain, Entity, Field}
-  alias Caravela.{Naming, Tenant}
+  alias Caravela.{Gen, Naming, Tenant}
 
   @login_template Path.expand("../../../priv/templates/svelte_auth_login.eex", __DIR__)
   @register_template Path.expand("../../../priv/templates/svelte_auth_register.eex", __DIR__)
@@ -28,8 +28,6 @@ defmodule Caravela.Gen.AuthSvelte do
   @confirm_template Path.expand("../../../priv/templates/svelte_auth_confirm_email.eex", __DIR__)
   @token_template Path.expand("../../../priv/templates/svelte_auth_token_manager.eex", __DIR__)
   @sessions_template Path.expand("../../../priv/templates/svelte_auth_session_list.eex", __DIR__)
-
-  @marker "<!-- --- CUSTOM --- -->"
 
   @doc "Render every auth Svelte component relevant to the domain."
   def render_all(%Domain{} = domain, opts \\ []) do
@@ -67,7 +65,8 @@ defmodule Caravela.Gen.AuthSvelte do
 
     source =
       EEx.eval_file(template, assigns: assigns, trim: true)
-      |> merge_svelte(existing)
+      |> Gen.Custom.merge_with_file(existing, style: :svelte, force: Keyword.get(opts, :force, false))
+      |> Gen.Custom.stamp_header(style: :svelte, generator: :"auth_svelte_#{Macro.underscore(name)}")
 
     {path, source}
   end
@@ -275,25 +274,6 @@ defmodule Caravela.Gen.AuthSvelte do
     |> String.split("_")
     |> Enum.map(&String.capitalize/1)
     |> Enum.join(" ")
-  end
-
-  defp merge_svelte(new_source, path) do
-    case File.read(path) do
-      {:ok, existing} ->
-        case String.split(existing, @marker, parts: 2) do
-          [_, rest] ->
-            case String.split(new_source, @marker, parts: 2) do
-              [head, _] -> head <> @marker <> rest
-              _ -> new_source
-            end
-
-          _ ->
-            new_source
-        end
-
-      {:error, _} ->
-        new_source
-    end
   end
 
   defp existing_path(path, opts) do

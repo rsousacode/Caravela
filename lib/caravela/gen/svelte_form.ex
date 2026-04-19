@@ -28,10 +28,9 @@ defmodule Caravela.Gen.SvelteForm do
   """
 
   alias Caravela.Schema.{Domain, Entity, Field}
-  alias Caravela.{Naming, Tenant}
+  alias Caravela.{Gen, Naming, Tenant}
 
   @template Path.expand("../../../priv/templates/svelte_form_dynamic.eex", __DIR__)
-  @svelte_marker "<!-- --- CUSTOM --- -->"
 
   @doc """
   Render the dynamic Svelte form. `form_module` must use
@@ -49,7 +48,8 @@ defmodule Caravela.Gen.SvelteForm do
 
     source =
       EEx.eval_file(@template, assigns: assigns, trim: true)
-      |> merge_svelte(existing)
+      |> Gen.Custom.merge_with_file(existing, style: :svelte, force: Keyword.get(opts, :force, false))
+      |> Gen.Custom.stamp_header(style: :svelte, generator: :svelte_form_dynamic)
 
     {path, source}
   end
@@ -222,28 +222,6 @@ defmodule Caravela.Gen.SvelteForm do
     |> String.split("_")
     |> Enum.map(&String.capitalize/1)
     |> Enum.join(" ")
-  end
-
-  # --- CUSTOM-marker merging -------------------------------------------
-
-  defp merge_svelte(new_source, path) do
-    case File.read(path) do
-      {:ok, existing} -> merge_marker(new_source, existing, @svelte_marker)
-      {:error, _} -> new_source
-    end
-  end
-
-  defp merge_marker(new_source, existing_source, marker) do
-    case String.split(existing_source, marker, parts: 2) do
-      [_, rest] ->
-        case String.split(new_source, marker, parts: 2) do
-          [head, _] -> head <> marker <> rest
-          _ -> new_source
-        end
-
-      _ ->
-        new_source
-    end
   end
 
   defp existing_path(path, opts) do

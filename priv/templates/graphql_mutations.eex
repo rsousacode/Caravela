@@ -78,6 +78,9 @@ defmodule <%= inspect @mutations_module %> do
       end
     end
 
+    # --- CUSTOM :mutations_<%= e.singular %> ---
+    # --- END :mutations_<%= e.singular %> ---
+
 <% end %>  end
 
   # --- Internal --------------------------------------------------------
