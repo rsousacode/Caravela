@@ -23,6 +23,7 @@ defmodule <%= inspect @controller_module %> do
   use Phoenix.Controller, formats: [:html]
 
   alias <%= inspect @context_module %>
+  alias Caravela.ChangesetTranslator
   alias CaravelaSvelte.Caravela, as: CS
 
   def index(conn, _params) do
@@ -126,7 +127,7 @@ defmodule <%= inspect @controller_module %> do
         |> put_status(:unprocessable_entity)
         |> CaravelaSvelte.render(<%= inspect @component_form %>, %{
           <%= @singular %>: changeset.data,
-          errors: CS.errors(changeset),
+          errors: ChangesetTranslator.translate(changeset),
           action: "create",
           field_access: field_access
         })
@@ -165,7 +166,7 @@ defmodule <%= inspect @controller_module %> do
             |> put_status(:unprocessable_entity)
             |> CaravelaSvelte.render(<%= inspect @component_form %>, %{
               <%= @singular %>: entity,
-              errors: CS.errors(changeset),
+              errors: ChangesetTranslator.translate(changeset),
               action: "update",
               field_access: field_access
             })

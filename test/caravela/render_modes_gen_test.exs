@@ -89,13 +89,13 @@ defmodule Caravela.RenderModesGenTest do
       refute Enum.any?(paths, &String.contains?(&1, "author_controller.ex"))
     end
 
-    test "emits a controller wiring put_field_access + errors helpers" do
+    test "emits a controller wiring put_field_access + structured errors" do
       domain = AllRestDomain.__caravela_domain__()
       [{_path, source}] = RestController.render_all(domain, root: System.tmp_dir!())
 
       assert source =~ "CaravelaSvelte.Caravela"
       assert source =~ "put_field_access"
-      assert source =~ "CS.errors(changeset)"
+      assert source =~ "ChangesetTranslator.translate(changeset)"
       assert source =~ "CaravelaSvelte.render"
     end
 

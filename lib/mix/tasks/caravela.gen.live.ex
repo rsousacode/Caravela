@@ -50,7 +50,7 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
 
   use Mix.Task
 
-  alias Caravela.Gen.{LiveRoute, LiveView, RestController, Svelte}
+  alias Caravela.Gen.{LiveView, RestController, Svelte}
   alias Caravela.MixHelpers
   alias Caravela.Schema.{Domain, Entity}
 
@@ -85,17 +85,50 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
     )
 
     unless Keyword.get(opts, :dry_run, false) do
-      Mix.shell().info("\n" <> LiveRoute.render(domain))
-
       if Enum.any?(domain.entities, &(&1.frontend == :rest)) do
-        Mix.shell().info(rest_next_steps())
+        Mix.shell().info(router_hint(domain, rest?: true))
       else
-        Mix.shell().info(live_next_steps())
+        Mix.shell().info(router_hint(domain, rest?: false))
       end
     end
 
     :ok
   end
+
+  # A single line the developer drops into their scope, instead of
+  # pasting a snippet for every entity. `caravela_routes MyApp.Domains.X`
+  # expands at compile time — see `Caravela.Router` for semantics.
+  defp router_hint(%Domain{module: domain_module} = _domain, rest?: rest?) do
+    base = """
+
+    Routes — add one line to lib/<app>_web/router.ex:
+
+        defmodule MyAppWeb.Router do
+          use Phoenix.Router
+          use Caravela.Router
+    """
+
+    rest_import =
+      if rest? do
+        "      import CaravelaSvelte.Router  # required for :rest entities\n"
+      else
+        ""
+      end
+
+    tail = """
+
+          scope "/", MyAppWeb do
+            pipe_through :browser
+            caravela_routes #{inspect(domain_module)}
+          end
+        end
+    """
+
+    base <> rest_import <> tail <> next_steps(rest?)
+  end
+
+  defp next_steps(true = _rest?), do: rest_next_steps()
+  defp next_steps(false = _rest?), do: live_next_steps()
 
   # Per-entity overrides keep `:rest` declarations even when the flag
   # requests `:live`; the flag only wins for entities that didn't
@@ -128,8 +161,7 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
          and delegate changeset errors to CaravelaSvelte.Caravela.errors/1.
       2. Install deps:  mix deps.get && cd assets && npm install && cd ..
       3. Wire CaravelaSvelte into assets/js/app.js (see caravela_svelte docs).
-      4. Paste the router snippet above into lib/<app>_web/router.ex.
-      5. Start the server: mix phx.server
+      4. Start the server: mix phx.server
     """
   end
 
@@ -143,13 +175,11 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
          :rest renders via CaravelaSvelte.render/3.
       2. Install deps:  mix deps.get && cd assets && npm install && cd ..
       3. Wire CaravelaSvelte into assets/js/app.js (see caravela_svelte docs).
-      4. `import CaravelaSvelte.Router` at the top of your router module,
-         then paste the router snippet above under your :browser pipeline.
-      5. Review generated controllers under lib/<app>_web/controllers/ —
+      4. Review generated controllers under lib/<app>_web/controllers/ —
          they call CaravelaSvelte.Caravela.put_field_access/2 and
          errors/1 automatically. Custom logic goes below the
          `# --- CUSTOM ---` markers and is preserved on regeneration.
-      6. Start the server: mix phx.server
+      5. Start the server: mix phx.server
     """
   end
 

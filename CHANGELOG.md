@@ -7,6 +7,86 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-04-19
+
+*Two API-contract upgrades that make Caravela-generated frontends
+adoption-ready for real teams: a compile-time router macro that
+replaces the paste-snippet workflow, and a structured /
+Gettext-ready changeset error shape.*
+
+### Added
+
+- **`Caravela.Router` + `caravela_routes/1,2`** — drop one line into
+  `router.ex` and every route for every entity in a domain is
+  registered at compile time. `:live` entities expand into
+  `live "/<plural>", <Entity>Live.<Kind>` calls; `:rest` entities
+  expand into `caravela_rest "/<plural>", <Entity>Controller`
+  (with `realtime: true` appended when the entity opts in).
+  Version-aware: respects `version "v1"` by inserting the version
+  segment into module aliases so Phoenix scope-alias resolution
+  still works.
+
+      defmodule MyAppWeb.Router do
+        use Phoenix.Router
+        use Caravela.Router
+        import CaravelaSvelte.Router
+
+        scope "/", MyAppWeb.Library do
+          pipe_through :browser
+          caravela_routes MyApp.Domains.Library
+        end
+      end
+
+  Accepts a `:session` option forwarded to Phoenix's
+  `live_session/3` so a group of `:live` entities can share an
+  `on_mount` hook without boilerplate.
+
+- **`Caravela.ChangesetTranslator`** — returns
+  `%{field => [%{code: atom, params: map, message: String.t}]}`
+  instead of the flat `%{field => [msg]}` Phoenix ships by
+  default. Frontends key on `:code` for localization, interpolate
+  `:params` into their own translation template, and fall back to
+  `:message` when no frontend translation exists.
+
+  Gettext integration is one config line:
+
+      config :caravela, :changeset_translator, MyAppWeb.Gettext
+
+  Caravela calls the backend's `dgettext/3` and `dngettext/5`
+  (plural forms via Ecto's `:count` option) — the same contract
+  Phoenix's own `ErrorHelpers.translate_error/1` uses, so existing
+  `priv/gettext/<locale>/LC_MESSAGES/errors.po` locale files work
+  unchanged.
+
+### Changed
+
+- **Generated LiveView forms and REST controllers** now produce
+  the structured error shape via `Caravela.ChangesetTranslator`,
+  shared across both transports. Replaces the flat
+  `CaravelaSvelte.Caravela.errors/1` delegation added in v0.11 —
+  that helper stays in `caravela_svelte` for backward compat, but
+  Caravela-generated code no longer uses it.
+
+- **`mix caravela.gen.live` no longer prints a paste-snippet for
+  the router.** It prints a minimal one-line hint pointing at the
+  `caravela_routes` macro. Existing apps that pasted snippets
+  manually keep working; the generator just stops nagging.
+
+### Migration — v0.11 → v0.12
+
+- Replace any pasted router snippet with `use Caravela.Router` +
+  `caravela_routes <DomainModule>`. The macro-expanded routes
+  match what v0.11 printed, so URL paths and module names don't
+  change.
+- Frontend consumers that expect the old `%{field => [msg]}`
+  error shape need to adapt. The new payload is
+  `%{field => [%{code, params, message}]}`. Most Svelte form
+  helpers only need to read `err.message` — a one-line change.
+  For i18n, read `err.code` + `err.params` instead.
+- To stay on English-only Phoenix defaults, no config is needed —
+  the translator falls back to interpolating `%{param}`
+  placeholders when no `:changeset_translator` is configured.
+
 ## [0.11.0] — 2026-04-19
 
 *Ships the Caravela ↔ `caravela_svelte` integration

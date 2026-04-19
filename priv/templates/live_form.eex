@@ -144,13 +144,14 @@ defmodule <%= inspect @module %> do
   defp new?(%<%= @entity_short %>{id: nil}), do: true
   defp new?(%<%= @entity_short %>{}), do: false
 
-  # Delegates to `caravela_svelte`'s authoritative implementation so
-  # the error shape stays identical across `:live` and `:rest` modes.
-  # `CaravelaSvelte.Caravela.errors/1` returns `%{field => [msg, ...]}`
-  # — the same shape `useLiveForm` (LiveView) and `useForm` (REST)
-  # consume on the client.
+  # Structured error shape shared across `:live` and `:rest` — see
+  # `Caravela.ChangesetTranslator`. Each error is a
+  # `%{code, params, message}` map; frontends key on `:code` for
+  # localization and fall back to `:message` when no translation
+  # exists. Configure a Gettext backend via
+  # `config :caravela, :changeset_translator, MyAppWeb.Gettext`.
   defp changeset_errors(%Ecto.Changeset{} = cs),
-    do: CaravelaSvelte.Caravela.errors(cs)
+    do: Caravela.ChangesetTranslator.translate(cs)
 
   defp build_context(socket) do
     %{
