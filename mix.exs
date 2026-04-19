@@ -1,7 +1,7 @@
 defmodule Caravela.MixProject do
   use Mix.Project
 
-  @version "0.10.0"
+  @version "0.11.0"
   @source_url "https://github.com/rsousacode/caravela"
 
   def project do
@@ -85,6 +85,7 @@ defmodule Caravela.MixProject do
       {:phoenix_live_view, "~> 1.0", optional: true},
       {:postgrex, "~> 0.18", optional: true},
       {:live_svelte, "~> 0.14", optional: true},
+      {:caravela_svelte, "~> 0.1", optional: true},
       {:absinthe, "~> 1.7", optional: true},
       {:absinthe_plug, "~> 1.5", optional: true},
       {:dataloader, "~> 2.0", optional: true},

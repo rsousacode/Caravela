@@ -7,13 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-*Slices 1–2 of [phase_c1_generator_integration.md](https://github.com/rsousacode/caravela-plan/blob/main/render_modes/phase_c1_generator_integration.md) —
-the Caravela ↔ `caravela_svelte` integration. Entities can now
-declare `frontend: :rest` (with optional `realtime: true`); the
-generator branches accordingly, emits Inertia-style controllers
-wired to `CaravelaSvelte.Caravela` helpers, and prints per-mode
-router snippets. Generator ergonomics and LLM metadata land in
-a follow-up slice.*
+## [0.11.0] — 2026-04-19
+
+*Ships the Caravela ↔ `caravela_svelte` integration
+([phase_c1_generator_integration.md](https://github.com/rsousacode/caravela-plan/blob/main/render_modes/phase_c1_generator_integration.md)).
+Entities now declare `frontend: :rest` (optionally with
+`realtime: true`); the generator branches to emit either a
+LiveView tree (`:live`) or a Phoenix controller (`:rest`), both
+targeting `caravela_svelte`'s shared client bundle. Generated
+code delegates field-access and changeset-error handling to
+`CaravelaSvelte.Caravela` helpers, so the same prop shape
+reaches every Svelte component regardless of transport.*
 
 ### Added
 
@@ -78,19 +82,52 @@ a follow-up slice.*
   for both). The next-steps message adapts to whichever modes
   are present.
 
-### Deferred to slice 3
+- **`caravela__describe_frontend_mode`** — new MCP tool. Reports
+  the render-mode configuration for a domain (or a single entity
+  when `entity: "..."` is provided): `frontend`, `realtime`, and
+  short transport-specific notes an LLM host can use before
+  suggesting code. Registered in `Caravela.MCP.Tool.registry/0`.
 
-- Swapping `<LiveSvelte.svelte>` → `<CaravelaSvelte.svelte>` in
-  generated LiveViews, and delegating their inline
-  `changeset_errors/1` to `CaravelaSvelte.Caravela.errors/1`.
-  Both are correctness-preserving refactors that tighten the
-  dep on `caravela_svelte` for `:live`-mode apps; shipped as a
-  single conversion rather than piecemeal.
+- **`@caravela-*` metadata header on generated Svelte files** —
+  every `Book{Index,Show,Form}.svelte` now carries
+  `@caravela-entity`, `@caravela-mode`, and (when applicable)
+  `@caravela-realtime` tags in its top-of-file HTML comment. Lets
+  the new MCP tool and any other static analysis pick up the
+  render mode from the file without re-parsing the DSL.
+
+- **`caravela_svelte` as optional dep** (`~> 0.1`). Caravela does
+  not force the dep on consumers, but generated code references
+  `CaravelaSvelte.*` modules, so apps using the generators must
+  now pull in `{:caravela_svelte, "~> 0.1"}` alongside Caravela.
+
+### Changed
+
+- **Generated LiveViews now mount via `<CaravelaSvelte.svelte>`,
+  not `<LiveSvelte.svelte>`**. The prop and slot contract is
+  identical, but both render modes now flow through the same
+  client bundle (`@caravela/svelte`). Existing apps that
+  regenerate must add `{:caravela_svelte, "~> 0.1"}` to `mix.exs`
+  — see the new next-steps output from `mix caravela.gen.live`.
+
+- **Generated LiveView forms delegate `changeset_errors/1` to
+  `CaravelaSvelte.Caravela.errors/1`** — a single authoritative
+  implementation shared with the `:rest` controller template, so
+  error shapes stay aligned across modes.
+
+- **`mix caravela.gen.live` next-steps output** was rewritten for
+  both modes to reference `caravela_svelte` instead of
+  `live_svelte`. The cold-start warning when the dep is missing
+  now prints when `CaravelaSvelte` isn't loaded, regardless of
+  which modes are in play.
+
+### Deferred (post-1.0 ergonomics)
+
 - `Caravela.Gen.svelte_component/2` / igniter recipe for
-  per-entity scaffolding.
-- LLM-friendly `@caravela-*` metadata headers on generated
-  Svelte files + a `caravela__describe_frontend_mode` MCP tool.
-- Regenerating the demo app's snapshot fixtures.
+  scaffolding a single Svelte file per entity. Open question —
+  whether this belongs here or in `caravela_svelte`.
+- Regenerating `caravela_demo`'s snapshot fixtures to use the
+  new `CaravelaSvelte.svelte` mount. Done in the demo repo, not
+  this package.
 
 ## [0.10.0] — 2026-04-19
 

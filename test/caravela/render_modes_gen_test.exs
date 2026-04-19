@@ -1,7 +1,7 @@
 defmodule Caravela.RenderModesGenTest do
   use ExUnit.Case, async: true
 
-  alias Caravela.Gen.{LiveRoute, LiveView, RestController}
+  alias Caravela.Gen.{LiveRoute, LiveView, RestController, Svelte}
 
   defmodule MixedDomain do
     use Caravela.Domain, default_policy: :allow
@@ -117,4 +117,32 @@ defmodule Caravela.RenderModesGenTest do
       refute source =~ "patch_ops"
     end
   end
+
+  describe "Svelte @caravela-* metadata header" do
+    test "stamps entity name and frontend mode on :live components" do
+      domain = MixedDomain.__caravela_domain__()
+      {_path, source} = Svelte.render_component(domain, entity(domain, :authors), :index)
+
+      assert source =~ "@caravela-entity Author"
+      assert source =~ "@caravela-mode live"
+      refute source =~ "@caravela-realtime"
+    end
+
+    test "stamps frontend: rest when the entity is :rest" do
+      domain = MixedDomain.__caravela_domain__()
+      {_path, source} = Svelte.render_component(domain, entity(domain, :books), :index)
+
+      assert source =~ "@caravela-entity Book"
+      assert source =~ "@caravela-mode rest"
+    end
+
+    test "includes @caravela-realtime true when the entity opts in" do
+      domain = RealtimeDomain.__caravela_domain__()
+      {_path, source} = Svelte.render_component(domain, entity(domain, :books), :index)
+
+      assert source =~ "@caravela-realtime true"
+    end
+  end
+
+  defp entity(domain, name), do: Enum.find(domain.entities, &(&1.name == name))
 end

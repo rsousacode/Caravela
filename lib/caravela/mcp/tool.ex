@@ -41,6 +41,7 @@ defmodule Caravela.MCP.Tool do
       Caravela.MCP.Tool.DescribeDomain,
       Caravela.MCP.Tool.ListEntities,
       Caravela.MCP.Tool.DescribeEntity,
+      Caravela.MCP.Tool.DescribeFrontendMode,
       Caravela.MCP.Tool.ValidateDsl
     ]
   end

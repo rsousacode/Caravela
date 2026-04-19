@@ -77,7 +77,9 @@ defmodule Caravela.Phase4GenTest do
       end
     end
 
-    test "index LiveView calls the context list/delete and renders LiveSvelte", %{plain: domain} do
+    test "index LiveView calls the context list/delete and renders CaravelaSvelte", %{
+      plain: domain
+    } do
       {_path, src} =
         LiveView.render_all(domain)
         |> Enum.find(fn {p, _} -> String.ends_with?(p, "book_live/index.ex") end)
@@ -87,7 +89,8 @@ defmodule Caravela.Phase4GenTest do
       assert src =~ "Library.list_books(context)"
       assert src =~ "Library.delete_book(id, context)"
       assert src =~ ~s|name="library/BookIndex"|
-      assert src =~ "LiveSvelte.svelte"
+      assert src =~ "CaravelaSvelte.svelte"
+      refute src =~ "LiveSvelte.svelte"
       assert src =~ "socket={@socket}"
     end
 

@@ -123,9 +123,11 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
 
     Next steps:
 
-      1. Add {:live_svelte, "~> 0.19"} to mix.exs (if you haven't already).
+      1. Add {:caravela_svelte, "~> 0.1"} to mix.exs (if you haven't already).
+         Generated LiveViews mount Svelte components via CaravelaSvelte.svelte
+         and delegate changeset errors to CaravelaSvelte.Caravela.errors/1.
       2. Install deps:  mix deps.get && cd assets && npm install && cd ..
-      3. Wire LiveSvelte into assets/js/app.js (see LiveSvelte docs).
+      3. Wire CaravelaSvelte into assets/js/app.js (see caravela_svelte docs).
       4. Paste the router snippet above into lib/<app>_web/router.ex.
       5. Start the server: mix phx.server
     """
@@ -136,8 +138,9 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
 
     Next steps:
 
-      1. Add {:caravela_svelte, "~> 0.1"} to mix.exs for `:rest` entities.
-         (`:live` entities still use {:live_svelte, "~> 0.19"}.)
+      1. Add {:caravela_svelte, "~> 0.1"} to mix.exs. Both modes rely
+         on caravela_svelte — :live mounts via CaravelaSvelte.svelte,
+         :rest renders via CaravelaSvelte.render/3.
       2. Install deps:  mix deps.get && cd assets && npm install && cd ..
       3. Wire CaravelaSvelte into assets/js/app.js (see caravela_svelte docs).
       4. `import CaravelaSvelte.Router` at the top of your router module,
@@ -150,17 +153,15 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
     """
   end
 
-  # LiveSvelte is an optional dep of Caravela. Warn (don't fail) if the
-  # consumer app doesn't have it yet — they may be adding it as part of
-  # running this task. Only warn when at least one entity actually
-  # needs LiveSvelte (i.e. stays on `:live`).
-  defp warn_if_live_svelte_missing(%Domain{} = domain) do
-    needs_live_svelte? = Enum.any?(domain.entities, fn %Entity{frontend: f} -> f == :live end)
-
-    if needs_live_svelte? and not Code.ensure_loaded?(LiveSvelte) do
+  # caravela_svelte is the shared transport for both render modes. Warn
+  # (don't fail) if the consumer app doesn't have it yet — they may be
+  # adding it as part of running this task.
+  defp warn_if_live_svelte_missing(%Domain{} = _domain) do
+    unless Code.ensure_loaded?(CaravelaSvelte) do
       Mix.shell().info(
-        "note: LiveSvelte not loaded. Add {:live_svelte, \"~> 0.19\"} to mix.exs " <>
-          "and run `mix deps.get` before booting the generated LiveViews."
+        "note: caravela_svelte not loaded. Add {:caravela_svelte, \"~> 0.1\"} " <>
+          "to mix.exs and run `mix deps.get` before booting the generated " <>
+          "LiveViews / controllers."
       )
     end
   end

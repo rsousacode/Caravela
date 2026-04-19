@@ -208,8 +208,25 @@ defmodule Caravela.Gen.Svelte do
       default_field_access: default_field_access_literal(public),
       singular: singular,
       plural: plural,
-      types_import: types_import_path(domain)
+      types_import: types_import_path(domain),
+      caravela_metadata: caravela_metadata_tags(entity)
     ]
+  end
+
+  # Emit the structured `@caravela-*` header the MCP tool
+  # (`caravela__describe_frontend_mode`) reads to surface render-mode
+  # metadata without re-compiling the domain. Kept on a single line so
+  # the comment stays tight; callers paste it into the file header
+  # block with a trailing newline of their own.
+  defp caravela_metadata_tags(%Entity{} = entity) do
+    tags =
+      [
+        "@caravela-entity " <> Naming.camelize(Naming.singularize(entity.name)),
+        "@caravela-mode " <> Atom.to_string(entity.frontend)
+      ] ++
+        if entity.realtime?, do: ["@caravela-realtime true"], else: []
+
+    Enum.join(tags, " ")
   end
 
   # Typescript object literal with every public field set to `true`.
