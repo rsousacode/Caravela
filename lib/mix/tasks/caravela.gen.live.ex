@@ -50,7 +50,7 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
 
   use Mix.Task
 
-  alias Caravela.Gen.{LiveRoute, LiveView, Svelte}
+  alias Caravela.Gen.{LiveRoute, LiveView, RestController, Svelte}
   alias Caravela.MixHelpers
   alias Caravela.Schema.{Domain, Entity}
 
@@ -74,10 +74,11 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
     warn_if_live_svelte_missing(domain)
 
     live_files = LiveView.render_all(domain, root: root, with_domain: with_domain?, force: force?)
+    rest_files = RestController.render_all(domain, root: root, force: force?)
     svelte_files = Svelte.render_all(domain, root: root, force: force?)
 
     MixHelpers.write_files(
-      live_files ++ svelte_files,
+      live_files ++ rest_files ++ svelte_files,
       root,
       force?,
       Keyword.get(opts, :dry_run, false)
@@ -139,10 +140,12 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
          (`:live` entities still use {:live_svelte, "~> 0.19"}.)
       2. Install deps:  mix deps.get && cd assets && npm install && cd ..
       3. Wire CaravelaSvelte into assets/js/app.js (see caravela_svelte docs).
-      4. Paste the router snippet above into lib/<app>_web/router.ex.
-      5. REST controllers are not yet emitted by this generator —
-         scaffold them by hand using CaravelaSvelte.render/3 until
-         the Caravela C.1 enrichment phase lands.
+      4. `import CaravelaSvelte.Router` at the top of your router module,
+         then paste the router snippet above under your :browser pipeline.
+      5. Review generated controllers under lib/<app>_web/controllers/ —
+         they call CaravelaSvelte.Caravela.put_field_access/2 and
+         errors/1 automatically. Custom logic goes below the
+         `# --- CUSTOM ---` markers and is preserved on regeneration.
       6. Start the server: mix phx.server
     """
   end

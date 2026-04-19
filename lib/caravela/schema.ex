@@ -83,8 +83,14 @@ defmodule Caravela.Schema do
     `frontend` selects the render transport for generated UI:
     `:live` (default) emits LiveView + WebSocket; `:rest` emits a
     controller + Inertia-style HTTP response via `caravela_svelte`.
+
+    `realtime?` opts the entity into SSE-driven live updates on top
+    of `:rest`. Only valid when `frontend: :rest` — a `:live` entity
+    already has LiveView's WebSocket for real-time. Generated
+    controllers publish `broadcast_patch/3` on create / update /
+    delete when this flag is set.
     """
-    defstruct [:name, :auth, fields: [], frontend: :live]
+    defstruct [:name, :auth, fields: [], frontend: :live, realtime?: false]
 
     @type frontend :: :live | :rest
 
@@ -92,7 +98,8 @@ defmodule Caravela.Schema do
             name: atom(),
             fields: [Field.t()],
             auth: AuthConfig.t() | nil,
-            frontend: frontend()
+            frontend: frontend(),
+            realtime?: boolean()
           }
   end
 

@@ -158,6 +158,16 @@ defmodule Caravela.Domain do
       (Inertia-style HTTP via `caravela_svelte`). Entities stay on
       `:live` when the option is omitted, so existing domains are
       unaffected.
+    * `:realtime` — opt into SSE-driven live updates on top of the
+      `:rest` transport. Defaults to `false`. Only valid when
+      `frontend: :rest` — `:live` entities already have LiveView's
+      WebSocket, so `realtime: true` there is rejected with a
+      `Caravela.DSLError`. Generated controllers get a
+      `broadcast_patch/3` call site on create / update / delete.
+
+          entity :books, frontend: :rest, realtime: true do
+            field :title, :string, required: true
+          end
   """
   defmacro entity(name, opts \\ [], do: block) do
     quote bind_quoted: [name: name, opts: opts, block: Macro.escape(block)],
@@ -180,7 +190,8 @@ defmodule Caravela.Domain do
         name: name,
         fields: fields,
         auth: auth,
-        frontend: Keyword.get(opts, :frontend, :live)
+        frontend: Keyword.get(opts, :frontend, :live),
+        realtime?: Keyword.get(opts, :realtime, false) == true
       }
 
       Module.delete_attribute(__MODULE__, :caravela_current_fields)
@@ -189,6 +200,7 @@ defmodule Caravela.Domain do
   end
 
   @valid_frontends [:live, :rest]
+  @valid_entity_opts [:frontend, :realtime]
 
   @doc false
   @spec __validate_entity_opts__!(atom(), keyword()) :: :ok
@@ -200,30 +212,47 @@ defmodule Caravela.Domain do
         docs_url: "https://hexdocs.pm/caravela/dsl.html#entities"
     end
 
-    case Keyword.get(opts, :frontend, :live) do
-      value when value in @valid_frontends ->
-        :ok
+    frontend = Keyword.get(opts, :frontend, :live)
 
-      other ->
-        raise Caravela.DSLError,
-          message:
-            "`entity :#{name}, frontend: …` expects one of #{inspect(@valid_frontends)}, " <>
-              "got: #{inspect(other)}",
-          suggestion:
-            "entity :#{name}, frontend: :rest do\n  ...\nend\n\n" <>
-              "# Or omit `frontend:` to default to :live.",
-          docs_url: "https://hexdocs.pm/caravela/render-modes.html"
+    unless frontend in @valid_frontends do
+      raise Caravela.DSLError,
+        message:
+          "`entity :#{name}, frontend: …` expects one of #{inspect(@valid_frontends)}, " <>
+            "got: #{inspect(frontend)}",
+        suggestion:
+          "entity :#{name}, frontend: :rest do\n  ...\nend\n\n" <>
+            "# Or omit `frontend:` to default to :live.",
+        docs_url: "https://hexdocs.pm/caravela/render-modes.html"
     end
 
-    unknown = Keyword.keys(opts) -- [:frontend]
+    realtime = Keyword.get(opts, :realtime, false)
+
+    unless is_boolean(realtime) do
+      raise Caravela.DSLError,
+        message: "`entity :#{name}, realtime: …` expects a boolean, got: #{inspect(realtime)}",
+        suggestion: "entity :#{name}, frontend: :rest, realtime: true do\n  ...\nend",
+        docs_url: "https://hexdocs.pm/caravela/render-modes.html#realtime"
+    end
+
+    if realtime == true and frontend != :rest do
+      raise Caravela.DSLError,
+        message:
+          "`entity :#{name}, realtime: true` requires `frontend: :rest`. " <>
+            "`:live` entities already have LiveView's WebSocket for real-time, " <>
+            "so `realtime:` is not applicable there.",
+        suggestion:
+          "entity :#{name}, frontend: :rest, realtime: true do\n  ...\nend\n\n" <>
+            "# Or drop `realtime:` if you want a plain LiveView.",
+        docs_url: "https://hexdocs.pm/caravela/render-modes.html#realtime"
+    end
+
+    unknown = Keyword.keys(opts) -- @valid_entity_opts
 
     if unknown != [] do
       raise Caravela.DSLError,
-        message:
-          "`entity :#{name}, <opts>` received unknown options: " <>
-            inspect(unknown),
+        message: "`entity :#{name}, <opts>` received unknown options: " <> inspect(unknown),
         suggestion:
-          "Currently supported entity options: [:frontend].\n" <>
+          "Currently supported entity options: #{inspect(@valid_entity_opts)}.\n" <>
             "Did you mean to declare these inside the `do` block instead?",
         docs_url: "https://hexdocs.pm/caravela/dsl.html#entities"
     end

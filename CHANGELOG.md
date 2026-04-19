@@ -7,13 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-*Slices 1–N of [phase_c1_generator_integration.md](https://github.com/rsousacode/caravela-plan/blob/main/render_modes/phase_c1_generator_integration.md) —
+*Slices 1–2 of [phase_c1_generator_integration.md](https://github.com/rsousacode/caravela-plan/blob/main/render_modes/phase_c1_generator_integration.md) —
 the Caravela ↔ `caravela_svelte` integration. Entities can now
-declare `frontend: :rest` to opt into `caravela_svelte`'s
-Inertia-style transport; the generator branches accordingly and
-the router snippet splits per-mode. Field-access / changeset
-helpers, realtime wiring, generator ergonomics, and LLM
-metadata land here too.*
+declare `frontend: :rest` (with optional `realtime: true`); the
+generator branches accordingly, emits Inertia-style controllers
+wired to `CaravelaSvelte.Caravela` helpers, and prints per-mode
+router snippets. Generator ergonomics and LLM metadata land in
+a follow-up slice.*
 
 ### Added
 
@@ -25,10 +25,30 @@ metadata land here too.*
   unknown entity options raise `Caravela.DSLError` with
   actionable suggestions.
 
-- **`Caravela.Schema.Entity{:frontend}`** — IR carries the
-  declared transport. Exposed as `entity.frontend` (string) on
-  `Caravela.IR.of/1` output and therefore on the
+- **`entity :name, frontend: :rest, realtime: true do … end`** —
+  opts the entity into SSE-driven real-time updates on top of
+  the `:rest` transport. Generated controllers call
+  `CaravelaSvelte.Caravela.broadcast_patch/3` on create, update,
+  and delete, scoped per-actor via `entity_topic/2`. Rejected
+  with a clear error on `:live` entities (LiveView's WebSocket
+  already covers that case).
+
+- **`Caravela.Schema.Entity{:frontend, :realtime?}`** — IR
+  carries both the declared transport and the realtime flag.
+  Exposed as `entity.frontend` (string) and `entity.realtime`
+  (boolean) on `Caravela.IR.of/1` output, visible through the
   `caravela__describe_entity` MCP tool response.
+
+- **`Caravela.Gen.RestController`** — new generator. Emits one
+  Phoenix controller per `frontend: :rest` entity at
+  `lib/<app>_web/controllers/<entity>_controller.ex`. Renders
+  Svelte components through `CaravelaSvelte.render/3`; wires
+  `CaravelaSvelte.Caravela.put_field_access/2` and
+  `CaravelaSvelte.Caravela.errors/1` on every action; adds
+  `broadcast_patch/3` call sites when `realtime: true`.
+  Custom code below `# --- CUSTOM ---` markers is preserved on
+  regeneration (same convention as the rest of Caravela's
+  generators).
 
 - **`mix caravela.gen.live --frontend <mode>`** — blanket
   override flag. `--frontend rest` or `--frontend live` applies
@@ -45,24 +65,32 @@ metadata land here too.*
 - **`Caravela.Gen.LiveRoute.render/1`** now emits up to two
   router blocks per domain: a `live …` block for `:live`
   entities (as before) and a `caravela_rest …` block for
-  `:rest` entities. Mixed domains get both. `:rest`-only
-  domains get only the `caravela_rest` block. The emitted
+  `:rest` entities. Entities declared with `realtime: true`
+  get `realtime: true` appended to their `caravela_rest` line
+  so the router registers the SSE endpoint. The emitted
   snippet mentions the required
   `import CaravelaSvelte.Router`.
 
-- **`mix caravela.gen.live` next-steps message** branches on
-  whether any `:rest` entities are present, pointing at
-  `caravela_svelte` instead of `live_svelte` when applicable.
+- **`mix caravela.gen.live`** now invokes `RestController` in
+  addition to `LiveView` and `Svelte`, so a single command
+  produces the full frontend layer (controllers for `:rest`
+  entities, LiveViews for `:live` entities, Svelte components
+  for both). The next-steps message adapts to whichever modes
+  are present.
 
-### Notes
+### Deferred to slice 3
 
-- **No `Caravela.Svelte` dispatcher deprecation.** The C.1 plan
-  listed deprecating a prior Path-A dispatcher; Caravela never
-  shipped one, so the deprecation step is a no-op and was
-  removed from the slice.
-- **`:rest` controller generation is still manual.** This slice
-  only handles the dispatch skeleton — the controller template
-  + field-access / changeset / realtime helpers land in slice 2.
+- Swapping `<LiveSvelte.svelte>` → `<CaravelaSvelte.svelte>` in
+  generated LiveViews, and delegating their inline
+  `changeset_errors/1` to `CaravelaSvelte.Caravela.errors/1`.
+  Both are correctness-preserving refactors that tighten the
+  dep on `caravela_svelte` for `:live`-mode apps; shipped as a
+  single conversion rather than piecemeal.
+- `Caravela.Gen.svelte_component/2` / igniter recipe for
+  per-entity scaffolding.
+- LLM-friendly `@caravela-*` metadata headers on generated
+  Svelte files + a `caravela__describe_frontend_mode` MCP tool.
+- Regenerating the demo app's snapshot fixtures.
 
 ## [0.10.0] — 2026-04-19
 

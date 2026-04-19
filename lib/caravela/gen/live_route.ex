@@ -111,13 +111,14 @@ defmodule Caravela.Gen.LiveRoute do
     ]
   end
 
-  defp rest_routes_for_entity(%Entity{name: name}) do
+  defp rest_routes_for_entity(%Entity{name: name, realtime?: realtime?}) do
     path = "/" <> Naming.plural_string(name)
     short = Naming.camelize(Naming.singularize(name))
 
-    [
-      ~s|  caravela_rest "#{path}", #{short}Controller|
-    ]
+    base = ~s|  caravela_rest "#{path}", #{short}Controller|
+    line = if realtime?, do: base <> ", realtime: true", else: base
+
+    [line]
   end
 
   defp scope_app_dir(%Domain{} = domain) do

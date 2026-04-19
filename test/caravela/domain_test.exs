@@ -266,4 +266,60 @@ defmodule Caravela.DomainTest do
       end
     end
   end
+
+  describe "entity realtime option" do
+    defmodule RealtimeDomain do
+      use Caravela.Domain
+
+      entity :authors do
+        field :name, :string, required: true
+      end
+
+      entity :books, frontend: :rest, realtime: true do
+        field :title, :string, required: true
+      end
+
+      entity :chapters, frontend: :rest do
+        field :number, :integer
+      end
+    end
+
+    test "defaults to false when omitted" do
+      domain = RealtimeDomain.__caravela_domain__()
+      authors = Enum.find(domain.entities, &(&1.name == :authors))
+      chapters = Enum.find(domain.entities, &(&1.name == :chapters))
+      assert authors.realtime? == false
+      assert chapters.realtime? == false
+    end
+
+    test "records true when declared" do
+      domain = RealtimeDomain.__caravela_domain__()
+      books = Enum.find(domain.entities, &(&1.name == :books))
+      assert books.realtime? == true
+    end
+
+    test "rejects realtime: true on :live entities" do
+      assert_raise Caravela.DSLError, ~r/requires `frontend: :rest`/, fn ->
+        defmodule BadRealtime do
+          use Caravela.Domain
+
+          entity :things, realtime: true do
+            field :name, :string
+          end
+        end
+      end
+    end
+
+    test "rejects non-boolean realtime values" do
+      assert_raise Caravela.DSLError, ~r/expects a boolean/, fn ->
+        defmodule NonBoolRealtime do
+          use Caravela.Domain
+
+          entity :things, frontend: :rest, realtime: "yes" do
+            field :name, :string
+          end
+        end
+      end
+    end
+  end
 end
