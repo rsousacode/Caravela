@@ -89,8 +89,9 @@ scope "/library", MyAppWeb do
 end
 ```
 
-See the [regeneration](regeneration.md) page for the CUSTOM-marker
-semantics that make re-runs safe.
+See the [regeneration](regeneration.md) page for the sha256 header,
+per-function `CUSTOM` blocks, and tail-marker semantics that make
+re-runs safe.
 
 ## Render functions are pure
 

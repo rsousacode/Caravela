@@ -96,4 +96,4 @@ curl -X POST localhost:4000/api/books \
 - [GraphQL](graphql.md) — Absinthe generation.
 - [LiveSvelte frontend](livesvelte.md) — generated LiveView + Svelte components.
 - [Live runtime](live_runtime.md) — opt-in composable state for hand-written LiveViews.
-- [Regeneration](regeneration.md) — the `# --- CUSTOM ---` marker and safe re-runs.
+- [Regeneration](regeneration.md) — checksum headers, per-function `CUSTOM` blocks, and safe re-runs.
