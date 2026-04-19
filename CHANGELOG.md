@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.3] — 2026-04-20
+
+*Follow-up to 0.13.2's rest-controller fixes. Caught while wiring
+the regenerated `publisher_controller.ex` into `caravela_demo`.*
+
+### Fixed
+
+- **REST controller `new` action called `change_<entity>` with
+  arity 3** (`change_book(%Book{}, %{}, context)`), but the
+  context generator only emits arity 1 / 2
+  (`change_book(book, attrs \\ %{})`). Result: a compile-time
+  `undefined function change_<entity>/3` warning for every `:rest`
+  entity, and a runtime `UndefinedFunctionError` the first time a
+  client hit `GET /<path>/new`. Template now matches the context
+  generator's signature by dropping the unused `context` arg.
+
 ## [0.13.2] — 2026-04-20
 
 *One-file regression fix caught while building the render-modes
@@ -33,6 +49,17 @@ fails to compile.*
   feature was DOA on a fresh install. Masked in 0.11 / 0.13.0 /
   0.13.1 because the `caravela_demo` regression suite only
   exercised `:live` entities.
+
+### Added
+
+- **Parse-level regression test** —
+  `test/caravela/render_modes_gen_test.exs` now asserts every
+  `RestController.render_all/2` output parses via
+  `Code.string_to_quoted/1`. Every prior test in the file matched
+  source content via regex only; no parser gate meant a dangling
+  `end` (or any other template-level syntax slip) could ship
+  green. The new test covers `:rest`-only, mixed, and `realtime:
+  true` domains.
 
 ## [0.13.1] — 2026-04-19
 

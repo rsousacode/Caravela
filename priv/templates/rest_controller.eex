@@ -70,7 +70,7 @@ defmodule <%= inspect @controller_module %> do
 
   def new(conn, _params) do
     context = build_context(conn)
-    changeset = <%= @context_short %>.<%= @change_fn %>(%<%= inspect @entity_module %>{}, %{}, context)
+    changeset = <%= @context_short %>.<%= @change_fn %>(%<%= inspect @entity_module %>{}, %{})
     field_access = field_access(context)
     actions = <%= @context_short %>.action_access(<%= inspect @entity_name %>, context)
 
