@@ -98,7 +98,11 @@ defmodule Caravela.Errors do
   @doc false
   def format(module, %{message: message} = fields) do
     [
-      "** (", inspect(module), ") ", message, "\n"
+      "** (",
+      inspect(module),
+      ") ",
+      message,
+      "\n"
     ]
     |> append_section("Got:", Map.get(fields, :snippet))
     |> append_section("Suggestion:", Map.get(fields, :suggestion))

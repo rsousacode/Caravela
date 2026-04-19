@@ -65,8 +65,14 @@ defmodule Caravela.Gen.AuthSvelte do
 
     source =
       EEx.eval_file(template, assigns: assigns, trim: true)
-      |> Gen.Custom.merge_with_file(existing, style: :svelte, force: Keyword.get(opts, :force, false))
-      |> Gen.Custom.stamp_header(style: :svelte, generator: :"auth_svelte_#{Macro.underscore(name)}")
+      |> Gen.Custom.merge_with_file(existing,
+        style: :svelte,
+        force: Keyword.get(opts, :force, false)
+      )
+      |> Gen.Custom.stamp_header(
+        style: :svelte,
+        generator: :"auth_svelte_#{Macro.underscore(name)}"
+      )
 
     {path, source}
   end

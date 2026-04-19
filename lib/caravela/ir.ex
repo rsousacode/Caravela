@@ -124,8 +124,9 @@ defmodule Caravela.IR do
 
   defp field_type_string(type) when is_atom(type), do: Atom.to_string(type)
 
-  defp field_type_string({:decimal, precision, scale}) when is_integer(precision) and is_integer(scale),
-    do: "decimal(#{precision},#{scale})"
+  defp field_type_string({:decimal, precision, scale})
+       when is_integer(precision) and is_integer(scale),
+       do: "decimal(#{precision},#{scale})"
 
   defp field_type_string(other), do: inspect(other)
 
@@ -182,9 +183,10 @@ defmodule Caravela.IR do
 
   defp auth_ir(%AuthConfig{} = auth) do
     %{
-      strategies: Enum.map(auth.strategies, fn {kind, opts} ->
-        %{kind: Atom.to_string(kind), opts: keyword_to_map(opts)}
-      end),
+      strategies:
+        Enum.map(auth.strategies, fn {kind, opts} ->
+          %{kind: Atom.to_string(kind), opts: keyword_to_map(opts)}
+        end),
       session: keyword_to_map_or_nil(auth.session),
       confirm: keyword_to_map_or_nil(auth.confirm),
       reset: keyword_to_map_or_nil(auth.reset),

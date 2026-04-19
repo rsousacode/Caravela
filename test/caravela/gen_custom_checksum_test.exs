@@ -116,7 +116,12 @@ defmodule Caravela.GenCustomChecksumTest do
 
   describe "verify_existing!/2" do
     setup %{test: name} do
-      dir = Path.join(System.tmp_dir!(), "caravela_checksum_#{name}_#{System.unique_integer([:positive])}")
+      dir =
+        Path.join(
+          System.tmp_dir!(),
+          "caravela_checksum_#{name}_#{System.unique_integer([:positive])}"
+        )
+
       File.mkdir_p!(dir)
       on_exit(fn -> File.rm_rf!(dir) end)
       {:ok, dir: dir}
@@ -191,7 +196,12 @@ defmodule Caravela.GenCustomChecksumTest do
 
   describe "merge_with_file/3" do
     setup %{test: name} do
-      dir = Path.join(System.tmp_dir!(), "caravela_merge_#{name}_#{System.unique_integer([:positive])}")
+      dir =
+        Path.join(
+          System.tmp_dir!(),
+          "caravela_merge_#{name}_#{System.unique_integer([:positive])}"
+        )
+
       File.mkdir_p!(dir)
       on_exit(fn -> File.rm_rf!(dir) end)
       {:ok, dir: dir}
@@ -214,7 +224,13 @@ defmodule Caravela.GenCustomChecksumTest do
         )
 
       # First write, plus user appends below the marker.
-      with_user_code = String.replace(v1, "# Custom code below this line is preserved on regeneration.\n", "# Custom code below this line is preserved on regeneration.\n  def my_helper, do: :kept\n")
+      with_user_code =
+        String.replace(
+          v1,
+          "# Custom code below this line is preserved on regeneration.\n",
+          "# Custom code below this line is preserved on regeneration.\n  def my_helper, do: :kept\n"
+        )
+
       File.write!(path, with_user_code)
 
       regenerated_template = """
@@ -471,7 +487,9 @@ defmodule Caravela.GenCustomChecksumTest do
     alias Caravela.Gen.Context
 
     setup %{test: name} do
-      dir = Path.join(System.tmp_dir!(), "caravela_e2e_#{name}_#{System.unique_integer([:positive])}")
+      dir =
+        Path.join(System.tmp_dir!(), "caravela_e2e_#{name}_#{System.unique_integer([:positive])}")
+
       File.mkdir_p!(dir)
       on_exit(fn -> File.rm_rf!(dir) end)
 

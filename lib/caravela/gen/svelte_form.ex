@@ -48,7 +48,10 @@ defmodule Caravela.Gen.SvelteForm do
 
     source =
       EEx.eval_file(@template, assigns: assigns, trim: true)
-      |> Gen.Custom.merge_with_file(existing, style: :svelte, force: Keyword.get(opts, :force, false))
+      |> Gen.Custom.merge_with_file(existing,
+        style: :svelte,
+        force: Keyword.get(opts, :force, false)
+      )
       |> Gen.Custom.stamp_header(style: :svelte, generator: :svelte_form_dynamic)
 
     {path, source}

@@ -257,10 +257,17 @@ defmodule Caravela.Gen.Custom do
 
       {:ok, contents} ->
         case verify_contents(contents, style) do
-          :ok -> :ok
-          :no_header -> :ok
-          {:mismatch, stored, current} when force? -> warn_forced(path, stored, current)
-          {:mismatch, stored, current} -> Mix.raise(mismatch_message(path, stored, current, style))
+          :ok ->
+            :ok
+
+          :no_header ->
+            :ok
+
+          {:mismatch, stored, current} when force? ->
+            warn_forced(path, stored, current)
+
+          {:mismatch, stored, current} ->
+            Mix.raise(mismatch_message(path, stored, current, style))
         end
     end
   end
@@ -339,7 +346,11 @@ defmodule Caravela.Gen.Custom do
   defp style_map(style) when is_map_key(@styles, style), do: Map.fetch!(@styles, style)
 
   defp style_map(style),
-    do: raise(ArgumentError, "unknown CUSTOM style #{inspect(style)}; expected :elixir | :ts | :svelte")
+    do:
+      raise(
+        ArgumentError,
+        "unknown CUSTOM style #{inspect(style)}; expected :elixir | :ts | :svelte"
+      )
 
   defp header_line(style, generator, version, hash) do
     %{header_open: open, header_close: close} = style_map(style)
