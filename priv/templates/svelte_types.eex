@@ -6,9 +6,11 @@
 // Regenerate with `mix caravela.gen.live <%= @domain_module %>`.
 
 /**
- * LiveSvelte hook handle injected as the `live` prop of every generated
- * component. Call `live.pushEvent(name, payload)` to dispatch an event
- * to the mounting LiveView.
+ * `caravela_svelte` LiveView hook handle — injected as the `live` prop
+ * of every generated component under `:live` render mode. Call
+ * `live.pushEvent(name, payload)` to dispatch an event to the mounting
+ * LiveView. Absent under `:rest` mode; use `useForm` / `navigate` from
+ * `@caravela/svelte` for HTTP-transport interactivity instead.
  */
 export interface LiveHandle {
   pushEvent: (

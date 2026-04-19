@@ -267,9 +267,10 @@ defmodule <%= inspect @context_module %> do
   end
 
   # Works for both Ecto structs and plain maps — the client-bound
-  # representation may be either depending on controller/LiveSvelte
-  # serialisation. We set the field to `nil` rather than removing it,
-  # so the TypeScript shape stays stable for Svelte components.
+  # representation may be either depending on controller or
+  # `caravela_svelte` serialisation. We set the field to `nil` rather
+  # than removing it, so the TypeScript shape stays stable for Svelte
+  # components.
   defp redact(%_struct{} = record, field) do
     if Map.has_key?(record, field), do: Map.put(record, field, nil), else: record
   end

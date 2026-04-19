@@ -12,7 +12,8 @@ describe('<%= @component_name %>', () => {
         loading: false,
         flash_message: null,
         field_access: <%= @default_field_access %>,
-        // TODO: pass a `live` handle (LiveSvelte) or mock for :rest mode.
+        // TODO: pass a `live` handle (`caravela_svelte` hook ref) under
+        // `:live` mode, or omit entirely under `:rest` mode.
       }
     });
 

@@ -47,6 +47,85 @@ defmodule Caravela.Gen.Migration do
     {path, source}
   end
 
+  @doc """
+  Locate an existing migration file for the domain's create-tables
+  step, relative to `root`.
+
+  Returns the file's basename (e.g.
+  `"20260417094708_create_library_tables.exs"`) when a prior
+  migration with the same stem exists, or `nil` when none does.
+  Reuse its 14-digit timestamp prefix to overwrite the same file on
+  regeneration instead of appending a duplicate (see
+  `reconcile_timestamp/2`).
+
+  When more than one matching migration is present (a symptom of
+  prior regenerations that didn't reconcile), the *oldest* one is
+  returned — regenerating against it lets the caller consolidate
+  state while still surfacing the duplicates for manual cleanup.
+  """
+  @spec existing_migration_basename(Domain.t(), Path.t()) :: String.t() | nil
+  def existing_migration_basename(%Domain{} = domain, root) do
+    ctx_short = Naming.context_short(domain.module)
+    dir = Path.join(root, "priv/repo/migrations")
+
+    if File.dir?(dir) do
+      ~r/^\d{14}_create_#{Regex.escape(ctx_short)}_tables\.exs$/
+      |> match_in(dir)
+      |> Enum.sort()
+      |> List.first()
+    end
+  end
+
+  @doc """
+  Decide which timestamp `render/2` should use given the current
+  filesystem state:
+
+    * No matching migration on disk → `default_timestamp/0`.
+    * Exactly one matching migration → reuse its timestamp, so
+      `render/2` produces the same path (idempotent regeneration).
+    * More than one matching migration → reuse the *oldest*
+      timestamp and return the extras so the caller can warn
+      about the drift.
+
+  Returns `{timestamp, duplicates}` where `duplicates` is a list of
+  basenames callers should flag or clean up.
+  """
+  @spec reconcile_timestamp(Domain.t(), Path.t()) :: {String.t(), [String.t()]}
+  def reconcile_timestamp(%Domain{} = domain, root) do
+    ctx_short = Naming.context_short(domain.module)
+    dir = Path.join(root, "priv/repo/migrations")
+
+    matching =
+      if File.dir?(dir) do
+        ~r/^(?<ts>\d{14})_create_#{Regex.escape(ctx_short)}_tables\.exs$/
+        |> match_in(dir)
+        |> Enum.sort()
+      else
+        []
+      end
+
+    case matching do
+      [] ->
+        {default_timestamp(), []}
+
+      [sole] ->
+        {timestamp_from(sole), []}
+
+      [primary | rest] ->
+        {timestamp_from(primary), rest}
+    end
+  end
+
+  defp match_in(regex, dir) do
+    dir
+    |> File.ls!()
+    |> Enum.filter(&Regex.match?(regex, &1))
+  end
+
+  defp timestamp_from(basename) do
+    basename |> String.split("_", parts: 2) |> List.first()
+  end
+
   defp default_timestamp do
     {{y, mo, d}, {h, mi, s}} = :calendar.universal_time()
 

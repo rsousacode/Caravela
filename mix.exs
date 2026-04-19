@@ -1,7 +1,7 @@
 defmodule Caravela.MixProject do
   use Mix.Project
 
-  @version "0.13.0"
+  @version "0.13.1"
   @source_url "https://github.com/rsousacode/caravela"
 
   def project do
@@ -87,7 +87,13 @@ defmodule Caravela.MixProject do
       {:phoenix_live_view, "~> 1.0", optional: true},
       {:postgrex, "~> 0.18", optional: true},
       {:live_svelte, "~> 0.14", optional: true},
-      {:caravela_svelte, "~> 0.1", optional: true},
+      # Not `optional: true`: generated LiveViews + REST controllers
+      # reference `CaravelaSvelte.*` modules directly, so every app
+      # using `mix caravela.gen.*` needs this at runtime. Marking it
+      # optional makes `mix deps.get` reject non-optional direct
+      # declarations in the consumer app (the previous behaviour
+      # forced users to discover `override: true` on their own).
+      {:caravela_svelte, "~> 0.1"},
       {:absinthe, "~> 1.7", optional: true},
       {:absinthe_plug, "~> 1.5", optional: true},
       {:dataloader, "~> 2.0", optional: true},

@@ -7,8 +7,11 @@
     LiveHandle
   } from '<%= @types_import %>';
 
-  // `live` is the LiveSvelte hook ref; call `live.pushEvent(...)` to
-  // dispatch events back to the mounting LiveView.
+  // `live` is the `caravela_svelte` hook ref (only supplied under
+  // `:live` render mode); call `live.pushEvent(...)` to dispatch
+  // events back to the mounting LiveView. Under `:rest` mode it's
+  // absent — use `useForm` / `navigate` from `@caravela/svelte`
+  // instead.
   //
   // `field_access` carries the per-field visibility decisions from the
   // server-side policy engine — fields the current actor cannot see

@@ -3,7 +3,8 @@
   import type { <%= @entity_ts %> } from '<%= @types_import %>';
   import type { LiveHandle } from '<%= @types_import %>';
 
-  // Props from LiveView (server state). `live` is the LiveSvelte hook ref.
+  // Props from LiveView (server state). `live` is the
+  // `caravela_svelte` hook ref.
   let {
     <%= @singular %> = {},
     errors = {},

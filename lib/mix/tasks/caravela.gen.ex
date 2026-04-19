@@ -34,26 +34,42 @@ defmodule Mix.Tasks.Caravela.Gen do
     domain = MixHelpers.load_domain!(args)
     root = Keyword.get(opts, :output, File.cwd!())
     force? = Keyword.get(opts, :force, false)
+    dry_run? = Keyword.get(opts, :dry_run, false)
     gen_opts = [root: root, force: force?]
 
     schemas = EctoSchema.render_all(domain, gen_opts)
-    migration = Migration.render(domain)
+    migration = reconciled_migration(domain, root, dry_run?)
     context = Context.render(domain, gen_opts)
     controllers = Controller.render_all(domain, gen_opts)
 
     files = [migration | schemas] ++ [context] ++ controllers
 
-    MixHelpers.write_files(
-      files,
-      root,
-      force?,
-      Keyword.get(opts, :dry_run, false)
-    )
+    MixHelpers.write_files(files, root, force?, dry_run?)
 
-    if Keyword.get(opts, :scope, true) and not Keyword.get(opts, :dry_run, false) do
+    if Keyword.get(opts, :scope, true) and not dry_run? do
       Mix.shell().info("\n" <> RouterScope.render(domain))
     end
 
     :ok
+  end
+
+  # Reuse an existing migration's timestamp so regenerating doesn't
+  # append a duplicate `create_*_tables.exs` under
+  # `priv/repo/migrations/`. Mirrors the behaviour in
+  # `Mix.Tasks.Caravela.Gen.Schema`.
+  defp reconciled_migration(domain, root, dry_run?) do
+    {timestamp, duplicates} = Migration.reconcile_timestamp(domain, root)
+
+    if duplicates != [] and not dry_run? do
+      Mix.shell().info("""
+
+      ! #{length(duplicates)} extra migration file(s) with the same `create_*_tables` stem
+        already exist — regeneration reused the oldest one. Review and delete
+        the rest manually:
+      #{Enum.map_join(duplicates, "\n", &"    priv/repo/migrations/#{&1}")}
+      """)
+    end
+
+    Migration.render(domain, timestamp: timestamp)
   end
 end

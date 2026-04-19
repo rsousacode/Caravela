@@ -69,7 +69,7 @@ defmodule <%= inspect @module %> do
   @impl true
   def render(assigns) do
     ~H"""
-    <LiveSvelte.svelte
+    <CaravelaSvelte.svelte
       name="<%= @component_ref %>"
       props={%{
         current_user: @current_user,

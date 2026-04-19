@@ -69,8 +69,9 @@ defmodule <%= inspect @module %> do
     test "new event navigates to the form", %{conn: conn} do
       {:ok, view, _html} = live(conn, "<%= @index_path %>")
 
-      # TODO: dispatch the `new` event (LiveSvelte: via pushEvent) and
-      # assert the LiveView pushed a navigation to the :new route.
+      # TODO: dispatch the `new` event (e.g. via `live.pushEvent` from
+      # the Svelte component) and assert the LiveView pushed a
+      # navigation to the :new route.
 
       assert view
     end
