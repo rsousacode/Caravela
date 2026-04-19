@@ -7,6 +7,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] — 2026-04-19
+
+*Second pass of the LLM-friendliness roadmap
+([llm_friendliness.md](https://github.com/rsousacode/caravela-plan/blob/main/phoenix/llm_friendliness.md)).
+Completes the §4 error-message rewrite across every remaining DSL and
+generator raise site, and ships the §10 `mix caravela.info` companion
+to `mix caravela.ir`.*
+
+### Added
+
+- **`mix caravela.info`** — human-readable summary of a compiled
+  domain. Prints domain-level flags (multi-tenant, default policy,
+  api version), a per-entity block with fields / relations / policy
+  summary / auth config, and a footer with hook + relation counts.
+  Companion to `mix caravela.ir` (which emits JSON); use `info` for
+  humans scanning "what's in this domain?" and `ir` for tooling
+  consuming the IR programmatically.
+
+      mix caravela.info MyApp.Domains.Library
+      mix caravela.info MyApp.Domains.Library --no-color   # for CI / piping
+
+  Exposed as a library call via `Mix.Tasks.Caravela.Info.render/2`
+  so tests and external tools can consume the same rendering
+  without shelling out.
+
+### Changed (breaking)
+
+- **Remaining DSL error sites migrated from `ArgumentError` /
+  `CompileError` to `Caravela.DSLError`.** In particular every
+  raise routed through `Caravela.Domain.compile_error!/2` and
+  `Caravela.Compiler.compile_error!/2` now carries the structured
+  four-part message shape. Covers:
+  - Policy DSL: duplicate scope rules, malformed `field :x, opts`
+    inside `policy`, `policy` with a non-atom entity, action-gate
+    arity validation.
+  - Authenticatable DSL: missing strategies, missing email field
+    for `:password`, manual declaration of auto-injected fields,
+    invalid `api_token :ttl` shape, multiple authenticatable
+    entities per domain.
+  - Live runtime DSL: `Caravela.Live.Domain.on_event` / `updater`
+    arity + shape errors.
+  - Live form DSL: `Caravela.Live.Form.visible` / `validate_async`
+    field / arity / opts errors.
+  - Compiler-level validations: entity / field / relation /
+    hook cross-checks emitted from `Caravela.Compiler`.
+
+- **Generator error sites migrated to `Caravela.GenError`.** The
+  three `Gen.Auth*` "no entity with an `authenticatable` block"
+  raises now carry a structured message with a canonical fix
+  suggestion.
+
+  Tests asserting `ArgumentError` or `CompileError` against any of
+  these surfaces need to switch to `Caravela.DSLError` or
+  `Caravela.GenError`. The regex from the old assertion still
+  matches the new message.
+
+### Kept as `ArgumentError` (intentionally)
+
+- `Caravela.IR.of/1` bad-argument errors (runtime API, not DSL).
+- `Caravela.Flow.start/3` runtime "no flow named" lookup failures.
+- `Caravela.Live.Template` runtime updater-not-found / arity-mismatch
+  errors (not compile-time — fire when `apply_updater` is called
+  with a bad name at runtime).
+
+These sites are documented in-code; they don't benefit from the
+structured format since there's no compile-time suggestion to make.
+
+### Fixed
+
+- Pre-existing `ArgumentError` assertions in the test suite updated
+  for 9 sites that exercised migrated paths. No behavior change;
+  assertions now name the correct exception type.
+
 ## [0.9.0] — 2026-04-19
 
 *First phase of the LLM-friendliness roadmap

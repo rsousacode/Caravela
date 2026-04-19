@@ -196,22 +196,31 @@ defmodule Caravela.Domain do
         # fail with a clear message instead of silently falling through
         # to the entity-field branch.
         if Module.get_attribute(__MODULE__, :caravela_current_policy_entity) do
-          raise ArgumentError, """
-          `field :#{name}, <opts>` inside a `policy` block must pass a
-          literal keyword list with `:visible`, e.g.
-
-              field :#{name}, visible: fn actor -> actor.role == :admin end
-
-          Module-attribute or variable references (e.g. `@admin_opts`)
-          aren't supported — the macro needs the fn AST at compile
-          time. For shared predicates, either inline them, use a `for`
-          comprehension over the field names, or wrap the shape in a
-          helper macro that expands to the literal form.
-          """
+          raise Caravela.DSLError,
+            message:
+              "`field :#{name}, <opts>` inside a `policy` block must pass a literal " <>
+                "keyword list with `:visible` — module-attribute or variable references " <>
+                "aren't supported (the macro needs the fn AST at compile time)",
+            suggestion:
+              "field :#{name}, visible: fn actor -> actor.role == :admin end\n\n" <>
+                "# For shared predicates, use a `for` comprehension over field names,\n" <>
+                "# inline the fn, or wrap in a helper macro that expands to the literal form.",
+            docs_url: "https://hexdocs.pm/caravela/policies.html#field-visibility"
         end
 
-        unless is_atom(name), do: raise(ArgumentError, "field name must be an atom")
-        unless is_atom(type), do: raise(ArgumentError, "field type must be an atom")
+        unless is_atom(name) do
+          raise Caravela.DSLError,
+            message: "field name must be an atom, got: #{inspect(name)}",
+            suggestion: "field :title, :string, required: true",
+            docs_url: "https://hexdocs.pm/caravela/dsl.html#fields"
+        end
+
+        unless is_atom(type) do
+          raise Caravela.DSLError,
+            message: "field type must be an atom, got: #{inspect(type)}",
+            suggestion: "field :title, :string, required: true",
+            docs_url: "https://hexdocs.pm/caravela/dsl.html#field-types"
+        end
 
         entry = %Caravela.Schema.Field{name: name, type: type, opts: opts}
         current = Module.get_attribute(__MODULE__, :caravela_current_fields) || []
@@ -386,10 +395,10 @@ defmodule Caravela.Domain do
   """
   defmacro policy(entity, do: block) do
     unless is_atom(entity) do
-      raise CompileError,
-        file: __CALLER__.file,
-        line: __CALLER__.line,
-        description: "Caravela: policy expects an entity atom, got: #{Macro.to_string(entity)}"
+      raise Caravela.DSLError,
+        message: "`policy` expects an entity atom, got: #{Macro.to_string(entity)}",
+        suggestion: "policy :books do\n  scope fn q, actor -> q end\nend",
+        docs_url: "https://hexdocs.pm/caravela/policies.html"
     end
 
     quote do
@@ -793,9 +802,13 @@ defmodule Caravela.Domain do
   end
 
   defp compile_error!(caller, msg) do
-    raise CompileError,
-      file: Map.get(caller, :file, "unknown"),
-      line: Map.get(caller, :line, 0),
-      description: "Caravela: " <> msg
+    # Caller is a %Macro.Env{} when available. We prefer DSLError here
+    # (structured → LLM-friendly) over CompileError; Elixir's error
+    # formatter still annotates the raise with file + line from the
+    # stacktrace frame.
+    raise Caravela.DSLError,
+      message: msg,
+      snippet: Caravela.Errors.snippet_from_env(caller),
+      docs_url: "https://hexdocs.pm/caravela/policies.html"
   end
 end

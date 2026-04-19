@@ -69,7 +69,7 @@ defmodule Caravela.Phase7AuthDslTest do
 
   describe "compile-time validation" do
     test "rejects an authenticatable block with no strategies" do
-      assert_raise CompileError, ~r/declares no strategies/, fn ->
+      assert_raise Caravela.DSLError, ~r/declares no strategies/, fn ->
         defmodule NoStrategies do
           use Caravela.Domain
 
@@ -84,7 +84,7 @@ defmodule Caravela.Phase7AuthDslTest do
     end
 
     test "rejects password strategy without an :email field" do
-      assert_raise CompileError, ~r/has no :email field/, fn ->
+      assert_raise Caravela.DSLError, ~r/has no :email field/, fn ->
         defmodule NoEmail do
           use Caravela.Domain
 
@@ -100,7 +100,7 @@ defmodule Caravela.Phase7AuthDslTest do
     end
 
     test "rejects manual declaration of an injected field" do
-      assert_raise CompileError, ~r/auto-injected/, fn ->
+      assert_raise Caravela.DSLError, ~r/auto-injected/, fn ->
         defmodule Collides do
           use Caravela.Domain
 
@@ -133,7 +133,7 @@ defmodule Caravela.Phase7AuthDslTest do
     end
 
     test "rejects invalid api_token ttl" do
-      assert_raise CompileError, ~r/api_token :ttl/, fn ->
+      assert_raise Caravela.DSLError, ~r/api_token :ttl/, fn ->
         defmodule BadTtl do
           use Caravela.Domain
 
@@ -149,7 +149,7 @@ defmodule Caravela.Phase7AuthDslTest do
     end
 
     test "rejects multiple authenticatable entities in one domain" do
-      assert_raise CompileError, ~r/multiple entities declare/, fn ->
+      assert_raise Caravela.DSLError, ~r/multiple entities declare/, fn ->
         defmodule TwoAuth do
           use Caravela.Domain
 

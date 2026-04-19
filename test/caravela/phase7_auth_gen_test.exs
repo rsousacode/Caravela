@@ -209,7 +209,7 @@ defmodule Caravela.Phase7AuthGenTest do
     test "render_all raises when domain has no authenticatable entity" do
       domain = MyApp.Domains.Library.__caravela_domain__()
 
-      assert_raise ArgumentError, ~r/has no entity with an `authenticatable` block/, fn ->
+      assert_raise Caravela.GenError, ~r/has no entity with an `authenticatable` block/, fn ->
         Auth.render_all(domain)
       end
     end

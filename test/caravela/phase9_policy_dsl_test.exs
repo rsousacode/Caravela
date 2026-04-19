@@ -270,7 +270,7 @@ defmodule Caravela.Phase9PolicyDslTest do
 
   describe "compile-time validation" do
     test "rejects a policy on an unknown entity" do
-      assert_raise CompileError, ~r/unknown entity/, fn ->
+      assert_raise Caravela.DSLError, ~r/unknown entity/, fn ->
         defmodule BadEntity do
           use Caravela.Domain
 
@@ -286,7 +286,7 @@ defmodule Caravela.Phase9PolicyDslTest do
     end
 
     test "rejects a field rule for an unknown field" do
-      assert_raise CompileError, ~r/unknown field/, fn ->
+      assert_raise Caravela.DSLError, ~r/unknown field/, fn ->
         defmodule BadField do
           use Caravela.Domain
 
@@ -330,7 +330,7 @@ defmodule Caravela.Phase9PolicyDslTest do
       # Silent clause-ordering resolution would be bewildering, so we
       # raise at compile time even when the rules are spread across
       # multiple additive policy blocks.
-      assert_raise CompileError, ~r/duplicate policy scope/, fn ->
+      assert_raise Caravela.DSLError, ~r/duplicate policy scope/, fn ->
         defmodule DupScope do
           use Caravela.Domain
 
@@ -348,7 +348,7 @@ defmodule Caravela.Phase9PolicyDslTest do
         end
       end
 
-      assert_raise CompileError, ~r/duplicate policy field rule/, fn ->
+      assert_raise Caravela.DSLError, ~r/duplicate policy field rule/, fn ->
         defmodule DupField do
           use Caravela.Domain
 
@@ -363,7 +363,7 @@ defmodule Caravela.Phase9PolicyDslTest do
         end
       end
 
-      assert_raise CompileError, ~r/duplicate policy allow rule/, fn ->
+      assert_raise Caravela.DSLError, ~r/duplicate policy allow rule/, fn ->
         defmodule DupAllow do
           use Caravela.Domain
 
@@ -383,7 +383,7 @@ defmodule Caravela.Phase9PolicyDslTest do
       # AST dispatch can't see `@admin_opts` as a keyword list, so
       # instead of silently misrouting we raise a pointed error that
       # tells the user what shape to use.
-      assert_raise ArgumentError, ~r/literal keyword list with/, fn ->
+      assert_raise Caravela.DSLError, ~r/literal keyword list with/, fn ->
         defmodule OptsRef do
           use Caravela.Domain
 
@@ -444,7 +444,7 @@ defmodule Caravela.Phase9PolicyDslTest do
     end
 
     test "rejects an allow action outside of :create / :update / :delete" do
-      assert_raise CompileError, ~r/policy allow expects/, fn ->
+      assert_raise Caravela.DSLError, ~r/policy allow expects/, fn ->
         defmodule BadAction do
           use Caravela.Domain
 

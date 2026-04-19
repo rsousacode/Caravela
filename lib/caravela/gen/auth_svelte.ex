@@ -255,8 +255,11 @@ defmodule Caravela.Gen.AuthSvelte do
   defp auth_config!(%Domain{} = domain) do
     case Domain.auth_entity(domain) do
       nil ->
-        raise ArgumentError,
-              "#{inspect(domain.module)} has no entity with an `authenticatable` block."
+        raise Caravela.GenError,
+          message: "#{inspect(domain.module)} has no entity with an `authenticatable` block",
+          suggestion:
+            "Add an `authenticatable do … end` block to an entity before running this generator.",
+          docs_url: "https://hexdocs.pm/caravela/auth.html"
 
       %Entity{auth: cfg} ->
         cfg

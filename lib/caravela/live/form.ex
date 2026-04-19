@@ -86,7 +86,10 @@ defmodule Caravela.Live.Form do
   """
   defmacro visible(field, fun) do
     unless is_atom(field) do
-      raise ArgumentError, "visible name must be an atom, got: #{inspect(field)}"
+      raise Caravela.DSLError,
+        message: "`visible` field name must be an atom, got: #{inspect(field)}",
+        suggestion: "visible :published_at, fn assigns -> assigns.attrs.published end",
+        docs_url: "https://hexdocs.pm/caravela/live_runtime.html#visible"
     end
 
     _ = fun_arity_or_raise!(fun, [1], :visible)
@@ -115,19 +118,27 @@ defmodule Caravela.Live.Form do
   """
   defmacro validate_async(field, opts \\ [], fun) do
     unless is_atom(field) do
-      raise ArgumentError, "validate_async name must be an atom, got: #{inspect(field)}"
+      raise Caravela.DSLError,
+        message: "`validate_async` field name must be an atom, got: #{inspect(field)}",
+        suggestion: "validate_async :isbn, debounce: 500, fn value, _ -> :ok end",
+        docs_url: "https://hexdocs.pm/caravela/live_runtime.html#validate_async"
     end
 
     unless is_list(opts) do
-      raise ArgumentError,
-            "validate_async opts must be a keyword list, got: #{inspect(opts)}"
+      raise Caravela.DSLError,
+        message: "`validate_async` opts must be a keyword list, got: #{inspect(opts)}",
+        suggestion: "validate_async :isbn, debounce: 500, fn value, _ -> :ok end",
+        docs_url: "https://hexdocs.pm/caravela/live_runtime.html#validate_async"
     end
 
     debounce = Keyword.get(opts, :debounce, 0)
 
     unless is_integer(debounce) and debounce >= 0 do
-      raise ArgumentError,
-            "validate_async :debounce must be a non-negative integer, got: #{inspect(debounce)}"
+      raise Caravela.DSLError,
+        message:
+          "`validate_async :debounce` must be a non-negative integer, got: #{inspect(debounce)}",
+        suggestion: "validate_async :isbn, debounce: 500, fn value, _ -> :ok end",
+        docs_url: "https://hexdocs.pm/caravela/live_runtime.html#validate_async"
     end
 
     _ = fun_arity_or_raise!(fun, [2], :validate_async)
@@ -194,21 +205,35 @@ defmodule Caravela.Live.Form do
         if a in allowed do
           a
         else
-          raise ArgumentError,
-                "Caravela: #{macro_name} requires a function of arity in " <>
-                  "#{inspect(allowed)}, got arity #{a}"
+          raise Caravela.DSLError,
+            message:
+              "`#{macro_name}` requires a function of arity in " <>
+                "#{inspect(allowed)}, got arity #{a}",
+            suggestion: form_suggestion(macro_name),
+            docs_url: "https://hexdocs.pm/caravela/live_runtime.html"
         end
 
       :unknown ->
-        raise ArgumentError,
-              "Caravela: #{macro_name} requires a literal `fn ... end` or " <>
-                "`&Module.fun/N` capture so arity can be checked at compile " <>
-                "time. Got: " <>
-                Macro.to_string(fun) <>
-                ". To pass a bound function variable, wrap it: " <>
-                "`fn arg -> my_fun.(arg) end`."
+        raise Caravela.DSLError,
+          message:
+            "`#{macro_name}` requires a literal `fn ... end` or `&Module.fun/N` " <>
+              "capture so arity can be checked at compile time. Got: " <>
+              Macro.to_string(fun),
+          suggestion:
+            "To pass a bound function variable, wrap it:\n" <>
+              "    fn arg -> my_fun.(arg) end",
+          docs_url: "https://hexdocs.pm/caravela/live_runtime.html"
     end
   end
+
+  defp form_suggestion(:visible),
+    do: "visible :published_at, fn assigns -> assigns.attrs.published end"
+
+  defp form_suggestion(:validate_async),
+    do: "validate_async :isbn, debounce: 500, fn value, _ -> :ok end"
+
+  defp form_suggestion(_),
+    do: "see https://hexdocs.pm/caravela/live_runtime.html for examples"
 
   defp arity_of({:fn, _, clauses}) when is_list(clauses) do
     arities =

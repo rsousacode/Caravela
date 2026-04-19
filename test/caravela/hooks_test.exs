@@ -46,7 +46,7 @@ defmodule Caravela.HooksTest do
 
   describe "validation failures" do
     test "hook on unknown entity is rejected" do
-      assert_raise CompileError, ~r/hook on_create references unknown entity :ghosts/, fn ->
+      assert_raise Caravela.DSLError, ~r/hook on_create references unknown entity :ghosts/, fn ->
         defmodule BadHookEntity do
           use Caravela.Domain
 
@@ -60,21 +60,23 @@ defmodule Caravela.HooksTest do
     end
 
     test "hook with wrong arity is rejected" do
-      assert_raise CompileError, ~r/on_create expects a function of arity 2, got arity 1/, fn ->
-        defmodule BadHookArity do
-          use Caravela.Domain
+      assert_raise Caravela.DSLError,
+                   ~r/on_create expects a function of arity 2, got arity 1/,
+                   fn ->
+                     defmodule BadHookArity do
+                       use Caravela.Domain
 
-          entity :authors do
-            field :name, :string
-          end
+                       entity :authors do
+                         field :name, :string
+                       end
 
-          on_create :authors, fn cs -> cs end
-        end
-      end
+                       on_create :authors, fn cs -> cs end
+                     end
+                   end
     end
 
     test "duplicate hook for same (action, entity) is rejected" do
-      assert_raise CompileError, ~r/duplicate hook on_create for entity :authors/, fn ->
+      assert_raise Caravela.DSLError, ~r/duplicate hook on_create for entity :authors/, fn ->
         defmodule DupHook do
           use Caravela.Domain
 
@@ -89,7 +91,7 @@ defmodule Caravela.HooksTest do
     end
 
     test "non-function argument is rejected" do
-      assert_raise CompileError, ~r/on_create requires a function literal/, fn ->
+      assert_raise Caravela.DSLError, ~r/on_create requires a function literal/, fn ->
         defmodule BadHookShape do
           use Caravela.Domain
 
@@ -123,17 +125,19 @@ defmodule Caravela.HooksTest do
     end
 
     test "rejects a captured named function of the wrong arity" do
-      assert_raise CompileError, ~r/on_create expects a function of arity 2, got arity 1/, fn ->
-        defmodule CapturedBad do
-          use Caravela.Domain
+      assert_raise Caravela.DSLError,
+                   ~r/on_create expects a function of arity 2, got arity 1/,
+                   fn ->
+                     defmodule CapturedBad do
+                       use Caravela.Domain
 
-          entity :things do
-            field :name, :string
-          end
+                       entity :things do
+                         field :name, :string
+                       end
 
-          on_create :things, &is_atom/1
-        end
-      end
+                       on_create :things, &is_atom/1
+                     end
+                   end
     end
   end
 end

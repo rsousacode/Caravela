@@ -27,7 +27,7 @@ defmodule Caravela.Phase3Test do
 
   describe "compiler validations" do
     test "rejects invalid version formats" do
-      assert_raise CompileError, ~r/version "release-1" is invalid/, fn ->
+      assert_raise Caravela.DSLError, ~r/version "release-1" is invalid/, fn ->
         defmodule BadVersion do
           use Caravela.Domain
           version "release-1"
@@ -40,7 +40,7 @@ defmodule Caravela.Phase3Test do
     end
 
     test "rejects manual tenant_id when multi_tenant is on" do
-      assert_raise CompileError, ~r/tenant_id is auto-injected/, fn ->
+      assert_raise Caravela.DSLError, ~r/tenant_id is auto-injected/, fn ->
         defmodule Collision do
           use Caravela.Domain, multi_tenant: true
 

@@ -56,7 +56,7 @@ defmodule Caravela.DomainTest do
 
   describe "validation failures" do
     test "unknown field type is rejected" do
-      assert_raise CompileError, ~r/unknown field type :widget/, fn ->
+      assert_raise Caravela.DSLError, ~r/unknown field type :widget/, fn ->
         defmodule BadType do
           use Caravela.Domain
 
@@ -68,7 +68,7 @@ defmodule Caravela.DomainTest do
     end
 
     test "relation to undefined entity is rejected" do
-      assert_raise CompileError, ~r/unknown entity :ghost/, fn ->
+      assert_raise Caravela.DSLError, ~r/unknown entity :ghost/, fn ->
         defmodule BadRelation do
           use Caravela.Domain
 
@@ -82,7 +82,7 @@ defmodule Caravela.DomainTest do
     end
 
     test "invalid relation type is rejected" do
-      assert_raise CompileError, ~r/invalid relation type :vibes/, fn ->
+      assert_raise Caravela.DSLError, ~r/invalid relation type :vibes/, fn ->
         defmodule BadRelType do
           use Caravela.Domain
 
@@ -100,7 +100,7 @@ defmodule Caravela.DomainTest do
     end
 
     test "numeric constraint on non-numeric field is rejected" do
-      assert_raise CompileError, ~r/numeric option :min/, fn ->
+      assert_raise Caravela.DSLError, ~r/numeric option :min/, fn ->
         defmodule BadConstraint do
           use Caravela.Domain
 
@@ -112,7 +112,7 @@ defmodule Caravela.DomainTest do
     end
 
     test "string constraint on non-string field is rejected" do
-      assert_raise CompileError, ~r/string option :min_length/, fn ->
+      assert_raise Caravela.DSLError, ~r/string option :min_length/, fn ->
         defmodule BadStringConstraint do
           use Caravela.Domain
 
@@ -124,7 +124,7 @@ defmodule Caravela.DomainTest do
     end
 
     test "duplicate entity is rejected" do
-      assert_raise CompileError, ~r/duplicate entity :things/, fn ->
+      assert_raise Caravela.DSLError, ~r/duplicate entity :things/, fn ->
         defmodule DupEntity do
           use Caravela.Domain
 
@@ -140,7 +140,7 @@ defmodule Caravela.DomainTest do
     end
 
     test "incompatible cardinality between declared sides is rejected" do
-      assert_raise CompileError, ~r/incompatible cardinality/, fn ->
+      assert_raise Caravela.DSLError, ~r/incompatible cardinality/, fn ->
         defmodule BadCardinality do
           use Caravela.Domain
 
@@ -159,7 +159,7 @@ defmodule Caravela.DomainTest do
     end
 
     test "circular required belongs_to chain (3-cycle) is rejected" do
-      assert_raise CompileError, ~r/circular required belongs_to/, fn ->
+      assert_raise Caravela.DSLError, ~r/circular required belongs_to/, fn ->
         defmodule Cycle do
           use Caravela.Domain
 

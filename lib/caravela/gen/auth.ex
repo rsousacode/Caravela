@@ -470,9 +470,17 @@ defmodule Caravela.Gen.Auth do
   defp require_auth_entity!(%Domain{} = domain) do
     case Domain.auth_entity(domain) do
       nil ->
-        raise ArgumentError,
-              "#{inspect(domain.module)} has no entity with an `authenticatable` block. " <>
-                "Add one before running mix caravela.gen.auth."
+        raise Caravela.GenError,
+          message: "#{inspect(domain.module)} has no entity with an `authenticatable` block",
+          suggestion:
+            "Add one before running `mix caravela.gen.auth`:\n\n" <>
+              "    entity :users do\n" <>
+              "      field :email, :string, required: true\n" <>
+              "      authenticatable do\n" <>
+              "        strategy :password\n" <>
+              "      end\n" <>
+              "    end",
+          docs_url: "https://hexdocs.pm/caravela/auth.html"
 
       entity ->
         entity

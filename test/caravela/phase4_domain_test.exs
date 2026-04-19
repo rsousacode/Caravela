@@ -126,7 +126,7 @@ defmodule Caravela.Phase4DomainTest do
 
   describe "validations" do
     test "updater with wrong arity is rejected at compile time" do
-      assert_raise ArgumentError, ~r/updater requires a function of arity/, fn ->
+      assert_raise Caravela.DSLError, ~r/updater.*requires a function of arity/, fn ->
         defmodule BadUpdater do
           use Caravela.Live.Domain
 
@@ -140,7 +140,7 @@ defmodule Caravela.Phase4DomainTest do
     end
 
     test "on_event with non-binary name is rejected" do
-      assert_raise ArgumentError, ~r/on_event name must be a string literal/, fn ->
+      assert_raise Caravela.DSLError, ~r/on_event.*must be a string literal/, fn ->
         defmodule BadEvent do
           use Caravela.Live.Domain
 

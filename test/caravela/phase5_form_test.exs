@@ -93,7 +93,7 @@ defmodule Caravela.Phase5FormTest do
 
   describe "validations" do
     test "visible with non-atom field name is rejected at compile time" do
-      assert_raise ArgumentError, ~r/visible name must be an atom/, fn ->
+      assert_raise Caravela.DSLError, ~r/visible.*must be an atom/, fn ->
         defmodule BadVisible do
           use Caravela.Live.Form, entity: Foo
 
@@ -106,7 +106,7 @@ defmodule Caravela.Phase5FormTest do
     end
 
     test "validate_async with non-atom field name is rejected at compile time" do
-      assert_raise ArgumentError, ~r/validate_async name must be an atom/, fn ->
+      assert_raise Caravela.DSLError, ~r/validate_async.*must be an atom/, fn ->
         defmodule BadValidateAsync do
           use Caravela.Live.Form, entity: Foo
 
@@ -119,7 +119,7 @@ defmodule Caravela.Phase5FormTest do
     end
 
     test "validate_async with negative debounce is rejected" do
-      assert_raise ArgumentError, ~r/non-negative integer/, fn ->
+      assert_raise Caravela.DSLError, ~r/non-negative integer/, fn ->
         defmodule BadDebounce do
           use Caravela.Live.Form, entity: Foo
 
@@ -132,7 +132,7 @@ defmodule Caravela.Phase5FormTest do
     end
 
     test "visible with wrong-arity fun is rejected" do
-      assert_raise ArgumentError, ~r/visible requires a function of arity/, fn ->
+      assert_raise Caravela.DSLError, ~r/visible.*requires a function of arity/, fn ->
         defmodule BadVisibleArity do
           use Caravela.Live.Form, entity: Foo
 

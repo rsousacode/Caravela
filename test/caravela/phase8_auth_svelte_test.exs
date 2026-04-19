@@ -27,7 +27,7 @@ defmodule Caravela.Phase8AuthSvelteTest do
     test "raises when domain has no authenticatable entity" do
       domain = MyApp.Domains.Library.__caravela_domain__()
 
-      assert_raise ArgumentError, ~r/no entity with an `authenticatable`/, fn ->
+      assert_raise Caravela.GenError, ~r/no entity with an `authenticatable`/, fn ->
         AuthSvelte.render_all(domain)
       end
     end

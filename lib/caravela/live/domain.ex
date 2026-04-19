@@ -143,7 +143,10 @@ defmodule Caravela.Live.Domain do
   """
   defmacro on_event(event, fun) do
     unless is_binary(event) do
-      raise ArgumentError, "on_event name must be a string literal, got: #{inspect(event)}"
+      raise Caravela.DSLError,
+        message: "`on_event` name must be a string literal, got: #{inspect(event)}",
+        suggestion: "on_event \"save\", fn socket, _params -> socket end",
+        docs_url: "https://hexdocs.pm/caravela/live_runtime.html#on_event"
     end
 
     arity = fun_arity_or_raise!(fun, [1, 2], :on_event)
@@ -241,19 +244,24 @@ defmodule Caravela.Live.Domain do
         if a in allowed do
           a
         else
-          raise ArgumentError,
-                "Caravela: #{macro_name} requires a function of arity in " <>
-                  "#{inspect(allowed)}, got arity #{a}"
+          raise Caravela.DSLError,
+            message:
+              "`#{macro_name}` requires a function of arity in " <>
+                "#{inspect(allowed)}, got arity #{a}",
+            suggestion: "on_event \"save\", fn socket, _params -> socket end",
+            docs_url: "https://hexdocs.pm/caravela/live_runtime.html"
         end
 
       :unknown ->
-        raise ArgumentError,
-              "Caravela: #{macro_name} requires a literal `fn ... end` or " <>
-                "`&Module.fun/N` capture so arity can be checked at compile " <>
-                "time. Got: " <>
-                Macro.to_string(fun) <>
-                ". To pass a bound function variable, wrap it: " <>
-                "`fn arg -> my_fun.(arg) end`."
+        raise Caravela.DSLError,
+          message:
+            "`#{macro_name}` requires a literal `fn ... end` or `&Module.fun/N` " <>
+              "capture so arity can be checked at compile time. Got: " <>
+              Macro.to_string(fun),
+          suggestion:
+            "To pass a bound function variable, wrap it:\n" <>
+              "    fn arg -> my_fun.(arg) end",
+          docs_url: "https://hexdocs.pm/caravela/live_runtime.html"
     end
   end
 

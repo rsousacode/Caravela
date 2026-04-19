@@ -100,8 +100,12 @@ defmodule Caravela.Compiler do
         entry = Map.get(acc, entity, new_entry(entity))
 
         if entry.has_scope? do
-          raise CompileError,
-            description: "Caravela: duplicate policy scope rule for #{inspect(entity)}"
+          raise Caravela.DSLError,
+            message: "duplicate policy scope rule for #{inspect(entity)}",
+            suggestion:
+              "each entity may declare at most one `scope fn q, actor -> ... end`.\n" <>
+                "Remove the extra `scope` call, or combine the two into one fn.",
+            docs_url: "https://hexdocs.pm/caravela/policies.html#scope"
         end
 
         Map.put(acc, entity, %{entry | has_scope?: true})
@@ -733,9 +737,12 @@ defmodule Caravela.Compiler do
   end
 
   defp compile_error!(env, msg) do
-    raise CompileError,
-      file: Map.get(env, :file, "unknown"),
-      line: Map.get(env, :line, 0),
-      description: "Caravela: " <> msg
+    # Structured errors are preferred for LLM iteration; Elixir's
+    # error formatter still annotates the raise with file + line via
+    # the macro stacktrace.
+    raise Caravela.DSLError,
+      message: msg,
+      snippet: Caravela.Errors.snippet_from_env(env),
+      docs_url: "https://hexdocs.pm/caravela/policies.html"
   end
 end
