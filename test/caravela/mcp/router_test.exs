@@ -74,7 +74,12 @@ defmodule Caravela.MCP.RouterTest do
           }
         })
 
-      assert %{"result" => %{"content" => [%{"type" => "text", "text" => text}], "isError" => false}} =
+      assert %{
+               "result" => %{
+                 "content" => [%{"type" => "text", "text" => text}],
+                 "isError" => false
+               }
+             } =
                resp
 
       payload = Jason.decode!(text)

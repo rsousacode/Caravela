@@ -5,7 +5,9 @@ defmodule Caravela.MCP.ProtocolTest do
 
   describe "encode/1" do
     test "emits newline-terminated JSON" do
-      out = Protocol.encode(%{"jsonrpc" => "2.0", "id" => 1, "result" => "ok"}) |> IO.iodata_to_binary()
+      out =
+        Protocol.encode(%{"jsonrpc" => "2.0", "id" => 1, "result" => "ok"})
+        |> IO.iodata_to_binary()
 
       assert String.ends_with?(out, "\n")
       assert {:ok, %{"id" => 1, "result" => "ok"}} = Jason.decode(String.trim(out))

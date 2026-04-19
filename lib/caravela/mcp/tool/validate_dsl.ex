@@ -68,8 +68,7 @@ defmodule Caravela.MCP.Tool.ValidateDsl do
            ok: false,
            error: %{
              kind: "not_a_domain",
-             message:
-               "#{inspect(module)} compiled but does not `use Caravela.Domain`"
+             message: "#{inspect(module)} compiled but does not `use Caravela.Domain`"
            }
          })}
       end

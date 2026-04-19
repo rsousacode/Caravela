@@ -52,6 +52,7 @@ defmodule Caravela.MCP.ServerTest do
       Server.run(io)
 
       {_, written} = StringIO.contents(io)
+
       responses =
         written
         |> String.split("\n", trim: true)
