@@ -1,7 +1,7 @@
 defmodule Caravela.MixProject do
   use Mix.Project
 
-  @version "0.9.1"
+  @version "0.9.2"
   @source_url "https://github.com/rsousacode/caravela"
 
   def project do
@@ -88,7 +88,8 @@ defmodule Caravela.MixProject do
       {:absinthe, "~> 1.7", optional: true},
       {:absinthe_plug, "~> 1.5", optional: true},
       {:dataloader, "~> 2.0", optional: true},
-      {:ex_doc, "~> 0.31", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.31", only: :dev, runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 end

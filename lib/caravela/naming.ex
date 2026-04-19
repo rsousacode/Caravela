@@ -22,6 +22,15 @@ defmodule Caravela.Naming do
 
   alias Caravela.Schema.Domain
 
+  @typedoc "Either a compiled `Caravela.Schema.Domain` struct or a raw domain module atom."
+  @type domain_or_module :: Domain.t() | module()
+
+  @typedoc "An entity's DSL name (plural atom — e.g. `:books`)."
+  @type entity_name :: atom()
+
+  @typedoc "A LiveView / Svelte component kind."
+  @type kind :: :index | :show | :form
+
   @doc """
   Context module derived from the domain module by stripping a `.Domains.`
   segment if present. When given a `Domain` struct with a declared
@@ -30,6 +39,7 @@ defmodule Caravela.Naming do
       context_module(MyApp.Domains.Library)          #=> MyApp.Library
       context_module(%Domain{... version: "v1" ...}) #=> MyApp.Library.V1
   """
+  @spec context_module(domain_or_module()) :: module()
   def context_module(%Domain{} = domain) do
     base = context_module(domain.module)
 
@@ -52,6 +62,7 @@ defmodule Caravela.Naming do
 
       context_short(MyApp.Domains.Library) #=> "library"
   """
+  @spec context_short(domain_or_module()) :: String.t()
   def context_short(%Domain{} = domain), do: context_short(domain.module)
 
   def context_short(domain_module) when is_atom(domain_module) do
@@ -69,6 +80,7 @@ defmodule Caravela.Naming do
       entity_module(MyApp.Domains.Library, :books)            #=> MyApp.Library.Book
       entity_module(%Domain{... version: "v1" ...}, :books)   #=> MyApp.Library.V1.Book
   """
+  @spec entity_module(domain_or_module(), entity_name()) :: module()
   def entity_module(%Domain{} = domain, entity_name) do
     Module.concat(context_module(domain), camelize(singularize(entity_name)))
   end
@@ -83,6 +95,7 @@ defmodule Caravela.Naming do
 
       table_name(MyApp.Domains.Library, :books) #=> "library_books"
   """
+  @spec table_name(domain_or_module(), entity_name()) :: String.t()
   def table_name(%Domain{} = domain, entity_name), do: table_name(domain.module, entity_name)
 
   def table_name(domain_module, entity_name) when is_atom(domain_module) do
@@ -99,6 +112,7 @@ defmodule Caravela.Naming do
       schema_file_path(%Domain{... version: "v1" ...}, :books)
       #=> "lib/my_app/library/v1/book.ex"
   """
+  @spec schema_file_path(domain_or_module(), entity_name()) :: String.t()
   def schema_file_path(%Domain{} = domain, entity_name) do
     dir = context_dir(domain)
     Path.join(dir, to_string(singularize(entity_name)) <> ".ex")
@@ -114,6 +128,7 @@ defmodule Caravela.Naming do
 
       has_many_name(:books) #=> :books
   """
+  @spec has_many_name(entity_name()) :: entity_name()
   def has_many_name(entity_name), do: entity_name
 
   @doc """
@@ -121,6 +136,7 @@ defmodule Caravela.Naming do
 
       belongs_to_name(:authors) #=> :author
   """
+  @spec belongs_to_name(entity_name()) :: atom()
   def belongs_to_name(entity_name) do
     entity_name |> singularize()
   end
@@ -130,6 +146,7 @@ defmodule Caravela.Naming do
 
       foreign_key(:authors) #=> :author_id
   """
+  @spec foreign_key(entity_name()) :: atom()
   def foreign_key(entity_name) do
     String.to_atom(to_string(singularize(entity_name)) <> "_id")
   end
@@ -138,6 +155,7 @@ defmodule Caravela.Naming do
   Simple singularization. Handles `-ies → -y`, `-sses → -ss`, trailing `s`
   (unless preceded by another `s`). Falls back to the input unchanged.
   """
+  @spec singularize(atom() | String.t()) :: atom() | String.t()
   def singularize(name) when is_atom(name),
     do: String.to_atom(singularize(Atom.to_string(name)))
 
@@ -152,6 +170,7 @@ defmodule Caravela.Naming do
   end
 
   @doc "CamelCase an atom or string."
+  @spec camelize(atom() | String.t()) :: String.t()
   def camelize(name) when is_atom(name), do: Macro.camelize(Atom.to_string(name))
   def camelize(name) when is_binary(name), do: Macro.camelize(name)
 
@@ -161,6 +180,7 @@ defmodule Caravela.Naming do
 
       singular_string(:books) #=> "book"
   """
+  @spec singular_string(entity_name()) :: String.t()
   def singular_string(entity_name), do: to_string(singularize(entity_name))
 
   @doc """
@@ -168,6 +188,7 @@ defmodule Caravela.Naming do
 
       plural_string(:books) #=> "books"
   """
+  @spec plural_string(entity_name()) :: String.t()
   def plural_string(entity_name), do: to_string(entity_name)
 
   @doc """
@@ -181,6 +202,7 @@ defmodule Caravela.Naming do
       context_file_path(%Domain{... version: "v1" ...})
       #=> "lib/my_app/library/v1.ex"
   """
+  @spec context_file_path(domain_or_module()) :: String.t()
   def context_file_path(%Domain{} = domain) do
     case Domain.version(domain) do
       nil ->
@@ -243,6 +265,7 @@ defmodule Caravela.Naming do
 
       repo_module(MyApp.Domains.Library) #=> MyApp.Repo
   """
+  @spec repo_module(domain_or_module()) :: module()
   def repo_module(%Domain{} = domain), do: repo_module(domain.module)
 
   def repo_module(domain_module) when is_atom(domain_module) do
@@ -256,6 +279,7 @@ defmodule Caravela.Naming do
 
       web_module(MyApp.Domains.Library) #=> MyAppWeb
   """
+  @spec web_module(domain_or_module()) :: module()
   def web_module(%Domain{} = domain), do: web_module(domain.module)
 
   def web_module(domain_module) when is_atom(domain_module) do
@@ -274,6 +298,7 @@ defmodule Caravela.Naming do
       controller_module(%Domain{... version: "v1" ...}, :books)
       #=> MyAppWeb.V1.BookController
   """
+  @spec controller_module(domain_or_module(), entity_name()) :: module()
   def controller_module(%Domain{} = domain, entity_name) do
     base =
       case Domain.version_segment(domain) do
@@ -298,6 +323,7 @@ defmodule Caravela.Naming do
       controller_file_path(%Domain{... version: "v1" ...}, :books)
       #=> "lib/my_app_web/controllers/v1/book_controller.ex"
   """
+  @spec controller_file_path(domain_or_module(), entity_name()) :: String.t()
   def controller_file_path(%Domain{} = domain, entity_name) do
     web = web_module(domain) |> Module.split() |> List.first() |> Macro.underscore()
     filename = "#{singular_string(entity_name)}_controller.ex"
@@ -318,6 +344,7 @@ defmodule Caravela.Naming do
 
       route_path(:books) #=> "/books"
   """
+  @spec route_path(entity_name()) :: String.t()
   def route_path(entity_name), do: "/" <> plural_string(entity_name)
 
   # --- Phase 4: LiveView + Svelte naming ---------------------------------
@@ -330,6 +357,7 @@ defmodule Caravela.Naming do
       #=> MyAppWeb.Library.BookLive.Index
       #=> MyAppWeb.V1.Library.BookLive.Index  (when version set)
   """
+  @spec live_module(Domain.t(), entity_name(), kind()) :: module()
   def live_module(%Domain{} = domain, entity_name, kind) do
     web = web_module(domain)
 
@@ -353,6 +381,7 @@ defmodule Caravela.Naming do
       #=> "lib/my_app_web/live/library/book_live/index.ex"
       #=> "lib/my_app_web/live/v1/library/book_live/index.ex"  (when versioned)
   """
+  @spec live_file_path(Domain.t(), entity_name(), kind()) :: String.t()
   def live_file_path(%Domain{} = domain, entity_name, kind) do
     web_root = web_module(domain) |> Module.split() |> List.first() |> Macro.underscore()
     ctx_short = context_short(domain)
@@ -375,6 +404,7 @@ defmodule Caravela.Naming do
       svelte_component_name(:books, :index) #=> "BookIndex"
       svelte_component_name(:books, :form)  #=> "BookForm"
   """
+  @spec svelte_component_name(entity_name(), kind()) :: String.t()
   def svelte_component_name(entity_name, kind) do
     camelize(singularize(entity_name)) <> Macro.camelize(Atom.to_string(kind))
   end
@@ -387,6 +417,7 @@ defmodule Caravela.Naming do
       svelte_component_ref(domain, :books, :index) #=> "library/BookIndex"
       #=> "v1/library/BookIndex"                   (when versioned)
   """
+  @spec svelte_component_ref(Domain.t(), entity_name(), kind()) :: String.t()
   def svelte_component_ref(%Domain{} = domain, entity_name, kind) do
     component = svelte_component_name(entity_name, kind)
     ctx_short = context_short(domain)
@@ -404,6 +435,7 @@ defmodule Caravela.Naming do
       #=> "assets/svelte/library/BookIndex.svelte"
       #=> "assets/svelte/v1/library/BookIndex.svelte"  (when versioned)
   """
+  @spec svelte_file_path(Domain.t(), entity_name(), kind()) :: String.t()
   def svelte_file_path(%Domain{} = domain, entity_name, kind) do
     component = svelte_component_name(entity_name, kind)
     ctx_short = context_short(domain)
@@ -424,6 +456,7 @@ defmodule Caravela.Naming do
       #=> "assets/svelte/auth/LoginForm.svelte"
       #=> "assets/svelte/v1/auth/LoginForm.svelte"  (when versioned)
   """
+  @spec svelte_auth_file_path(Domain.t(), String.t()) :: String.t()
   def svelte_auth_file_path(%Domain{} = domain, component) when is_binary(component) do
     segments =
       case Domain.version(domain) do
@@ -441,6 +474,7 @@ defmodule Caravela.Naming do
       svelte_auth_component_ref(domain, "LoginForm") #=> "auth/LoginForm"
       #=> "v1/auth/LoginForm"                         (when versioned)
   """
+  @spec svelte_auth_component_ref(Domain.t(), String.t()) :: String.t()
   def svelte_auth_component_ref(%Domain{} = domain, component) when is_binary(component) do
     case Domain.version(domain) do
       nil -> "auth/#{component}"
@@ -453,6 +487,7 @@ defmodule Caravela.Naming do
   domain's TypeScript interfaces file. Both sit under the same
   `v<N>/` (or root) scope so the relative path is always `../types/<ctx>`.
   """
+  @spec svelte_auth_types_import(Domain.t()) :: String.t()
   def svelte_auth_types_import(%Domain{} = domain) do
     "../types/#{context_short(domain)}"
   end
@@ -465,6 +500,7 @@ defmodule Caravela.Naming do
       #=> MyAppWeb.AuthLive.Login
       #=> MyAppWeb.V1.AuthLive.Login  (when versioned)
   """
+  @spec auth_live_module(Domain.t(), String.t()) :: module()
   def auth_live_module(%Domain{} = domain, name) when is_binary(name) do
     web = web_module(domain)
 
@@ -484,6 +520,7 @@ defmodule Caravela.Naming do
       #=> "lib/my_app_web/live/auth_live/login.ex"
       #=> "lib/my_app_web/live/v1/auth_live/login.ex"  (when versioned)
   """
+  @spec auth_live_file_path(Domain.t(), String.t()) :: String.t()
   def auth_live_file_path(%Domain{} = domain, name) when is_binary(name) do
     web_root = web_module(domain) |> Module.split() |> List.first() |> Macro.underscore()
     file = Macro.underscore(name) <> ".ex"
@@ -504,6 +541,7 @@ defmodule Caravela.Naming do
       #=> "assets/svelte/types/library.ts"
       #=> "assets/svelte/v1/types/library.ts"  (when versioned)
   """
+  @spec svelte_types_file_path(Domain.t()) :: String.t()
   def svelte_types_file_path(%Domain{} = domain) do
     ctx_short = context_short(domain)
 

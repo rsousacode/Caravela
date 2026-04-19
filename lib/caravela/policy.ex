@@ -79,11 +79,13 @@ defmodule Caravela.Policy do
           }
 
     @doc "Does this entry have a field rule for `field`?"
+    @spec field_rule(t(), atom()) :: FieldRule.t() | nil
     def field_rule(%__MODULE__{fields: fields}, field) do
       Enum.find(fields, &(&1.field == field))
     end
 
     @doc "Does this entry have an action gate for `action`?"
+    @spec action_gate(t(), ActionGate.action()) :: ActionGate.t() | nil
     def action_gate(%__MODULE__{actions: gates}, action) do
       Enum.find(gates, &(&1.action == action))
     end
@@ -92,5 +94,6 @@ defmodule Caravela.Policy do
   @action_gate_actions [:create, :update, :delete]
 
   @doc false
+  @spec action_gate_actions() :: [ActionGate.action()]
   def action_gate_actions, do: @action_gate_actions
 end

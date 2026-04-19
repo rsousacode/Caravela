@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] — 2026-04-19
+
+*Kicks off the §10 spec pass from
+[llm_friendliness.md](https://github.com/rsousacode/caravela-plan/blob/main/phoenix/llm_friendliness.md) —
+every public function on the stable-API allowlist now carries a
+`@spec`. Wires Credo into CI as a hard gate so new public functions
+without specs fail the pipeline.*
+
+### Added
+
+- **`@spec` on every public function** in ten stable-API modules:
+  `Caravela.IR`, `Caravela.Errors`, `Caravela.Error`,
+  `Caravela.Types`, `Caravela.Naming`, `Caravela.Tenant`,
+  `Caravela.Auth`, `Caravela.Policy`, `Caravela.Schema`,
+  `Caravela.Gen.Custom`. 85 specs added across the set.
+
+- **Type aliases** where the same shape recurred:
+  - `Caravela.Naming.domain_or_module :: Domain.t() | module()`
+  - `Caravela.Naming.entity_name :: atom()`
+  - `Caravela.Naming.kind :: :index | :show | :form`
+  - `Caravela.Types.dsl_type :: atom()`
+  - `Caravela.Gen.Custom.style :: :elixir | :ts | :svelte`
+
+- **Credo dep** (`~> 1.7`, dev/test only) + `.credo.exs` with
+  `Credo.Check.Readability.Specs` enabled and scoped via
+  `files.included` to the stable-API allowlist. Running a plain
+  `mix credo --strict` locally also surfaces advisory hygiene
+  checks (nesting depth, function complexity) that aren't hard-
+  gated yet.
+
+- **CI hard gate**: `.github/workflows/ci.yml` now runs
+  `mix credo --strict --only Readability.Specs` between compile
+  and test. New public functions added to allowlisted modules
+  without a `@spec` fail the pipeline. Modules outside the
+  allowlist (mix tasks, generator internals, `Live.*` macros) are
+  intentionally excluded until they stabilize — see the comments
+  in `.credo.exs` for the rationale.
+
+### Notes
+
+- The allowlist grows as modules stabilize. Intended pattern for
+  future additions: add the file path to `.credo.exs`, run
+  `mix credo --strict --only Readability.Specs`, add the missing
+  specs it flags, done. No per-module config beyond the include list.
+- This is **presence** enforcement (every public fn has a spec),
+  not **correctness** enforcement. Spec correctness is Dialyzer's
+  job; wiring Dialyzer into CI is deferred to the 1.1 phase per
+  the LLM plan.
+
 ## [0.9.1] — 2026-04-19
 
 *Second pass of the LLM-friendliness roadmap

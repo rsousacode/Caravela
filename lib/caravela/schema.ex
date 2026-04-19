@@ -49,20 +49,25 @@ defmodule Caravela.Schema do
           }
 
     @doc "True if the password strategy is enabled."
+    @spec password?(t()) :: boolean()
     def password?(%__MODULE__{strategies: s}),
       do: Enum.any?(s, fn {k, _} -> k == :password end)
 
     @doc "True if the api_token strategy is enabled."
+    @spec api_token?(t()) :: boolean()
     def api_token?(%__MODULE__{strategies: s}),
       do: Enum.any?(s, fn {k, _} -> k == :api_token end)
 
     @doc "True if email confirmation is enabled."
+    @spec confirm?(t()) :: boolean()
     def confirm?(%__MODULE__{confirm: c}), do: not is_nil(c)
 
     @doc "True if password reset is enabled."
+    @spec reset?(t()) :: boolean()
     def reset?(%__MODULE__{reset: r}), do: not is_nil(r)
 
     @doc "Options for a strategy (or `nil` if disabled)."
+    @spec strategy_opts(t(), atom()) :: keyword() | nil
     def strategy_opts(%__MODULE__{strategies: s}, name) do
       case Enum.find(s, fn {k, _} -> k == name end) do
         {_, opts} -> opts
@@ -142,21 +147,25 @@ defmodule Caravela.Schema do
           }
 
     @doc "Lookup an entity by its DSL name."
+    @spec fetch_entity(t(), atom()) :: Entity.t() | nil
     def fetch_entity(%__MODULE__{entities: es}, name) do
       Enum.find(es, &(&1.name == name))
     end
 
     @doc "Does the domain declare a hook for `action` on `entity`?"
+    @spec has_hook?(t(), Hook.action(), atom()) :: boolean()
     def has_hook?(%__MODULE__{hooks: hs}, action, entity) do
       Enum.any?(hs, &(&1.action == action and &1.entity == entity))
     end
 
     @doc "Policy entry for `entity`, or `nil` if none was declared."
+    @spec policy_for(t(), atom()) :: Caravela.Policy.Entry.t() | nil
     def policy_for(%__MODULE__{policies: ps}, entity) do
       Enum.find(ps, &(&1.entity == entity))
     end
 
     @doc "Is the domain multi-tenant (row-level scoped by tenant_id)?"
+    @spec multi_tenant?(t()) :: boolean()
     def multi_tenant?(%__MODULE__{opts: opts}) do
       Keyword.get(opts || [], :multi_tenant, false) == true
     end
@@ -166,6 +175,7 @@ defmodule Caravela.Schema do
     `:deny` (default): scope filters to zero rows, every field hidden,
     every write gate denies. `:allow`: legacy permissive behavior.
     """
+    @spec default_policy(t()) :: :deny | :allow
     def default_policy(%__MODULE__{opts: opts}) do
       Keyword.get(opts || [], :default_policy, :deny)
     end
@@ -175,17 +185,20 @@ defmodule Caravela.Schema do
     if none do. Caravela currently supports a single authenticatable
     entity per domain.
     """
+    @spec auth_entity(t()) :: Entity.t() | nil
     def auth_entity(%__MODULE__{entities: es}) do
       Enum.find(es, fn %{auth: auth} -> not is_nil(auth) end)
     end
 
     @doc "True if the domain has an authenticatable entity."
+    @spec authenticated?(t()) :: boolean()
     def authenticated?(%__MODULE__{} = d), do: not is_nil(auth_entity(d))
 
     @doc """
     Explicit API version declared via `version "v1"` in the DSL. Returns
     the raw string (e.g. `"v1"`) or `nil` when no version was declared.
     """
+    @spec version(t()) :: String.t() | nil
     def version(%__MODULE__{opts: opts}) do
       Keyword.get(opts || [], :version)
     end
@@ -194,6 +207,7 @@ defmodule Caravela.Schema do
     Camelized version segment usable as a module name suffix
     (`"v1"` → `"V1"`). Returns `nil` when no version is declared.
     """
+    @spec version_segment(t()) :: String.t() | nil
     def version_segment(%__MODULE__{} = domain) do
       case version(domain) do
         nil -> nil

@@ -34,4 +34,8 @@ jobs:
       - run: mix deps.get
       - run: mix format --check-formatted
       - run: mix compile --warnings-as-errors
+      # Hard-gate: every public function in the stable-API allowlist
+      # (see `.credo.exs`) must have a `@spec`. Other credo checks run
+      # advisory-only via `mix credo --strict` locally.
+      - run: mix credo --strict --only Readability.Specs
       - run: mix test

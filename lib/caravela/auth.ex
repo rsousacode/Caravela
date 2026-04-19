@@ -16,6 +16,7 @@ defmodule Caravela.Auth do
   alias Caravela.Schema.{AuthConfig, Domain, Entity, Field}
 
   @doc "Name of the generated session schema module suffix."
+  @spec session_module_suffix() :: :UserSession
   def session_module_suffix, do: :UserSession
 
   @doc """
@@ -23,6 +24,7 @@ defmodule Caravela.Auth do
   required by its declared strategies. A no-op for non-authenticatable
   domains.
   """
+  @spec inject(Domain.t()) :: Domain.t()
   def inject(%Domain{} = domain) do
     %Domain{domain | entities: Enum.map(domain.entities, &inject_entity/1)}
   end
@@ -69,6 +71,7 @@ defmodule Caravela.Auth do
   end
 
   @doc "Returns `true` if the given field was auto-injected by `Caravela.Auth`."
+  @spec injected?(Field.t()) :: boolean()
   def injected?(%Field{opts: opts}) do
     Keyword.has_key?(opts || [], :auth)
   end

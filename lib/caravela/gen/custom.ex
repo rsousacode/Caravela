@@ -56,7 +56,11 @@ defmodule Caravela.Gen.Custom do
   # newlines; the backref `\1` requires the names to match.
   @named_regex ~r/^[ \t]*# --- CUSTOM :([a-zA-Z_][a-zA-Z0-9_!?]*) ---[ \t]*\n(.*?)^[ \t]*# --- END :\1 ---[ \t]*$/ms
 
+  @typedoc "Comment style for a generated file's CUSTOM markers."
+  @type style :: :elixir | :ts | :svelte
+
   @doc "Marker string for the given style (default `:elixir`)."
+  @spec marker(style()) :: String.t()
   def marker(style \\ :elixir), do: style_map(style).marker
 
   @doc """
@@ -65,6 +69,7 @@ defmodule Caravela.Gen.Custom do
   for the `:elixir` style; Svelte and TS templates embed their own
   trailing marker inline.
   """
+  @spec marker_block() :: String.t()
   def marker_block do
     marker(:elixir) <>
       "\n  # Custom code below this line is preserved on regeneration." <>
@@ -80,6 +85,7 @@ defmodule Caravela.Gen.Custom do
       iex> Caravela.Gen.Custom.named_empty(:list_books, indent: "  ")
       "  # --- CUSTOM :list_books ---\\n  # --- END :list_books ---"
   """
+  @spec named_empty(atom() | String.t(), keyword()) :: String.t()
   def named_empty(name, opts \\ []) when is_atom(name) or is_binary(name) do
     indent = Keyword.get(opts, :indent, "  ")
     n = to_string(name)
@@ -96,6 +102,7 @@ defmodule Caravela.Gen.Custom do
   Only parses Elixir-style markers (`# --- CUSTOM :name ---`). The
   other styles don't support named blocks in this release.
   """
+  @spec extract_named_blocks(String.t()) :: %{String.t() => String.t()}
   def extract_named_blocks(source) when is_binary(source) do
     @named_regex
     |> Regex.scan(source)
@@ -114,6 +121,7 @@ defmodule Caravela.Gen.Custom do
   Only applies to Elixir-style markers. Returns `new_source`
   unchanged for any other style.
   """
+  @spec merge_named(String.t(), String.t(), keyword()) :: String.t()
   def merge_named(new_source, existing_source, opts \\ [])
 
   def merge_named(new_source, existing_source, opts)
@@ -168,6 +176,7 @@ defmodule Caravela.Gen.Custom do
   (emitted at the tail of the template). Using first-occurrence
   would cut the file at the docstring and produce garbage.
   """
+  @spec merge(String.t(), String.t(), keyword()) :: String.t()
   def merge(new_source, existing_source, opts \\ [])
       when is_binary(new_source) and is_binary(existing_source) do
     style = Keyword.get(opts, :style, :elixir)
@@ -198,6 +207,7 @@ defmodule Caravela.Gen.Custom do
   match its current above-marker body and `force: true` was not
   passed. Returns the merged source otherwise.
   """
+  @spec merge_with_file(String.t(), Path.t(), keyword()) :: String.t()
   def merge_with_file(new_source, path, opts \\ []) do
     verify_existing!(path, opts)
 
@@ -225,6 +235,7 @@ defmodule Caravela.Gen.Custom do
   the header line itself. Call after any formatting step so the hash
   reflects the bytes actually written to disk.
   """
+  @spec stamp_header(String.t(), keyword()) :: String.t()
   def stamp_header(source, opts) when is_binary(source) do
     generator = Keyword.fetch!(opts, :generator)
     version = Keyword.get(opts, :version, caravela_version())
@@ -247,6 +258,7 @@ defmodule Caravela.Gen.Custom do
   Raises via `Mix.raise/1` when the stored hash does not match, unless
   `opts[:force]` is true.
   """
+  @spec verify_existing!(Path.t(), keyword()) :: :ok
   def verify_existing!(path, opts \\ []) do
     force? = Keyword.get(opts, :force, false)
     style = Keyword.get(opts, :style, :elixir)
@@ -278,6 +290,8 @@ defmodule Caravela.Gen.Custom do
 
   Pure function. Useful from tests and `mix caravela.gen --check`.
   """
+  @spec verify_contents(String.t(), style()) ::
+          :ok | :no_header | {:mismatch, String.t(), String.t()}
   def verify_contents(contents, style \\ :elixir) when is_binary(contents) do
     case split_first_line(contents) do
       {first, rest} ->
@@ -303,6 +317,9 @@ defmodule Caravela.Gen.Custom do
   Parse a header line into `{:ok, %{generator, version, hash}}` or
   `:error`. Exposed for tests and tooling.
   """
+  @spec parse_header_line(String.t(), style()) ::
+          {:ok, %{hash: String.t(), generator: String.t() | nil, version: String.t() | nil}}
+          | :error
   def parse_header_line(line, style \\ :elixir) when is_binary(line) do
     %{header_open: open, header_close: close} = style_map(style)
 

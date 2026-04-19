@@ -16,12 +16,14 @@ defmodule Caravela.Tenant do
   alias Caravela.Schema.{Domain, Entity, Field}
 
   @doc "The DSL name of the injected tenant field."
+  @spec field_name() :: :tenant_id
   def field_name, do: :tenant_id
 
   @doc """
   Add a `tenant_id` field to every entity in the domain when
   `multi_tenant: true` is enabled. A no-op otherwise.
   """
+  @spec inject(Domain.t()) :: Domain.t()
   def inject(%Domain{} = domain) do
     if Domain.multi_tenant?(domain) do
       %Domain{domain | entities: Enum.map(domain.entities, &inject_entity/1)}
@@ -31,6 +33,7 @@ defmodule Caravela.Tenant do
   end
 
   @doc "Returns `true` if the given field was auto-injected by `Caravela.Tenant`."
+  @spec injected?(Field.t()) :: boolean()
   def injected?(%Field{opts: opts}) do
     Keyword.get(opts || [], :tenant, false) == true
   end

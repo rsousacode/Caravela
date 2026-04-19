@@ -30,13 +30,19 @@ defmodule Caravela.Types do
   @numeric_types ~w(integer bigint float decimal)a
   @string_types ~w(string text binary)a
 
+  @typedoc "A DSL type atom recognised by Caravela."
+  @type dsl_type :: atom()
+
   @doc "All DSL types recognised by Caravela."
+  @spec known_types() :: [dsl_type()]
   def known_types, do: Map.keys(@mappings)
 
   @doc "Is the atom a known DSL type?"
+  @spec known?(dsl_type()) :: boolean()
   def known?(type), do: Map.has_key?(@mappings, type)
 
   @doc "Ecto type for a DSL atom. Raises if unknown."
+  @spec ecto_type(dsl_type()) :: atom()
   def ecto_type(type) do
     case @mappings do
       %{^type => {ecto, _}} -> ecto
@@ -45,6 +51,7 @@ defmodule Caravela.Types do
   end
 
   @doc "Postgres column type for a DSL atom. Raises if unknown."
+  @spec postgres_type(dsl_type()) :: atom()
   def postgres_type(type) do
     case @mappings do
       %{^type => {_, pg}} -> pg
@@ -61,8 +68,10 @@ defmodule Caravela.Types do
   end
 
   @doc "True for numeric DSL types."
+  @spec numeric?(dsl_type()) :: boolean()
   def numeric?(type), do: type in @numeric_types
 
   @doc "True for string-ish DSL types."
+  @spec string_like?(dsl_type()) :: boolean()
   def string_like?(type), do: type in @string_types
 end

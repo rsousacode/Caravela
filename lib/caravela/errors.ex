@@ -96,6 +96,7 @@ defmodule Caravela.Errors do
   """
 
   @doc false
+  @spec format(module(), %{:message => String.t(), optional(atom()) => any()}) :: String.t()
   def format(module, %{message: message} = fields) do
     [
       "** (",
@@ -134,6 +135,7 @@ defmodule Caravela.Errors do
               message: "field requires a type",
               suggestion: "field :title, :string")
   """
+  @spec dsl(Macro.Env.t() | nil, keyword()) :: Caravela.DSLError.t()
   def dsl(env, fields) when is_list(fields) do
     %Caravela.DSLError{
       message: Keyword.fetch!(fields, :message),
@@ -146,6 +148,7 @@ defmodule Caravela.Errors do
   @doc """
   Build a `Caravela.GenError` for a generator-level failure.
   """
+  @spec gen(keyword()) :: Caravela.GenError.t()
   def gen(fields) when is_list(fields) do
     %Caravela.GenError{
       message: Keyword.fetch!(fields, :message),
