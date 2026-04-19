@@ -58,7 +58,10 @@ defmodule Caravela.Flow.DSL do
   """
   defmacro flow(name, opts \\ [], do: block) do
     unless is_atom(name) do
-      raise ArgumentError, "flow name must be an atom, got: #{inspect(name)}"
+      raise Caravela.DSLError,
+        message: "flow name must be an atom, got: #{inspect(name)}",
+        suggestion: "flow :sync_book, initial_state: %{...} do\n  ...\nend",
+        docs_url: "https://hexdocs.pm/caravela/flows.html"
     end
 
     initial_state =

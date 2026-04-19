@@ -117,7 +117,7 @@ defmodule Caravela.Phase7AuthDslTest do
     end
 
     test "rejects unknown strategy names" do
-      assert_raise ArgumentError, ~r/unknown auth strategy/, fn ->
+      assert_raise Caravela.DSLError, ~r/unknown auth strategy/, fn ->
         defmodule BadStrategy do
           use Caravela.Domain
 

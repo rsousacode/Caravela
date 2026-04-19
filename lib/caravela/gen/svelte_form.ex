@@ -80,10 +80,15 @@ defmodule Caravela.Gen.SvelteForm do
         entity
 
       :error ->
-        raise ArgumentError,
-              "Caravela.Gen.SvelteForm: could not find entity #{inspect(entity_ref)} " <>
-                "in domain #{inspect(domain.module)}. The form's `entity:` option must " <>
-                "reference an entity declared in the supplied domain."
+        known = Enum.map_join(domain.entities, ", ", &inspect(&1.name))
+
+        raise Caravela.GenError,
+          message:
+            "Caravela.Gen.SvelteForm: could not find entity #{inspect(entity_ref)} " <>
+              "in domain #{inspect(domain.module)}",
+          snippet: "use Caravela.Live.Form, entity: #{inspect(entity_ref)}",
+          suggestion: "known entities in this domain: #{known}",
+          docs_url: "https://hexdocs.pm/caravela/generators.html"
     end
   end
 

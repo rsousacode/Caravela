@@ -40,7 +40,7 @@ defmodule Caravela.Types do
   def ecto_type(type) do
     case @mappings do
       %{^type => {ecto, _}} -> ecto
-      _ -> raise ArgumentError, "unknown Caravela field type: #{inspect(type)}"
+      _ -> raise Caravela.DSLError, unknown_type_error(type)
     end
   end
 
@@ -48,8 +48,16 @@ defmodule Caravela.Types do
   def postgres_type(type) do
     case @mappings do
       %{^type => {_, pg}} -> pg
-      _ -> raise ArgumentError, "unknown Caravela field type: #{inspect(type)}"
+      _ -> raise Caravela.DSLError, unknown_type_error(type)
     end
+  end
+
+  defp unknown_type_error(type) do
+    [
+      message: "unknown Caravela field type: #{inspect(type)}",
+      suggestion: "Supported types: #{Enum.map_join(known_types(), ", ", &inspect/1)}",
+      docs_url: "https://hexdocs.pm/caravela/dsl.html#field-types"
+    ]
   end
 
   @doc "True for numeric DSL types."

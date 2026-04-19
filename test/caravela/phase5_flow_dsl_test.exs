@@ -90,7 +90,7 @@ defmodule Caravela.Phase5FlowDSLTest do
 
   describe "validation" do
     test "flow with non-atom name is rejected at compile time" do
-      assert_raise ArgumentError, ~r/flow name must be an atom/, fn ->
+      assert_raise Caravela.DSLError, ~r/flow name must be an atom/, fn ->
         defmodule BadFlow do
           use Caravela.Flow
 

@@ -49,9 +49,12 @@ defmodule Caravela.Domain do
     opts = Keyword.update(opts, :default_policy, :deny, & &1)
 
     unless Keyword.get(opts, :default_policy) in [:deny, :allow] do
-      raise ArgumentError,
-            "use Caravela.Domain, default_policy: … expects :deny or :allow, got: " <>
-              inspect(Keyword.get(opts, :default_policy))
+      raise Caravela.DSLError,
+        message:
+          "`use Caravela.Domain, default_policy: …` expects `:deny` or `:allow`, got: " <>
+            inspect(Keyword.get(opts, :default_policy)),
+        suggestion: "use Caravela.Domain, default_policy: :deny",
+        docs_url: "https://hexdocs.pm/caravela/policies.html#default-policy"
     end
 
     quote do
@@ -123,7 +126,10 @@ defmodule Caravela.Domain do
   defmacro version(v) do
     quote bind_quoted: [v: v] do
       unless is_binary(v) do
-        raise ArgumentError, "version must be a string like \"v1\", got: #{inspect(v)}"
+        raise Caravela.DSLError,
+          message: "`version` expects a string, got: #{inspect(v)}",
+          suggestion: "version \"v1\"",
+          docs_url: "https://hexdocs.pm/caravela/versioning.html"
       end
 
       @caravela_version v
@@ -259,12 +265,18 @@ defmodule Caravela.Domain do
       name = unquote(name)
 
       unless entity do
-        raise ArgumentError,
-              "`field :name, visible: …` must be called inside a `policy` block"
+        raise Caravela.DSLError,
+          message: "`field :name, visible: …` must be called inside a `policy` block",
+          suggestion:
+            "policy :books do\n  field :price, visible: fn actor -> actor.role == :admin end\nend",
+          docs_url: "https://hexdocs.pm/caravela/policies.html#field-visibility"
       end
 
       unless is_atom(name) do
-        raise ArgumentError, "policy field name must be an atom, got: #{inspect(name)}"
+        raise Caravela.DSLError,
+          message: "policy field name must be an atom, got: #{inspect(name)}",
+          suggestion: "field :price, visible: fn actor -> ... end",
+          docs_url: "https://hexdocs.pm/caravela/policies.html#field-visibility"
       end
 
       Module.put_attribute(
@@ -418,7 +430,11 @@ defmodule Caravela.Domain do
       entity = Module.get_attribute(__MODULE__, :caravela_current_policy_entity)
 
       unless entity do
-        raise ArgumentError, "`scope` must be called inside a `policy` block"
+        raise Caravela.DSLError,
+          message: "`scope` must be called inside a `policy` block",
+          suggestion:
+            "policy :books do\n  scope fn q, actor -> where(q, [b], b.tenant_id == ^actor.tenant_id) end\nend",
+          docs_url: "https://hexdocs.pm/caravela/policies.html#scope"
       end
 
       Module.put_attribute(
@@ -468,7 +484,11 @@ defmodule Caravela.Domain do
       entity = Module.get_attribute(__MODULE__, :caravela_current_policy_entity)
 
       unless entity do
-        raise ArgumentError, "`allow` must be called inside a `policy` block"
+        raise Caravela.DSLError,
+          message: "`allow` must be called inside a `policy` block",
+          suggestion:
+            "policy :books do\n  allow :create, fn actor -> actor.role in [:admin, :editor] end\nend",
+          docs_url: "https://hexdocs.pm/caravela/policies.html#allow"
       end
 
       Module.put_attribute(
@@ -519,8 +539,11 @@ defmodule Caravela.Domain do
           unquote(block)
 
         _ ->
-          raise ArgumentError,
-                "authenticatable/1 must be called inside an entity do .. end block"
+          raise Caravela.DSLError,
+            message: "`authenticatable/1` must be called inside an `entity do … end` block",
+            suggestion:
+              "entity :users do\n  field :email, :string, required: true\n  authenticatable do\n    strategy :password\n  end\nend",
+            docs_url: "https://hexdocs.pm/caravela/auth.html"
       end
     end
   end
@@ -529,14 +552,21 @@ defmodule Caravela.Domain do
   defmacro strategy(name, opts \\ []) do
     quote bind_quoted: [name: name, opts: opts] do
       unless name in [:password, :api_token] do
-        raise ArgumentError,
-              "unknown auth strategy #{inspect(name)} — expected :password or :api_token"
+        raise Caravela.DSLError,
+          message:
+            "unknown auth strategy #{inspect(name)} — expected `:password` or `:api_token`",
+          suggestion: "strategy :password, hashing: :argon2",
+          docs_url: "https://hexdocs.pm/caravela/auth.html#strategies"
       end
 
       {ename, cfg} = Module.get_attribute(__MODULE__, :caravela_current_auth)
 
       unless match?(%Caravela.Schema.AuthConfig{}, cfg) do
-        raise ArgumentError, "strategy/2 must be called inside an authenticatable do .. end block"
+        raise Caravela.DSLError,
+          message: "`strategy/2` must be called inside an `authenticatable do … end` block",
+          suggestion:
+            "entity :users do\n  authenticatable do\n    strategy :password, hashing: :argon2\n  end\nend",
+          docs_url: "https://hexdocs.pm/caravela/auth.html#strategies"
       end
 
       strategies = cfg.strategies ++ [{name, opts}]
@@ -550,7 +580,11 @@ defmodule Caravela.Domain do
       {ename, cfg} = Module.get_attribute(__MODULE__, :caravela_current_auth)
 
       unless match?(%Caravela.Schema.AuthConfig{}, cfg) do
-        raise ArgumentError, "session/2 must be called inside an authenticatable do .. end block"
+        raise Caravela.DSLError,
+          message: "`session/2` must be called inside an `authenticatable do … end` block",
+          suggestion:
+            "authenticatable do\n  strategy :password\n  session :token, ttl: {30, :days}\nend",
+          docs_url: "https://hexdocs.pm/caravela/auth.html#session"
       end
 
       @caravela_current_auth {ename, %{cfg | session: opts}}
@@ -563,7 +597,11 @@ defmodule Caravela.Domain do
       {ename, cfg} = Module.get_attribute(__MODULE__, :caravela_current_auth)
 
       unless match?(%Caravela.Schema.AuthConfig{}, cfg) do
-        raise ArgumentError, "confirm/2 must be called inside an authenticatable do .. end block"
+        raise Caravela.DSLError,
+          message: "`confirm/2` must be called inside an `authenticatable do … end` block",
+          suggestion:
+            "authenticatable do\n  strategy :password\n  confirm :email, token_ttl: {24, :hours}\nend",
+          docs_url: "https://hexdocs.pm/caravela/auth.html#email-confirmation"
       end
 
       @caravela_current_auth {ename, %{cfg | confirm: opts}}
@@ -576,7 +614,11 @@ defmodule Caravela.Domain do
       {ename, cfg} = Module.get_attribute(__MODULE__, :caravela_current_auth)
 
       unless match?(%Caravela.Schema.AuthConfig{}, cfg) do
-        raise ArgumentError, "reset/2 must be called inside an authenticatable do .. end block"
+        raise Caravela.DSLError,
+          message: "`reset/2` must be called inside an `authenticatable do … end` block",
+          suggestion:
+            "authenticatable do\n  strategy :password\n  reset :password, token_ttl: {1, :hour}\nend",
+          docs_url: "https://hexdocs.pm/caravela/auth.html#password-reset"
       end
 
       @caravela_current_auth {ename, %{cfg | reset: opts}}
@@ -626,8 +668,12 @@ defmodule Caravela.Domain do
       {ename, cfg} = Module.get_attribute(__MODULE__, :caravela_current_auth)
 
       unless match?(%Caravela.Schema.AuthConfig{}, cfg) do
-        raise ArgumentError,
-              "#{unquote(action)}/1 must be called inside an authenticatable do .. end block"
+        raise Caravela.DSLError,
+          message:
+            "`#{unquote(action)}/1` must be called inside an `authenticatable do … end` block",
+          suggestion:
+            "authenticatable do\n  strategy :password\n  #{unquote(action)} fn changeset, _ctx -> changeset end\nend",
+          docs_url: "https://hexdocs.pm/caravela/auth.html#hooks"
       end
 
       @caravela_current_auth {ename, unquote(mark)}

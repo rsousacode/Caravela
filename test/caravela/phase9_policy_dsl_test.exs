@@ -256,7 +256,7 @@ defmodule Caravela.Phase9PolicyDslTest do
     end
 
     test "rejects an invalid default_policy value at compile time" do
-      assert_raise ArgumentError, ~r/default_policy/, fn ->
+      assert_raise Caravela.DSLError, ~r/default_policy/, fn ->
         defmodule BadDefaultPolicy do
           use Caravela.Domain, default_policy: :maybe
 

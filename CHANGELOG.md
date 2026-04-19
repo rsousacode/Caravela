@@ -7,6 +7,96 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-04-19
+
+*First phase of the LLM-friendliness roadmap
+([llm_friendliness.md](https://github.com/rsousacode/caravela-plan/blob/main/phoenix/llm_friendliness.md)).
+Delivers structured errors, a unified validation command, and a
+public IR export — the "close the iteration loop" half of the plan.
+Eval harness, natural-language scaffolder, and MCP server land in
+subsequent releases.*
+
+### Added
+
+- **`Caravela.IR`** — public, JSON-serializable view of a compiled
+  domain. Call `Caravela.IR.of(MyApp.Domains.Library)` to get a plain
+  map of entities, fields, relations, policies, hooks, and auth
+  config. Anonymous functions inside policies are not included; only
+  their metadata (existence, arity, target). The shape is semver-stable
+  starting from this release.
+
+- **`mix caravela.ir`** — print the IR as JSON (or write it to a
+  file). Intended for consumption by editors, LLMs, and external
+  tooling that wants a structured view of the domain without parsing
+  Elixir source.
+
+      mix caravela.ir MyApp.Domains.Library > library.json
+      mix caravela.ir MyApp.Domains.Library --output docs/library.json
+      mix caravela.ir MyApp.Domains.Library --no-pretty
+
+- **`mix caravela.check`** — single-command validation oracle.
+  Compiles the project, discovers every module using `Caravela.Domain`,
+  runs all applicable generators in dry-run mode, and optionally
+  runs `mix test` (`--tests`) and `mix dialyzer` (`--dialyzer`).
+  Exits 0 on green, non-zero with a per-domain / per-generator
+  summary otherwise. Targeted at LLM iteration loops and CI — one
+  command, one pass/fail signal.
+
+      mix caravela.check
+      mix caravela.check --only MyApp.Domains.Library
+      mix caravela.check --tests --dialyzer
+      mix caravela.check --quiet
+
+- **`Caravela.DSLError` / `Caravela.GenError`** — structured
+  exceptions with a four-part message: *what went wrong*, *what
+  Caravela got* (code snippet), *suggested fix*, *docs URL*. Every
+  migrated DSL error now spells out both the problem and a canonical
+  example of the right shape. `Caravela.Errors.dsl/2` and
+  `snippet_from_env/1` are convenience helpers for macro authors.
+
+  Example rendered output:
+
+      ** (Caravela.DSLError) `scope` must be called inside a `policy` block
+
+         Suggestion:
+             policy :books do
+               scope fn q, actor -> where(q, [b], b.tenant_id == ^actor.tenant_id) end
+             end
+
+         See: https://hexdocs.pm/caravela/policies.html#scope
+
+### Changed (breaking)
+
+- **DSL errors now raise `Caravela.DSLError` instead of
+  `ArgumentError`.** Migrated sites: `default_policy` option,
+  `version` option, `scope`/`allow`/`field` inside policy blocks,
+  every `authenticatable` sub-macro (`strategy`, `session`,
+  `confirm`, `reset`, hook blocks, unknown strategy names), `flow`
+  name validation, and `Caravela.Types.ecto_type/1` /
+  `postgres_type/1` on unknown field types.
+
+  If you had `assert_raise ArgumentError` tests against any of these
+  surfaces, update to `assert_raise Caravela.DSLError`. The
+  structured message is strictly more informative; the regex from
+  the old assertion will still match the new message.
+
+- **`Caravela.Gen.SvelteForm.render/2`** raises `Caravela.GenError`
+  on a missing-entity reference (previously `ArgumentError`) and
+  includes the list of known entities in the suggestion.
+
+### Migration
+
+No source changes required for domain files; the migration is only
+visible if you had tests asserting on the old exception type. Run
+`mix caravela.check` after upgrading to confirm everything parses
+cleanly.
+
+Not every `raise ArgumentError` site has been migrated yet — this
+release covers the DSL and generator surfaces that users hit most
+often. Runtime `Caravela.Live.*` errors and a handful of generator
+edge cases still raise `ArgumentError` and will migrate
+incrementally in 0.9.x / 1.0.
+
 ## [0.8.1] — 2026-04-19
 
 ### Added
