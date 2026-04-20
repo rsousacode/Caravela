@@ -104,7 +104,7 @@ defmodule Caravela.IRTest do
       assert is_list(e.policy.action_gates)
     end
 
-    test "action gates expose action name and arity only — no closures", %{books: e} do
+    test "action gates expose action name and arity only - no closures", %{books: e} do
       gate = Enum.find(e.policy.action_gates, &(&1.action == "create"))
       assert gate.action == "create"
       assert is_integer(gate.arity)

@@ -232,7 +232,7 @@ defmodule <%= inspect @module %> do
   end
 
   @doc """
-  Return a client-safe view of `user`'s API tokens — the raw token value
+  Return a client-safe view of `user`'s API tokens - the raw token value
   is never returned (only its id = token hash prefix), so this can be
   sent to the browser without leaking credentials.
   """

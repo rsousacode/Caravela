@@ -2,7 +2,7 @@ defmodule Caravela.MCP.Tool.ListEntities do
   @moduledoc """
   MCP tool: list the entity names declared by a Caravela domain.
 
-  Cheap introspection — callers use this to discover what's in a
+  Cheap introspection - callers use this to discover what's in a
   domain before drilling into a specific entity with
   `caravela__describe_entity`.
   """

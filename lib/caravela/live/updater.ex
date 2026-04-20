@@ -5,7 +5,7 @@ defmodule Caravela.Live.Updater do
   An updater is a pure function from one assigns-map to another, or a
   function of arity 2 that takes an extra argument (an "event payload").
   The point is to make state transitions composable and testable in
-  isolation — any LiveView `handle_event` can be reassembled from small
+  isolation - any LiveView `handle_event` can be reassembled from small
   named updaters rather than inlining the logic.
 
   When the composed updater is applied via `apply/3` to a socket, the
@@ -35,7 +35,7 @@ defmodule Caravela.Live.Updater do
 
   If either side takes two arguments (an event payload), use `apply/3`
   with the payload threaded explicitly. `compose/2` itself only composes
-  the 1-arity shape — keep 2-arity updaters at the call boundary.
+  the 1-arity shape - keep 2-arity updaters at the call boundary.
   """
   @spec compose(updater(), updater()) :: (assigns() -> assigns())
   def compose(a, b) when is_function(a, 1) and is_function(b, 1) do
@@ -102,7 +102,7 @@ defmodule Caravela.Live.Updater do
   # Replace socket.assigns. For real LiveView sockets we route through
   # `Phoenix.Component.assign/2` so LiveView's change tracking fires
   # (required for LiveSvelte's prop diffing). For plain-map sockets
-  # (tests, tooling), fall back to direct replacement — keeps the
+  # (tests, tooling), fall back to direct replacement - keeps the
   # Updater testable without a running LiveView.
   defp assign_all(%{assigns: _} = socket, new_assigns) when is_map(new_assigns) do
     if is_struct(socket) and Code.ensure_loaded?(Phoenix.LiveView.Socket) and

@@ -37,7 +37,7 @@ defmodule Caravela.HooksTest do
     end
 
     test "__caravela_hook__ falls back when no hook is declared" do
-      # No on_create hook for :authors — fallback returns changeset as-is.
+      # No on_create hook for :authors - fallback returns changeset as-is.
       cs = %Ecto.Changeset{data: %{}, valid?: true}
 
       assert MyApp.Domains.Library.__caravela_hook__(:on_create, :authors, cs, %{}) == cs

@@ -153,14 +153,14 @@ defmodule Caravela.Domain do
 
   Supported options:
 
-    * `:frontend` — render transport for generated UI. One of
-      `:live` (default — LiveView + WebSocket) or `:rest`
+    * `:frontend` - render transport for generated UI. One of
+      `:live` (default - LiveView + WebSocket) or `:rest`
       (Inertia-style HTTP via `caravela_svelte`). Entities stay on
       `:live` when the option is omitted, so existing domains are
       unaffected.
-    * `:realtime` — opt into SSE-driven live updates on top of the
+    * `:realtime` - opt into SSE-driven live updates on top of the
       `:rest` transport. Defaults to `false`. Only valid when
-      `frontend: :rest` — `:live` entities already have LiveView's
+      `frontend: :rest` - `:live` entities already have LiveView's
       WebSocket, so `realtime: true` there is rejected with a
       `Caravela.DSLError`. Generated controllers get a
       `broadcast_patch/3` call site on create / update / delete.
@@ -283,7 +283,7 @@ defmodule Caravela.Domain do
       field :author_email,
         visible: fn actor, record -> actor.id == record.author_id end
 
-  The dispatch is a pure AST check — no runtime overhead.
+  The dispatch is a pure AST check - no runtime overhead.
   """
   defmacro field(name, second, opts \\ []) do
     if policy_field_ast?(second) do
@@ -299,7 +299,7 @@ defmodule Caravela.Domain do
           raise Caravela.DSLError,
             message:
               "`field :#{name}, <opts>` inside a `policy` block must pass a literal " <>
-                "keyword list with `:visible` — module-attribute or variable references " <>
+                "keyword list with `:visible` - module-attribute or variable references " <>
                 "aren't supported (the macro needs the fn AST at compile time)",
             suggestion:
               "field :#{name}, visible: fn actor -> actor.role == :admin end\n\n" <>
@@ -329,7 +329,7 @@ defmodule Caravela.Domain do
     end
   end
 
-  # True when the 2nd arg AST is a keyword list carrying `:visible` —
+  # True when the 2nd arg AST is a keyword list carrying `:visible` -
   # the shape used by the policy-field variant.
   defp policy_field_ast?(ast) when is_list(ast) do
     Enum.any?(ast, fn
@@ -475,7 +475,7 @@ defmodule Caravela.Domain do
         allow :delete, fn actor -> actor.role == :admin end
       end
 
-  The block is plain Elixir — `for`, `if`, helper function calls, and
+  The block is plain Elixir - `for`, `if`, helper function calls, and
   `@module_attribute` splicing all work the same as anywhere else:
 
       policy :books do
@@ -506,7 +506,7 @@ defmodule Caravela.Domain do
       @caravela_current_policy_entity unquote(entity)
 
       # Record that this entity has a policy block even if no rules
-      # are declared — it still qualifies for the per-entity permissive
+      # are declared - it still qualifies for the per-entity permissive
       # fallback tier in the compiler.
       Module.put_attribute(
         __MODULE__,
@@ -529,7 +529,7 @@ defmodule Caravela.Domain do
         if actor.role == :admin, do: query, else: where(query, [b], b.published)
       end
 
-  The fn must have arity 2 — `(query, actor) -> query`. Raises at
+  The fn must have arity 2 - `(query, actor) -> query`. Raises at
   compile time if called outside a `policy` block.
   """
   defmacro scope(fun) do
@@ -663,7 +663,7 @@ defmodule Caravela.Domain do
       unless name in [:password, :api_token] do
         raise Caravela.DSLError,
           message:
-            "unknown auth strategy #{inspect(name)} — expected `:password` or `:api_token`",
+            "unknown auth strategy #{inspect(name)} - expected `:password` or `:api_token`",
           suggestion: "strategy :password, hashing: :argon2",
           docs_url: "https://hexdocs.pm/caravela/auth.html#strategies"
       end
@@ -881,7 +881,7 @@ defmodule Caravela.Domain do
   # `&Mod.fun/2` or `&fun/2`
   defp fun_arity({:&, _, [{:/, _, [_, arity]}]}) when is_integer(arity), do: {:ok, arity}
 
-  # `&(&1 + &2)` — infer arity from the highest capture placeholder.
+  # `&(&1 + &2)` - infer arity from the highest capture placeholder.
   defp fun_arity({:&, _, [body]}) do
     case max_capture(body, 0) do
       0 -> :unknown

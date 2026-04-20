@@ -4,8 +4,8 @@ defmodule <%= inspect @queries_module %> do
 
   Absinthe query object. Each entity exposes:
 
-    * `<entity>` — fetch a single record by id
-    * `<entities>` — list all records visible to the caller
+    * `<entity>` - fetch a single record by id
+    * `<entities>` - list all records visible to the caller
 
   Context (authorization, tenant) is extracted from the Absinthe
   resolution via `extract_context/1`.

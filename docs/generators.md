@@ -40,19 +40,19 @@ paths; see [versioning](versioning.md).
 
 ## Flags specific to `mix caravela.gen.live`
 
-- `--frontend MODE` — override every entity's declared render mode
+- `--frontend MODE` - override every entity's declared render mode
   (`live` or `rest`). Useful for previewing generator output for the
   other transport without touching the DSL. See
   [svelte frontend](livesvelte.md) for the per-entity declaration
   (`entity :x, frontend: :rest do …`).
 
-- `--no-tests` — skip emitting the ExUnit + Vitest test skeletons.
+- `--no-tests` - skip emitting the ExUnit + Vitest test skeletons.
   By default the generator writes one `<entity>_live_test.exs` per
   `:live` entity, one `<entity>_controller_test.exs` per `:rest`
   entity, and one `*.test.ts` colocated next to every Svelte file.
   See [testing](testing.md).
 
-- `--with-domain` — in addition to the three per-entity LiveViews
+- `--with-domain` - in addition to the three per-entity LiveViews
   (`index`, `show`, `form`), also emit a `Caravela.Live.Domain`
   companion module (e.g. `MyAppWeb.Library.BookLive.FormDomain`) and
   generate `form.ex` from the Template-backed variant. Index and show
@@ -78,7 +78,7 @@ required if you use the corresponding generator:
 {:absinthe_plug, "~> 1.5"},
 {:dataloader, "~> 2.0"},
 
-# Svelte frontend (mix caravela.gen.live — both :live and :rest modes)
+# Svelte frontend (mix caravela.gen.live - both :live and :rest modes)
 {:caravela_svelte, "~> 0.1"},
 
 # Phoenix (any generator targeting web code)
@@ -137,7 +137,7 @@ re-runs safe.
 ## Render functions are pure
 
 Every `Caravela.Gen.*.render/1,2` function is a pure function of the
-compiled domain module — it builds a `{path, source}` tuple (or a list
+compiled domain module - it builds a `{path, source}` tuple (or a list
 of them) in memory and never touches the filesystem or starts Mix. The
 mix tasks are thin CLI wrappers around these calls.
 

@@ -28,7 +28,7 @@ defmodule Caravela.Live.Template do
   and are routed through the domain's `on_event` handlers. If no
   handler matches, the default `handle_event/3` lets the LiveView's
   own (developer-written) clauses take over via Elixir's normal
-  clause-matching — this macro only adds a catch-all at the bottom.
+  clause-matching - this macro only adds a catch-all at the bottom.
   """
 
   @doc false
@@ -125,7 +125,7 @@ defmodule Caravela.Live.Template do
 
       fun when is_function(fun, 2) ->
         raise ArgumentError,
-              "updater #{inspect(name)} on #{inspect(domain)} takes an argument — " <>
+              "updater #{inspect(name)} on #{inspect(domain)} takes an argument - " <>
                 "use apply_updater(socket, #{inspect(name)}, arg)"
     end
   end
@@ -142,7 +142,7 @@ defmodule Caravela.Live.Template do
 
       fun when is_function(fun, 1) ->
         raise ArgumentError,
-              "updater #{inspect(name)} on #{inspect(domain)} takes no argument — " <>
+              "updater #{inspect(name)} on #{inspect(domain)} takes no argument - " <>
                 "use apply_updater(socket, #{inspect(name)})"
     end
   end

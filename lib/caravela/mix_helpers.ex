@@ -12,7 +12,7 @@ defmodule Caravela.MixHelpers do
     Mix.Task.run("compile")
 
     unless Code.ensure_loaded?(domain_module) do
-      Mix.raise("Module #{inspect(domain_module)} is not loaded — is it compiled?")
+      Mix.raise("Module #{inspect(domain_module)} is not loaded - is it compiled?")
     end
 
     unless function_exported?(domain_module, :__caravela_domain__, 0) do
@@ -50,7 +50,7 @@ defmodule Caravela.MixHelpers do
   defp write_file(path, source, force?) do
     cond do
       File.exists?(path) and not force? ->
-        case Mix.shell().yes?("File #{path} exists — overwrite?") do
+        case Mix.shell().yes?("File #{path} exists - overwrite?") do
           true -> do_write(path, source)
           false -> Mix.shell().info("skipped #{path}")
         end

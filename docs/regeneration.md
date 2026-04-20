@@ -11,7 +11,7 @@ safe across re-runs:
    marker per file, plus per-function named markers placed at every
    natural extension point.
 
-Both work together — edits in user-owned regions are preserved
+Both work together - edits in user-owned regions are preserved
 verbatim; edits in generator-owned regions are caught before they're
 silently stomped.
 
@@ -82,7 +82,7 @@ stored vs. current hash and three remediation steps, then aborts via
 
 1. Move the edits below the `# --- CUSTOM ---` marker (or into a
    named `:xxx` block) and re-run the generator cleanly, or
-2. Re-run with `--force` to overwrite — Caravela prints a yellow
+2. Re-run with `--force` to overwrite - Caravela prints a yellow
    warning recording what was discarded, or
 3. Re-run with `--dry-run` to inspect what Caravela wants to write
    before committing to either of the above.
@@ -158,7 +158,7 @@ warning: orphan CUSTOM blocks dropped during regen:
   Recover from git history if you need the content.
 ```
 
-Discard is intentional — keeping phantom blocks around with no
+Discard is intentional - keeping phantom blocks around with no
 structural home invites confusion. Recover from git if the content
 matters.
 
@@ -166,12 +166,12 @@ matters.
 
 Every `mix caravela.gen.schema` (and the all-in-one `mix caravela.gen`)
 emits a **new** migration file with a fresh timestamp. It contains
-the full desired schema — not a diff. Caravela is *stateless about
+the full desired schema - not a diff. Caravela is *stateless about
 schema evolution*: it produces the desired state; you (or your LLM)
 write the bridging `ALTER TABLE` migration with
 `mix ecto.gen.migration`.
 
-There is no checksum header on migrations — they're one-shot
+There is no checksum header on migrations - they're one-shot
 artifacts, owned by you from the moment they're written.
 
 ## Router is not edited

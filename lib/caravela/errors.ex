@@ -63,9 +63,9 @@ defmodule Caravela.Errors do
 
   Two exception modules cover the surface:
 
-    * `Caravela.DSLError` — raised from inside DSL macros (`entity`,
+    * `Caravela.DSLError` - raised from inside DSL macros (`entity`,
       `field`, `policy`, `authenticatable`, …) at compile time.
-    * `Caravela.GenError` — raised from `Caravela.Gen.*` functions and
+    * `Caravela.GenError` - raised from `Caravela.Gen.*` functions and
       `mix caravela.gen.*` tasks at generator-run time.
 
   Both carry the same four-part shape: **what went wrong**, **what
@@ -76,7 +76,7 @@ defmodule Caravela.Errors do
   ## Why structured
 
   Freeform `raise ArgumentError, "bad field"` strings are fine for
-  humans reading a terminal but painful for LLM iteration loops — the
+  humans reading a terminal but painful for LLM iteration loops - the
   model has to guess what to fix from one line of prose. Structured
   errors let the LLM latch onto the `Suggestion:` block and patch
   correctly on the first try. Same benefit applies to humans opening

@@ -84,7 +84,7 @@ defmodule Caravela.Phase8AuthSvelteTest do
       # :users has field :name, :string, required: true
       assert_contains(src, "let name = $state('');")
       assert_contains(src, "let email = $state('');")
-      # :role has a default — should be skipped
+      # :role has a default - should be skipped
       refute_contains(src, "let role = $state")
     end
 
@@ -174,7 +174,7 @@ defmodule Caravela.Phase8AuthSvelteTest do
       {:ok, src: src}
     end
 
-    test "emits User with only public fields — no credential fields", %{src: src} do
+    test "emits User with only public fields - no credential fields", %{src: src} do
       assert_contains(src, "export interface User {")
       refute_contains(src, "hashed_password")
       refute_contains(src, "api_tokens")

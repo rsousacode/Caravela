@@ -36,7 +36,7 @@ end
 versions. Different DSL versions share rows; renaming is a
 column/type concern, not a table concern. If a later version changes a
 column type, you write a bridging migration by hand (Caravela is
-deliberately stateless about schema evolution — see
+deliberately stateless about schema evolution - see
 [regeneration](regeneration.md)).
 
 ## Multiple versions coexisting

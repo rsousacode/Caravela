@@ -19,8 +19,8 @@ defmodule Caravela.Live.OnMount do
 
   Keys pulled from `socket.assigns`:
 
-    * `:current_user` — always included when present, otherwise `nil`.
-    * `:tenant` — included when present. Mirrors the generated
+    * `:current_user` - always included when present, otherwise `nil`.
+    * `:tenant` - included when present. Mirrors the generated
       `build_context/1` shape for multi-tenant domains.
 
   Extra keys can be folded in by calling `put/3` from your own
@@ -31,7 +31,7 @@ defmodule Caravela.Live.OnMount do
   @doc """
   `Phoenix.LiveView` on_mount hook. Wires `:current_user` and `:tenant`
   from the socket into the `:context` assign. Always returns `{:cont,
-  socket}` — it never blocks a mount.
+  socket}` - it never blocks a mount.
   """
   def on_mount(:default, _params, _session, socket) do
     {:cont, assign_context(socket, build_context(socket))}

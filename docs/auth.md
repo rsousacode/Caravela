@@ -8,7 +8,7 @@ a context module, a session schema, Plug pipelines, LiveView `on_mount`
 hooks, an HTTP controller, and a session-tokens migration.
 
 The generated code is standard Phoenix. You can edit it, eject it, or
-let Caravela regenerate it — user-authored code below the
+let Caravela regenerate it - user-authored code below the
 `# --- CUSTOM ---` marker is preserved on every rerun.
 
 ## DSL
@@ -60,9 +60,9 @@ end
 ### Lifecycle options
 
 - `session :token, ttl: {n, :days}, remember_me: {n, :days}, max_sessions: n`
-- `confirm :email, token_ttl: {n, :hours}` — injects `confirmed_at`;
+- `confirm :email, token_ttl: {n, :hours}` - injects `confirmed_at`;
   unconfirmed users cannot log in.
-- `reset :password, token_ttl: {n, :hours}` — enables reset flow.
+- `reset :password, token_ttl: {n, :hours}` - enables reset flow.
 - `on_register fn changeset, ctx -> changeset end`
 - `on_login fn user, ctx -> :ok | {:error, term} end`
 
@@ -101,7 +101,7 @@ lib/my_app_web/live/v1/auth_live/*.ex           # matching LiveView pages
 ```
 
 A router snippet (public auth routes, authenticated `live_session`,
-authenticated API) is printed to stdout — paste it into your router.
+authenticated API) is printed to stdout - paste it into your router.
 
 Flags: `--dry-run`, `--output DIR`, `--force`, `--skip-ui` (server only),
 `--skip-router` (suppress the snippet).
@@ -144,7 +144,7 @@ end
 
 ## Dependencies
 
-Password hashing uses `:argon2_elixir`. Add it to your deps — the
+Password hashing uses `:argon2_elixir`. Add it to your deps - the
 Caravela package does not pull it in:
 
 ```elixir
@@ -154,15 +154,15 @@ Caravela package does not pull it in:
 ## Svelte components
 
 Every generated component is Svelte 5 (`$props`, `$state`, `$derived`)
-and receives `live: LiveHandle` — the same prop every Caravela-generated
-component gets — so events flow through `live.pushEvent(...)`.
+and receives `live: LiveHandle` - the same prop every Caravela-generated
+component gets - so events flow through `live.pushEvent(...)`.
 
 ### `RegisterForm.svelte`
 
 Form fields are synthesised from the authenticatable entity: every
 public, non-`auth`, non-`role`, non-`tenant_id` field gets an input.
 Add `field :company, :string, required: true` to the entity and
-regenerate — the registration form grows a required company input on
+regenerate - the registration form grows a required company input on
 the next run. Fields with a `default:` (like `role`) are omitted so the
 server picks the value.
 
@@ -204,7 +204,7 @@ containing:
 - A matching `/api/auth/{register,login,logout}` scope for non-browser
   clients
 - A `live_session :authenticated` with `on_mount: [{…AuthHooks, :require_auth}]`
-  — every LiveView mounted inside it receives `current_user` as a typed
+  - every LiveView mounted inside it receives `current_user` as a typed
   Svelte prop
 - An authenticated API scope accepting either session cookie or
   `Authorization: Bearer <token>`
@@ -214,5 +214,5 @@ containing:
 With `multi_tenant: true`, the context scopes email lookups by
 `tenant_id` (from `context.tenant_id`) and stamps every registration
 with the caller's tenant. `fetch_current_user` does not set
-`tenant_id` itself — your app sets it earlier in the pipeline (e.g.
+`tenant_id` itself - your app sets it earlier in the pipeline (e.g.
 from a subdomain plug or `X-Tenant-Id` header).

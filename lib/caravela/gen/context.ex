@@ -126,7 +126,7 @@ defmodule Caravela.Gen.Context do
   #     `__caravela_policy_allow__/3` answers (everything true under
   #     `default_policy: :allow`, everything false under `:deny`).
   #   * If an arity-1 gate exists (`allow :create, fn actor -> ... end`),
-  #     call arity-3 — the actor fully determines the answer.
+  #     call arity-3 - the actor fully determines the answer.
   #   * If an arity-2 gate exists (`allow :update, fn actor, record ->
   #     ... end`), emit the literal atom `:per_record`. Action-level
   #     access can't resolve without a record; the frontend gates per
@@ -139,7 +139,7 @@ defmodule Caravela.Gen.Context do
   end
 
   defp action_access_expr(mod, entity_name, action, nil) do
-    # No policy block — the domain's arity-3 fallback is the
+    # No policy block - the domain's arity-3 fallback is the
     # source of truth (either permissive-everywhere or deny-
     # everywhere under default_policy).
     "#{inspect(mod)}.__caravela_policy_allow__(" <>
@@ -160,7 +160,7 @@ defmodule Caravela.Gen.Context do
 
       nil ->
         # The entity has a policy block but no gate for this action.
-        # The compiler's per-entity fallback decides — call arity-3.
+        # The compiler's per-entity fallback decides - call arity-3.
         "#{inspect(mod)}.__caravela_policy_allow__(" <>
           "#{inspect(entity_name)}, #{inspect(action)}, actor)"
     end

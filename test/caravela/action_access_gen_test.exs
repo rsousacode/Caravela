@@ -4,12 +4,12 @@ defmodule Caravela.ActionAccessGenTest do
   alias Caravela.Gen.{Context, LiveView, RestController, Svelte}
 
   # Policies chosen to exercise every action-access path:
-  #   * :authors — no policy block; falls through to the deny-all
+  #   * :authors - no policy block; falls through to the deny-all
   #     fallback (default_policy: :deny below).
-  #   * :books — arity-1 gates on `:create` and `:delete`; no
+  #   * :books - arity-1 gates on `:create` and `:delete`; no
   #     `:update` gate. Expected: arity-3 expression for :create and
   #     :delete, and a fallback arity-3 for :update.
-  #   * :journals — arity-2 gate on `:update`; should compile to the
+  #   * :journals - arity-2 gate on `:update`; should compile to the
   #     literal `:per_record` in `compute_action_access/2` and get
   #     resolved by `action_access/3`.
   defmodule FixtureDomain do
@@ -41,7 +41,7 @@ defmodule Caravela.ActionAccessGenTest do
     {:ok, domain: FixtureDomain.__caravela_domain__()}
   end
 
-  describe "Caravela.Gen.Context — action_access plumbing" do
+  describe "Caravela.Gen.Context - action_access plumbing" do
     test "emits action_access/2 and action_access/3 on the context", %{domain: domain} do
       {_path, src} = Context.render(domain)
 
@@ -72,7 +72,7 @@ defmodule Caravela.ActionAccessGenTest do
       {_path, src} = Context.render(domain)
 
       # `compute_action_access(:journals, actor)` must map :update to
-      # the atom :per_record — action_access/3 resolves it per-row.
+      # the atom :per_record - action_access/3 resolves it per-row.
       assert src =~ ~r/:journals.*?:update\s*=>\s*:per_record/s
     end
 
@@ -94,7 +94,7 @@ defmodule Caravela.ActionAccessGenTest do
     end
   end
 
-  describe "Caravela.Gen.Svelte — Actions TypeScript type" do
+  describe "Caravela.Gen.Svelte - Actions TypeScript type" do
     test "emits <Entity>Actions in the shared types file", %{domain: domain} do
       {_path, src} = Svelte.render_types(domain)
 
@@ -120,7 +120,7 @@ defmodule Caravela.ActionAccessGenTest do
     end
   end
 
-  describe "Caravela.Gen.LiveView — passes actions into component props" do
+  describe "Caravela.Gen.LiveView - passes actions into component props" do
     test "index assigns actions and threads them as a prop", %{domain: domain} do
       {_path, src} =
         LiveView.render_all(domain, root: System.tmp_dir!())
@@ -142,7 +142,7 @@ defmodule Caravela.ActionAccessGenTest do
     end
   end
 
-  describe "Caravela.Gen.RestController — passes actions into render/3" do
+  describe "Caravela.Gen.RestController - passes actions into render/3" do
     test "index threads collection-level actions", %{domain: domain} do
       [{_path, src}] = RestController.render_all(domain, root: System.tmp_dir!())
 

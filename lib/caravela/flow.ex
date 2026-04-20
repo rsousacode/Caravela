@@ -32,7 +32,7 @@ defmodule Caravela.Flow do
 
   While the flow runs, each state change is delivered to the `:notify`
   pid as `{:flow_state, new_state}`. A LiveView can forward these
-  messages to assigns — LiveSvelte picks up the prop diff and the
+  messages to assigns - LiveSvelte picks up the prop diff and the
   Svelte component re-renders reactively.
 
   > #### Scope {: .info}
@@ -62,10 +62,10 @@ defmodule Caravela.Flow do
 
   Options:
 
-    * `:initial_state` — overrides the flow's declared default state
-    * `:notify` — a pid to receive `{:flow_state, ...}`,
+    * `:initial_state` - overrides the flow's declared default state
+    * `:notify` - a pid to receive `{:flow_state, ...}`,
       `{:flow_done, ...}`, `{:flow_error, ...}` messages
-    * `:tag` — when set, every notification arrives wrapped as
+    * `:tag` - when set, every notification arrives wrapped as
       `{:caravela_flow, tag, original_msg}`. Use this to demultiplex
       many flows sharing one listener without forwarder processes.
 

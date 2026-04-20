@@ -25,7 +25,7 @@ defmodule Caravela.Phase9PolicyGenTest do
     test "compute_field_access routes every field through the domain dispatch", %{src: src} do
       # Every public field on :books hits __caravela_policy_field_visible__/3.
       # The clause cascade on the domain module picks the right result
-      # at runtime — arity-1 rules return a boolean, arity-2 rules
+      # at runtime - arity-1 rules return a boolean, arity-2 rules
       # return :per_record, unruled fields fall through to the
       # per-entity / default_policy fallback.
       assert_def(src, :compute_field_access, 2)
@@ -48,13 +48,13 @@ defmodule Caravela.Phase9PolicyGenTest do
       assert_calls(src, :policy_authorize, [:books, :delete, :_, :_])
 
       # policy_authorize delegates into the domain module's dispatch
-      # function — match by short name since the full module alias is
+      # function - match by short name since the full module alias is
       # `MyApp.Domains.PolicyLibrary`.
       assert_calls(src, :__caravela_policy_allow__, [:_, :_, :_], module: PolicyLibrary)
     end
 
     test "domain-module dispatch honours arity-2 rule at runtime" do
-      # Pure domain-module behaviour — no generated source needed.
+      # Pure domain-module behaviour - no generated source needed.
       admin = %{id: "a", role: :admin}
       viewer = %{id: "v", role: :viewer}
 

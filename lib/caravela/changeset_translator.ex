@@ -13,7 +13,7 @@ defmodule Caravela.ChangesetTranslator do
   ## Why structured
 
   Phoenix's out-of-the-box error format (`%{field => [msg]}`) is
-  ergonomic but impossible to localize on the frontend — by the time
+  ergonomic but impossible to localize on the frontend - by the time
   the string reaches the Svelte layer, the structure is gone. Teams
   shipping beyond English have had to parse strings or re-validate
   client-side.
@@ -25,8 +25,8 @@ defmodule Caravela.ChangesetTranslator do
       translation template.
     * Fall back to `:message` when no frontend translation exists.
 
-  The server still renders a `:message` — via the configured
-  translator or a built-in pass-through interpolator — so
+  The server still renders a `:message` - via the configured
+  translator or a built-in pass-through interpolator - so
   monolingual apps need no extra setup.
 
   ## Configuring a translator
@@ -36,7 +36,7 @@ defmodule Caravela.ChangesetTranslator do
       config :caravela, :changeset_translator, MyAppWeb.Gettext
 
   Caravela calls `MyAppWeb.Gettext.dgettext("errors", template, params)`
-  (and `dngettext/5` for plural forms signalled via `:count`) — the
+  (and `dngettext/5` for plural forms signalled via `:count`) - the
   exact pattern Phoenix's own `ErrorHelpers.translate_error/1` uses,
   so existing locale files under `priv/gettext/<locale>/LC_MESSAGES/
   errors.po` work unchanged.
@@ -47,7 +47,7 @@ defmodule Caravela.ChangesetTranslator do
 
   ## Custom translators
 
-  Any module that exports `dgettext/3` and `dngettext/5` works —
+  Any module that exports `dgettext/3` and `dngettext/5` works -
   the contract matches Gettext backends. Pass `translator: false`
   to skip translation entirely and only interpolate parameters.
 
@@ -56,7 +56,7 @@ defmodule Caravela.ChangesetTranslator do
   `:code` is Ecto's `:validation` option when present, then
   `:constraint`, then `:invalid` as a generic fallback. Ecto's
   sub-kinds (`kind: :min`, `kind: :greater_than`) stay in `:params`
-  — consumers normalize to friendly codes (`:too_short`,
+  - consumers normalize to friendly codes (`:too_short`,
   `:too_large`) at their own discretion.
   """
 
@@ -68,7 +68,7 @@ defmodule Caravela.ChangesetTranslator do
 
   Options:
 
-    * `:translator` — an atom module exporting `dgettext/3` and
+    * `:translator` - an atom module exporting `dgettext/3` and
       `dngettext/5` (the Gettext backend contract). Falls back to
       the `config :caravela, :changeset_translator, _` value, and
       then to the pass-through interpolator when neither is set.
@@ -118,7 +118,7 @@ defmodule Caravela.ChangesetTranslator do
   end
 
   # `:validation` / `:constraint` are metadata, not interpolation
-  # parameters — drop them from `:params` so the frontend translation
+  # parameters - drop them from `:params` so the frontend translation
   # doesn't receive noise. Everything else stays, including `:count`,
   # `:kind`, `:max`, etc. that templates interpolate.
   defp extract_params(opts) do

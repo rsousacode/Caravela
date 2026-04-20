@@ -20,9 +20,9 @@ defmodule Mix.Tasks.Caravela.Gen.Auth do
 
   Flags:
 
-    * `--dry-run`  — print the generated files without writing anything
-    * `--output DIR` — write under `DIR` instead of the project root
-    * `--force`    — overwrite existing files without prompting
+    * `--dry-run`  - print the generated files without writing anything
+    * `--output DIR` - write under `DIR` instead of the project root
+    * `--force`    - overwrite existing files without prompting
   """
 
   use Mix.Task

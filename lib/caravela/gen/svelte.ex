@@ -5,9 +5,9 @@ defmodule Caravela.Gen.Svelte do
 
   Output per entity:
 
-    * `BookIndex.svelte` — list view
-    * `BookShow.svelte` — detail view
-    * `BookForm.svelte` — create/edit form
+    * `BookIndex.svelte` - list view
+    * `BookShow.svelte` - detail view
+    * `BookForm.svelte` - create/edit form
 
   Plus one TypeScript file per domain holding every entity's interface.
   File paths mirror the context and version namespaces (see
@@ -15,7 +15,7 @@ defmodule Caravela.Gen.Svelte do
   `Caravela.Naming.svelte_types_file_path/1`).
 
   Tenant-injected fields are hidden from both the TypeScript interface
-  and the form inputs — tenant id comes from the server, not the
+  and the form inputs - tenant id comes from the server, not the
   Svelte client.
 
   Returns a list of `{path, source}` tuples. Files preserve content
@@ -238,7 +238,7 @@ defmodule Caravela.Gen.Svelte do
     ]
   end
 
-  # Default `actions` prop literal — permissive across the three
+  # Default `actions` prop literal - permissive across the three
   # action gates so a component mounted without the LiveView/
   # controller wiring still renders every button. Real values
   # arrive from `Caravela.*.action_access/2` at runtime.
@@ -319,10 +319,10 @@ defmodule Caravela.Gen.Svelte do
   end
 
   defp svelte_cell_expression(name, :boolean, row_var),
-    do: "{#{row_var}.#{name} ? '✓' : '—'}"
+    do: "{#{row_var}.#{name} ? '✓' : '-'}"
 
   defp svelte_cell_expression(name, _type, row_var),
-    do: "{#{row_var}.#{name} ?? '—'}"
+    do: "{#{row_var}.#{name} ?? '-'}"
 
   defp form_input_control(name, :boolean, row_var) do
     """
@@ -393,7 +393,7 @@ defmodule Caravela.Gen.Svelte do
 
   # Fields safe to send to the Svelte client: drop tenant_id and any
   # auth-redacted credential field (hashed_password, api_tokens).
-  # `confirmed_at` is kept — it's useful for the UI to gate features on
+  # `confirmed_at` is kept - it's useful for the UI to gate features on
   # email confirmation.
   defp public_fields(%Entity{fields: fields}) do
     Enum.reject(fields, fn f -> Tenant.injected?(f) or auth_redacted?(f) end)

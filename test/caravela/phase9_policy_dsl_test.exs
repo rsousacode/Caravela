@@ -51,13 +51,13 @@ defmodule Caravela.Phase9PolicyDslTest do
       admin = %{id: "a", role: :admin, author_id: "a"}
       viewer = %{id: "v", role: :viewer, author_id: nil}
 
-      # A bare Ecto query on a source table — no schema module required.
+      # A bare Ecto query on a source table - no schema module required.
       base = from(b in "library_books", select: b.id)
 
       # admin scope returns the query unchanged (identity)
       assert MyApp.Domains.PolicyLibrary.__caravela_policy_scope__(:books, base, admin) == base
 
-      # viewer scope adds a where clause — `wheres` grows by one.
+      # viewer scope adds a where clause - `wheres` grows by one.
       %Ecto.Query{wheres: wheres_after} =
         MyApp.Domains.PolicyLibrary.__caravela_policy_scope__(:books, base, viewer)
 
@@ -219,7 +219,7 @@ defmodule Caravela.Phase9PolicyDslTest do
     test "per-entity permissive fallback fires for entities with a policy block" do
       # `:authors` has a policy (only a field rule on :email) but no
       # `scope` or `allow` rules. Under deny-by-default the module-level
-      # fallback would deny everything — but the per-entity permissive
+      # fallback would deny everything - but the per-entity permissive
       # fallback kicks in first, so list/create/update/delete on an
       # authenticated actor are allowed.
       import Ecto.Query, only: [from: 2]
@@ -247,7 +247,7 @@ defmodule Caravela.Phase9PolicyDslTest do
                %{role: :viewer}
              ) == true
 
-      # But the declared rule on :email still wins — viewers can't see it.
+      # But the declared rule on :email still wins - viewers can't see it.
       assert MyApp.Domains.PolicyLibrary.__caravela_policy_field_visible__(
                :authors,
                :email,
@@ -302,7 +302,7 @@ defmodule Caravela.Phase9PolicyDslTest do
     end
 
     test "multiple `policy` blocks for the same entity are additive" do
-      # Additive blocks are a deliberate feature — lets you split
+      # Additive blocks are a deliberate feature - lets you split
       # policy declarations across files / environments.
       defmodule AdditivePolicy do
         use Caravela.Domain
@@ -402,7 +402,7 @@ defmodule Caravela.Phase9PolicyDslTest do
     end
 
     test "arbitrary Elixir inside a policy block Just Works" do
-      # The policy block is plain Elixir — `for`, `if`, `@module_attr`
+      # The policy block is plain Elixir - `for`, `if`, `@module_attr`
       # expansions, helper calls all expand the same way they would
       # at module top-level. This test defines a module dynamically
       # and checks that the accumulated rules match what the source

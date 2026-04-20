@@ -4,13 +4,13 @@ defmodule Caravela.IR do
 
   The internal `Caravela.Schema.Domain` struct is for generator and
   compiler consumption. `Caravela.IR` is the *stable* shape external
-  tools, LLMs, and documentation readers consume — a plain map of
+  tools, LLMs, and documentation readers consume - a plain map of
   atom keys and primitive values (strings, booleans, integers, maps,
   lists, `nil`) that encodes cleanly through `Jason.encode/1`.
 
   Anonymous functions inside policies (scope closures, field-rule
   predicates) are *not* included. The IR records only their metadata
-  (the fact that a rule exists, its arity, its entity) — the
+  (the fact that a rule exists, its arity, its entity) - the
   implementations live as compiled function clauses on the domain
   module and are not serializable.
 
@@ -221,7 +221,7 @@ defmodule Caravela.IR do
     if Keyword.keyword?(v), do: keyword_to_map(v), else: Enum.map(v, &encode_value/1)
   end
 
-  # Structs (like `Regex`) get stringified — they're opaque to the IR.
+  # Structs (like `Regex`) get stringified - they're opaque to the IR.
   defp encode_value(%_{} = struct), do: inspect(struct)
 
   defp encode_value(v) when is_map(v),

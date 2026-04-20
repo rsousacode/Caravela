@@ -19,7 +19,7 @@ defmodule Caravela.MCP.Tool.DescribeEntity do
   @impl true
   @spec description() :: String.t()
   def description do
-    "Return the IR for one entity within a Caravela domain — " <>
+    "Return the IR for one entity within a Caravela domain - " <>
       "fields, relations (inbound + outbound), policy summary, auth config."
   end
 

@@ -117,7 +117,7 @@ defmodule Caravela.RenderModesGenTest do
       refute source =~ "patch_ops"
     end
 
-    # Regression — 0.13.2 — a stray `end` after `<%= @custom_marker %>` in
+    # Regression - 0.13.2 - a stray `end` after `<%= @custom_marker %>` in
     # `priv/templates/rest_controller.eex` shipped a controller that failed
     # to compile with `unexpected reserved word: end`. Every other test in
     # this file only regex-matched the emitted source; none parsed it, so

@@ -13,7 +13,7 @@ defmodule Caravela.MCP.Tool.ValidateDsl do
 
   The candidate source is `Code.eval_string/1`-compiled. That's
   arbitrary Elixir execution. The server intentionally scopes this
-  tool to localhost stdio transport in 0.10 — when HTTP transport
+  tool to localhost stdio transport in 0.10 - when HTTP transport
   lands, this tool MUST be gated behind auth + sandboxed further
   (see the future-work section in `caravela_plan/phoenix/llm_friendliness.md`).
   """

@@ -72,13 +72,13 @@ defmodule Caravela.Compiler do
       #
       # Clause ordering matters. In order:
       #
-      #   1. Specific clauses — one per `scope`, `field :_, visible: …`,
+      #   1. Specific clauses - one per `scope`, `field :_, visible: …`,
       #      or `allow :_, …` declared in a `policy` block.
-      #   2. Per-entity permissive fallbacks — for each entity that
+      #   2. Per-entity permissive fallbacks - for each entity that
       #      declared ANY policy block, undeclared rule types default
       #      to "permissive for this entity" regardless of the
       #      domain-level default.
-      #   3. Module-level fallbacks — governed by the `default_policy`
+      #   3. Module-level fallbacks - governed by the `default_policy`
       #      domain option. Only fires for entities with no `policy`
       #      block at all.
       unquote_splicing(specific_policy_clauses)
@@ -201,7 +201,7 @@ defmodule Caravela.Compiler do
       {:allow, entity, action, 2, fun_ast} ->
         [
           quote do
-            # Arity-2 gate without a record defaults to denying — the
+            # Arity-2 gate without a record defaults to denying - the
             # caller should pass the record for a real decision.
             def __caravela_policy_allow__(unquote(entity), unquote(action), _actor), do: false
           end,
@@ -332,7 +332,7 @@ defmodule Caravela.Compiler do
         else
           compile_error!(
             env,
-            "version #{inspect(v)} is invalid — must match #{inspect(@version_re)} (e.g. \"v1\")"
+            "version #{inspect(v)} is invalid - must match #{inspect(@version_re)} (e.g. \"v1\")"
           )
         end
 
@@ -348,7 +348,7 @@ defmodule Caravela.Compiler do
           compile_error!(
             env,
             "entity #{inspect(ename)} declares a :tenant_id field, but the domain " <>
-              "has multi_tenant: true — tenant_id is auto-injected. Remove the manual field."
+              "has multi_tenant: true - tenant_id is auto-injected. Remove the manual field."
           )
         end
       end)
@@ -456,7 +456,7 @@ defmodule Caravela.Compiler do
   end
 
   # If both sides of a relation are declared, they must be compatible. The
-  # opposite side can be omitted — the generators will infer it.
+  # opposite side can be omitted - the generators will infer it.
   defp validate_cardinality(%Domain{relations: rels}, env) do
     by_pair = Enum.reduce(rels, %{}, fn r, acc -> Map.put(acc, {r.from, r.to}, r.type) end)
 
@@ -637,7 +637,7 @@ defmodule Caravela.Compiler do
   end
 
   # The compiler later injects `hashed_password`, `confirmed_at`,
-  # `api_tokens` — error early if the user declared any of them by hand.
+  # `api_tokens` - error early if the user declared any of them by hand.
   defp validate_auth_no_collisions(entities, env) do
     Enum.each(entities, fn %Entity{name: n, fields: fs} ->
       injected = [:hashed_password, :confirmed_at, :api_tokens]

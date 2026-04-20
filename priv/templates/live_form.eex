@@ -146,7 +146,7 @@ defmodule <%= inspect @module %> do
   defp new?(%<%= @entity_short %>{id: nil}), do: true
   defp new?(%<%= @entity_short %>{}), do: false
 
-  # Structured error shape shared across `:live` and `:rest` — see
+  # Structured error shape shared across `:live` and `:rest` - see
   # `Caravela.ChangesetTranslator`. Each error is a
   # `%{code, params, message}` map; frontends key on `:code` for
   # localization and fall back to `:message` when no translation

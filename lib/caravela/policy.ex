@@ -7,14 +7,14 @@ defmodule Caravela.Policy do
   `Caravela.Policy.Entry` struct that captures three categories of
   rules:
 
-    * `scope` — a 2-arity function `(query, actor) -> query` compiled
+    * `scope` - a 2-arity function `(query, actor) -> query` compiled
       into the context's `apply_scope/3` helper (Ecto WHERE clauses).
-    * `field` rules — per-field visibility predicates of arity 1 or 2
+    * `field` rules - per-field visibility predicates of arity 1 or 2
       (`fn actor -> bool end` or `fn actor, record -> bool end`).
       Field rules compile into `compute_field_access/2` and
       `project_fields/3` on the context, and into the `field_access`
       prop reaching Svelte via LiveSvelte.
-    * `allow` action gates — one per `{:create, :update, :delete}`.
+    * `allow` action gates - one per `{:create, :update, :delete}`.
 
   The `Caravela.Policy` module itself only holds the structs.
   `Caravela.Policy.Compiler` emits the matching `__caravela_policy_*__`
@@ -31,7 +31,7 @@ defmodule Caravela.Policy do
   defmodule FieldRule do
     @moduledoc """
     A field-level visibility rule. `arity` is either 1 (depends only on
-    the actor — static per request) or 2 (depends on actor + record —
+    the actor - static per request) or 2 (depends on actor + record -
     evaluated per-row).
     """
     defstruct [:entity, :field, :arity]

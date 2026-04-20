@@ -85,7 +85,7 @@ defmodule Caravela.Phase2GenTest do
 
     test "delete_<entity> accepts both a struct and a primary-key id",
          %{domain: domain} do
-      # §2.3: a single round-trip delete_book(id, context) variant,
+      # 2.3: a single round-trip delete_book(id, context) variant,
       # folded into one function head with the existing struct variant.
       {_path, source} = Context.render(domain)
 

@@ -9,21 +9,21 @@ defmodule Caravela.Flow.Steps do
 
   ### Semantic overview (Ballerina mapping in parens)
 
-    * `Sequence` (`Co.Seq`) — run inner steps in order
-    * `Repeat`   (`Co.Repeat`) — loop the inner step forever
-    * `Wait`     (`Co.Wait`) — pause for a fixed duration
-    * `WaitUntil` (`Co.While`) — block until a predicate over state
+    * `Sequence` (`Co.Seq`) - run inner steps in order
+    * `Repeat`   (`Co.Repeat`) - loop the inner step forever
+    * `Wait`     (`Co.Wait`) - pause for a fixed duration
+    * `WaitUntil` (`Co.While`) - block until a predicate over state
       becomes true
-    * `Debounce` — pause, but reset the timer if state changes during
+    * `Debounce` - pause, but reset the timer if state changes during
       the pause
-    * `SetState` (`Co.SetState`) — mutate state synchronously
-    * `Run`      (`Co.Await`) — invoke async work with optional retry
+    * `SetState` (`Co.SetState`) - mutate state synchronously
+    * `Run`      (`Co.Await`) - invoke async work with optional retry
       + backoff
-    * `Parallel` (`Co.All`) — run a list of tasks concurrently, collect
+    * `Parallel` (`Co.All`) - run a list of tasks concurrently, collect
       all results into a state key
-    * `Race`     (`Co.Any`) — run tasks concurrently, keep the first
+    * `Race`     (`Co.Any`) - run tasks concurrently, keep the first
       result
-    * `Each`     (`Co.For`) — iterate a collection already in state
+    * `Each`     (`Co.For`) - iterate a collection already in state
 
   Each struct holds only data (funs + configs). Interpretation lives
   in `Caravela.Flow.Runner`.
@@ -81,10 +81,10 @@ defmodule Caravela.Flow.Steps do
     @moduledoc """
     Run `fun.(state)` once. The return value drives what happens next:
 
-      * `:ok` — advance, state unchanged
-      * `{:ok, new_state}` — advance with new state
-      * `{:retry, new_state}` — retry (if `retries > 0`) with new state
-      * `{:error, reason}` — retry (if `retries > 0`) else fail flow
+      * `:ok` - advance, state unchanged
+      * `{:ok, new_state}` - advance with new state
+      * `{:retry, new_state}` - retry (if `retries > 0`) with new state
+      * `{:error, reason}` - retry (if `retries > 0`) else fail flow
     """
     defstruct [:fun, retries: 0, backoff: :linear, base_delay: 100]
 
@@ -132,9 +132,9 @@ defmodule Caravela.Flow.Steps do
     Iterate a collection already in state under `key`. For every item,
     invoke `fun.(item, state)`. The fun may return:
 
-      * `{:ok, new_state}` — continue with updated state
-      * `{:skip, reason}`  — skip this item, continue
-      * `{:error, reason}` — abort the whole flow
+      * `{:ok, new_state}` - continue with updated state
+      * `{:skip, reason}`  - skip this item, continue
+      * `{:error, reason}` - abort the whole flow
     """
     defstruct [:key, :fun]
 

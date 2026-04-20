@@ -6,8 +6,8 @@ defmodule Caravela.Gen.AuthLive do
   Emits, under `lib/<web>/live/[v<N>/]auth_live/`:
 
     * `login.ex`, `register.ex`, `confirm_email.ex`, `session_list.ex`
-    * `reset_password.ex`      — only when `reset :password` is set
-    * `token_manager.ex`       — only when `:api_token` strategy is set
+    * `reset_password.ex`      - only when `reset :password` is set
+    * `token_manager.ex`       - only when `:api_token` strategy is set
 
   Returns a list of `{path, source}` tuples. Files preserve content
   below the `# --- CUSTOM ---` marker on regeneration.

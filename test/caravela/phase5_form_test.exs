@@ -1,7 +1,7 @@
 defmodule Caravela.Phase5FormTest do
   use ExUnit.Case, async: true
 
-  describe "Caravela.Live.Form — visibility predicates + async validators" do
+  describe "Caravela.Live.Form - visibility predicates + async validators" do
     defmodule BookForm do
       use Caravela.Live.Form,
         entity: MyApp.Library.Book,

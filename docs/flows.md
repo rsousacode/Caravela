@@ -1,8 +1,8 @@
-# Flows — async workflow orchestration
+# Flows - async workflow orchestration
 
 `Caravela.Flow` is a small DSL + GenServer runtime for composable
 async workflows: debouncing, retries, sagas, parallel tasks. It is
-**deliberately scoped** to ephemeral orchestration — no event
+**deliberately scoped** to ephemeral orchestration - no event
 sourcing, no CQRS, no read-model projections. Teams needing
 append-only logs should reach for
 [Commanded](https://github.com/commanded/commanded); flows deliberately
@@ -81,10 +81,10 @@ Ballerina equivalents are listed in the module doc and below.
 
 `run/2` understands the following return shapes:
 
-- `:ok` — advance, state unchanged
-- `{:ok, new_state}` — advance with new state
-- `{:retry, new_state}` — retry (decrements `retries`)
-- `{:error, reason}` — retry; if `retries == 0`, fail the flow
+- `:ok` - advance, state unchanged
+- `{:ok, new_state}` - advance with new state
+- `{:retry, new_state}` - retry (decrements `retries`)
+- `{:error, reason}` - retry; if `retries == 0`, fail the flow
 
 `each/2` understands `{:ok, state}`, `{:skip, reason}`, and
 `{:error, reason}`. `:skip` keeps iterating; `:error` aborts the
@@ -110,9 +110,9 @@ Caravela.Flow.stop(pid)
 
 The `:notify` pid receives three message shapes:
 
-- `{:flow_state, new_state}` — whenever state changes
-- `{:flow_done, final_state}` — when the flow completes normally
-- `{:flow_error, reason}` — on `{:error, _}` from `run/each`
+- `{:flow_state, new_state}` - whenever state changes
+- `{:flow_done, final_state}` - when the flow completes normally
+- `{:flow_error, reason}` - on `{:error, _}` from `run/each`
 
 ## Supervising flows
 
@@ -130,10 +130,10 @@ Supervisor.start_link(children, strategy: :one_for_one)
 
 With the supervisor running, every `Caravela.Flow.start/3` call
 attaches the new runner as a supervised child. Without it,
-`start/3` falls back to an unsupervised `start_link` — handy in tests
+`start/3` falls back to an unsupervised `start_link` - handy in tests
 and tooling.
 
-## The real-time loop — Flow → LiveView → LiveSvelte → Svelte
+## The real-time loop - Flow → LiveView → LiveSvelte → Svelte
 
 ```
 Flow (GenServer)
@@ -148,7 +148,7 @@ Svelte Component
   │ let { sync_status } = $props();
   │ const statusLabel = $derived(derive(sync_status));
   ▼
-  Reactive DOM update — no manual WebSocket code.
+  Reactive DOM update - no manual WebSocket code.
 ```
 
 ### LiveView side
@@ -198,18 +198,18 @@ end
 </div>
 ```
 
-The Svelte component declares a prop and reacts — no `socket.on`,
+The Svelte component declares a prop and reacts - no `socket.on`,
 no subscriptions, no ad-hoc WebSocket plumbing. LiveView + LiveSvelte
 already own the transport; flows just feed it.
 
 ## Scope boundary (no event sourcing)
 
-Flows are **ephemeral async orchestration** — live only while the
+Flows are **ephemeral async orchestration** - live only while the
 runner process is alive, state is in-memory only, and there is no
 persistent log. If a runner crashes, the flow starts over from
 initial state (or from the state you persisted externally). That's
 the tradeoff for a tiny, predictable runtime.
 
 If you need durable event streams, projections, or CQRS, use
-[Commanded](https://github.com/commanded/commanded) — Caravela
+[Commanded](https://github.com/commanded/commanded) - Caravela
 intentionally does not compete with it.

@@ -1,14 +1,14 @@
 defmodule Caravela.MCP.Tool.DescribeFrontendMode do
   @moduledoc """
   MCP tool: report the render-mode configuration for a Caravela
-  domain's entities — which ones use `:live` vs `:rest`, and whether
+  domain's entities - which ones use `:live` vs `:rest`, and whether
   `:rest` entities opt into SSE realtime.
 
   Lets an LLM host know which transport each entity uses before
   suggesting code. Without this, a host asked "how do I add a form
   to BookIndex" can't tell whether the entity is rendered through
   LiveView's WebSocket or through `caravela_svelte`'s Inertia-style
-  HTTP — and those need different client-side patterns.
+  HTTP - and those need different client-side patterns.
   """
 
   @behaviour Caravela.MCP.Tool
@@ -83,7 +83,7 @@ defmodule Caravela.MCP.Tool.DescribeFrontendMode do
   end
 
   # Terse capsule of transport-specific facts an LLM needs before
-  # suggesting code. Kept short on purpose — the host can call
+  # suggesting code. Kept short on purpose - the host can call
   # `caravela__describe_entity` for the full IR.
   defp notes_for(%{frontend: "live"}) do
     [
@@ -111,7 +111,7 @@ defmodule Caravela.MCP.Tool.DescribeFrontendMode do
         "`CaravelaSvelte.render/3`.",
       "Client-side interactivity uses `useForm` + `navigate` from " <>
         "`@caravela/svelte`.",
-      "No real-time updates — opt in via `realtime: true` on the entity."
+      "No real-time updates - opt in via `realtime: true` on the entity."
     ]
   end
 

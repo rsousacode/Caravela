@@ -15,7 +15,7 @@ The task compiles the project (so domain modules are loadable), then
 speaks JSON-RPC 2.0 over stdio, one message per line. Protocol
 version `2024-11-05`.
 
-No daemon, no port. The host owns process lifecycle — typically
+No daemon, no port. The host owns process lifecycle - typically
 spawning one per workspace.
 
 ### Claude Code / Claude Desktop
@@ -49,7 +49,7 @@ the IR schema ([`Caravela.IR`](../lib/caravela/ir.ex)).
 | `caravela__list_entities`          | `{domain}`                     | Entity names declared on the domain, in DSL order                     |
 | `caravela__describe_entity`        | `{domain, entity: "books"}`    | One entity's IR plus its relations (inbound + outbound)               |
 | `caravela__describe_frontend_mode` | `{domain, entity?}`            | Render transport (`:live` / `:rest`), `realtime?` flag, per-mode notes |
-| `caravela__validate_dsl`           | `{source: "defmodule …"}`      | `{:ok}` or `{:error, [DSLError]}` — parse a candidate domain file without compiling it into the project |
+| `caravela__validate_dsl`           | `{source: "defmodule …"}`      | `{:ok}` or `{:error, [DSLError]}` - parse a candidate domain file without compiling it into the project |
 
 All tools read from the *current* compiled IR. Modify the DSL, recompile,
 and subsequent tool calls see the new shape. No caching.
@@ -68,7 +68,7 @@ Concretely:
 - **No guessed render mode.** Asked "add a delete button to
   BookIndex", the LLM first calls `caravela__describe_frontend_mode`
   to confirm whether `books` is served as `:live` (`live.pushEvent`)
-  or `:rest` (`useForm` / `navigate`) — those have different client
+  or `:rest` (`useForm` / `navigate`) - those have different client
   patterns.
 - **Pre-validated DSL changes.** Before proposing a DSL patch, the
   LLM can call `caravela__validate_dsl` on the candidate source and
@@ -76,16 +76,16 @@ Concretely:
 
 ## Context for the rest of the plan
 
-The MCP server is §9 of [llm_friendliness.md](https://github.com/rsousacode/caravela-plan/blob/main/features/llm_friendliness.md) and composes
+The MCP server is 9 of [llm_friendliness.md](https://github.com/rsousacode/caravela-plan/blob/main/features/llm_friendliness.md) and composes
 with the other LLM-grounding deliverables:
 
-- **Structured errors** ([§4](https://github.com/rsousacode/caravela-plan/blob/main/features/llm_friendliness.md) — shipped v0.9.0): every
+- **Structured errors** ([4](https://github.com/rsousacode/caravela-plan/blob/main/features/llm_friendliness.md) - shipped v0.9.0): every
   `Caravela.DSLError` carries `:message`, `:snippet`, `:suggestion`,
   and `:docs_url`. `caravela__validate_dsl` returns them verbatim.
-- **Unified check** (`mix caravela.check` — shipped v0.9.1): one
-  oracle for "is this correct?" — hosts that want a pass/fail
+- **Unified check** (`mix caravela.check` - shipped v0.9.1): one
+  oracle for "is this correct?" - hosts that want a pass/fail
   instead of per-tool inspection call this.
-- **JSON IR** (`mix caravela.ir` + `Caravela.IR.of/1` — shipped
+- **JSON IR** (`mix caravela.ir` + `Caravela.IR.of/1` - shipped
   v0.9.0): the same structure the MCP tools return, dumpable to a
   file for grounding RAG systems or fine-tuning corpora.
 
@@ -99,5 +99,5 @@ The stdio transport shipped in Caravela 0.10+ is local-only. An HTTP
 transport for team / shared MCP scenarios is out of 1.1 scope and
 will require explicit auth. Write-capable tools (tools that would
 modify files rather than just read the IR) are also out of scope
-until after 1.0 — the current tool surface is read-only plus one
+until after 1.0 - the current tool surface is read-only plus one
 sandbox validator.

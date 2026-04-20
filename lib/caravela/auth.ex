@@ -8,7 +8,7 @@ defmodule Caravela.Auth do
   entity's explicit fields. The generators in `Caravela.Gen.Auth`
   consume those fields like any other.
 
-  This module only transforms the IR — the actual auth context,
+  This module only transforms the IR - the actual auth context,
   plugs, LiveView hooks, controller, and session schema live in the
   templates under `priv/templates/auth_*.eex`.
   """

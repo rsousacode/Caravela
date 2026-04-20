@@ -8,7 +8,7 @@ defmodule MyApp.Domains.Library do
 
   entity :books do
     field :title, :string, required: true
-    # tenant_id is auto-injected — don't declare it
+    # tenant_id is auto-injected - don't declare it
   end
 end
 ```
@@ -22,7 +22,7 @@ standalone `[:tenant_id]` index on tables with no FKs.
 
 **Context.** The generated context scopes every read with
 `where(q.tenant_id == ^tenant_id)` and stamps every create with
-`put_change(:tenant_id, tenant_id)` — both driven by `context.tenant.id`
+`put_change(:tenant_id, tenant_id)` - both driven by `context.tenant.id`
 at the call site. When the caller's context has no `:tenant`, the
 scoping helpers no-op (useful for background jobs that deliberately
 cross tenants).
@@ -30,8 +30,8 @@ cross tenants).
 **Controllers & LiveViews.** Generated controllers read
 `conn.assigns[:tenant]` into the context automatically. Same for
 generated LiveViews reading `socket.assigns[:tenant]`. You plug the
-tenant in ahead of your `:api` or `:browser` pipeline — from a
-subdomain, header, or session claim — Caravela only consumes it.
+tenant in ahead of your `:api` or `:browser` pipeline - from a
+subdomain, header, or session claim - Caravela only consumes it.
 
 **GraphQL.** The Absinthe input objects hide `tenant_id`; tenant id
 comes from the resolver's Absinthe context, not the client.
@@ -52,7 +52,7 @@ If an entity tries to declare a `:tenant_id` field manually in a
 `multi_tenant: true` domain, the compiler raises:
 
     ** (CompileError) Caravela: entity :books declares a :tenant_id field,
-    but the domain has multi_tenant: true — tenant_id is auto-injected.
+    but the domain has multi_tenant: true - tenant_id is auto-injected.
 
 ## Caveats
 

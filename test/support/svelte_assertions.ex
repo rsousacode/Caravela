@@ -15,7 +15,7 @@ defmodule Caravela.SvelteAssertions do
       refute_contains(src, "hashed_password")
 
   If you need to assert *absence* of a token, use `refute_contains/2`
-  — it also normalizes whitespace so a formatter break doesn't sneak
+  - it also normalizes whitespace so a formatter break doesn't sneak
   the token past the refute.
   """
 

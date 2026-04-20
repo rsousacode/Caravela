@@ -10,10 +10,10 @@ defmodule Mix.Tasks.Caravela.Gen.Api do
 
   Flags:
 
-    * `--dry-run`  — print the generated files without writing
-    * `--output DIR` — write under `DIR` instead of the project root
-    * `--force`    — overwrite existing files without prompting
-    * `--no-scope` — skip printing the router snippet
+    * `--dry-run`  - print the generated files without writing
+    * `--output DIR` - write under `DIR` instead of the project root
+    * `--force`    - overwrite existing files without prompting
+    * `--no-scope` - skip printing the router snippet
 
   Regeneration preserves content below the `# --- CUSTOM ---` marker.
   """

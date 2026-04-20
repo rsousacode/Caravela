@@ -60,14 +60,14 @@ defmodule Mix.Tasks.Caravela.InfoTest do
       assert out =~ ~r/policy:.*scope/
     end
 
-    test "entity without a policy shows '—'", %{ir: ir} do
+    test "entity without a policy shows '-'", %{ir: ir} do
       out = Info.render(ir, false)
 
       # authors has no policy.
       authors_block =
         out |> String.split("\n\n") |> Enum.find(&String.contains?(&1, "authors\n"))
 
-      assert authors_block =~ "policy:     —"
+      assert authors_block =~ "policy:     -"
     end
 
     test "totals footer shows counts", %{ir: ir} do

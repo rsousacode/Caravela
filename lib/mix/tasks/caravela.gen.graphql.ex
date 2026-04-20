@@ -18,9 +18,9 @@ defmodule Mix.Tasks.Caravela.Gen.Graphql do
 
   Flags:
 
-    * `--dry-run`  — print the generated files without writing
-    * `--output DIR` — write under `DIR` instead of the project root
-    * `--force`    — overwrite existing files without prompting
+    * `--dry-run`  - print the generated files without writing
+    * `--output DIR` - write under `DIR` instead of the project root
+    * `--force`    - overwrite existing files without prompting
 
   Regeneration preserves content below the `# --- CUSTOM ---` marker.
   """
@@ -50,7 +50,7 @@ defmodule Mix.Tasks.Caravela.Gen.Graphql do
     )
   end
 
-  # Absinthe is an optional dep of Caravela — warn the developer at
+  # Absinthe is an optional dep of Caravela - warn the developer at
   # runtime if they try to generate GraphQL code without it.
   defp ensure_absinthe! do
     unless Code.ensure_loaded?(Absinthe.Schema.Notation) do

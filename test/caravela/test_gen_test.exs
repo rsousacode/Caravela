@@ -38,8 +38,8 @@ defmodule Caravela.TestGenTest do
       assert src =~ "import Phoenix.LiveViewTest"
       assert src =~ ~s|describe "index"|
       assert src =~ ~s|describe "show"|
-      assert src =~ ~s|describe "form — create"|
-      assert src =~ ~s|describe "form — edit"|
+      assert src =~ ~s|describe "form - create"|
+      assert src =~ ~s|describe "form - edit"|
     end
 
     test "carries TODO markers where user fixture wiring is expected" do

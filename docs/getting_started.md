@@ -92,11 +92,11 @@ curl -X POST localhost:4000/api/books \
 
 ## Where to go next
 
-- [DSL reference](dsl.md) — every macro, every field option, every compile-time validation.
-- [Generators](generators.md) — the mix tasks and their flags.
-- [Multi-tenancy](multi_tenancy.md) — row-level tenant scoping.
-- [Versioning](versioning.md) — coexisting API versions from one source.
-- [GraphQL](graphql.md) — Absinthe generation.
-- [LiveSvelte frontend](livesvelte.md) — generated LiveView + Svelte components.
-- [Live runtime](live_runtime.md) — opt-in composable state for hand-written LiveViews.
-- [Regeneration](regeneration.md) — checksum headers, per-function `CUSTOM` blocks, and safe re-runs.
+- [DSL reference](dsl.md) - every macro, every field option, every compile-time validation.
+- [Generators](generators.md) - the mix tasks and their flags.
+- [Multi-tenancy](multi_tenancy.md) - row-level tenant scoping.
+- [Versioning](versioning.md) - coexisting API versions from one source.
+- [GraphQL](graphql.md) - Absinthe generation.
+- [LiveSvelte frontend](livesvelte.md) - generated LiveView + Svelte components.
+- [Live runtime](live_runtime.md) - opt-in composable state for hand-written LiveViews.
+- [Regeneration](regeneration.md) - checksum headers, per-function `CUSTOM` blocks, and safe re-runs.

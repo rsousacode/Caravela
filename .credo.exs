@@ -160,10 +160,10 @@
           # `@spec` enforcement on Caravela's *stable public API*.
           # Every public function in the listed files must have a
           # `@spec` or CI fails. New modules are added to this list
-          # once they stabilize (see llm_friendliness.md §10).
+          # once they stabilize (see llm_friendliness.md 10).
           #
           # Files outside this list are free to evolve without specs
-          # for now — notably mix tasks (fixed Mix.Task signature),
+          # for now - notably mix tasks (fixed Mix.Task signature),
           # generator internals (mostly transitively private), and
           # Live.* macros (AST-dependent shapes).
           {Credo.Check.Readability.Specs,

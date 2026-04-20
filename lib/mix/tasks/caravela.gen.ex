@@ -12,10 +12,10 @@ defmodule Mix.Tasks.Caravela.Gen do
 
   Flags:
 
-    * `--dry-run`  — print the generated files without writing
-    * `--output DIR` — write under `DIR` instead of the project root
-    * `--force`    — overwrite existing files without prompting
-    * `--no-scope` — skip printing the router snippet
+    * `--dry-run`  - print the generated files without writing
+    * `--output DIR` - write under `DIR` instead of the project root
+    * `--force`    - overwrite existing files without prompting
+    * `--no-scope` - skip printing the router snippet
 
   Regeneration preserves content below the `# --- CUSTOM ---` marker
   in every file that has one (schemas, contexts, controllers).
@@ -64,7 +64,7 @@ defmodule Mix.Tasks.Caravela.Gen do
       Mix.shell().info("""
 
       ! #{length(duplicates)} extra migration file(s) with the same `create_*_tables` stem
-        already exist — regeneration reused the oldest one. Review and delete
+        already exist - regeneration reused the oldest one. Review and delete
         the rest manually:
       #{Enum.map_join(duplicates, "\n", &"    priv/repo/migrations/#{&1}")}
       """)

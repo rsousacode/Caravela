@@ -3,12 +3,12 @@ defmodule Caravela.Gen.UpstreamTagRegressionTest do
   Catches stale `<LiveSvelte.svelte>` references in any generator
   output. v0.11 committed to the `caravela_svelte` convergence but
   the `--with-domain` form template was missed in that pass
-  (bug_improvements_3.md §1.1), and v0.13 was still emitting the
-  old tag in six auth LiveView templates (§1.3).
+  (bug_improvements_3.md 1.1), and v0.13 was still emitting the
+  old tag in six auth LiveView templates (1.3).
 
   This test runs every generator that emits Phoenix/EEx/Svelte
   output against a representative domain and asserts `LiveSvelte`
-  never appears in the rendered source — a single checkpoint that
+  never appears in the rendered source - a single checkpoint that
   stops any future template regression dead.
   """
 
@@ -35,7 +35,7 @@ defmodule Caravela.Gen.UpstreamTagRegressionTest do
   defp assert_no_live_svelte({path, source}) do
     refute source =~ "LiveSvelte.svelte",
            """
-           `#{path}` still contains `LiveSvelte.svelte` — v0.11 moved generated
+           `#{path}` still contains `LiveSvelte.svelte` - v0.11 moved generated
            output to `<CaravelaSvelte.svelte>`. If you're adding a new template,
            mount Svelte components via `<CaravelaSvelte.svelte>` instead.
            """
@@ -57,7 +57,7 @@ defmodule Caravela.Gen.UpstreamTagRegressionTest do
       |> LiveView.render_all(root: System.tmp_dir!(), with_domain: true)
       |> Enum.filter(fn {path, _} -> String.ends_with?(path, "form.ex") end)
       |> Enum.each(fn {_path, src} ->
-        # Positive check — the tag is present.
+        # Positive check - the tag is present.
         assert src =~ "<CaravelaSvelte.svelte"
       end)
 

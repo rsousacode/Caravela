@@ -10,7 +10,7 @@ defmodule Caravela.LiveOnMountTest do
   alias Caravela.Live.OnMount
 
   defp socket(assigns) do
-    # A plain map suffices — OnMount's assign_context helper falls back
+    # A plain map suffices - OnMount's assign_context helper falls back
     # to merging into `socket.assigns` when the value isn't a real
     # `Phoenix.LiveView.Socket` struct.
     %{assigns: assigns}

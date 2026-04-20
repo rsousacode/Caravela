@@ -24,7 +24,7 @@ defmodule MyApp.Domains.PolicyLibrary do
   end
 
   entity :widgets do
-    # Intentionally no `policy` block — under `default_policy: :deny`
+    # Intentionally no `policy` block - under `default_policy: :deny`
     # every rule falls through to the deny fallback.
     field :name, :string, required: true
   end

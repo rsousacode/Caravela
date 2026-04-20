@@ -29,7 +29,7 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
   Every LiveView and controller mounts / renders its Svelte component
   via `caravela_svelte` (both `<CaravelaSvelte.svelte>` for `:live`
   and `CaravelaSvelte.render/3` for `:rest`), and delegates to the
-  generated context module for CRUD calls — authorization, hooks, and
+  generated context module for CRUD calls - authorization, hooks, and
   multi-tenant scoping flow through for free.
 
   Requires `caravela_svelte` in the consumer app:
@@ -41,19 +41,19 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
 
   Flags:
 
-    * `--dry-run`  — print the generated files without writing
-    * `--output DIR` — write under `DIR` instead of the project root
-    * `--force`    — overwrite existing files without prompting
-    * `--with-domain` — also emit a `Caravela.Live.Domain` companion
+    * `--dry-run`  - print the generated files without writing
+    * `--output DIR` - write under `DIR` instead of the project root
+    * `--force`    - overwrite existing files without prompting
+    * `--with-domain` - also emit a `Caravela.Live.Domain` companion
       module per `:live` entity and generate `form.ex` from the
       Template-backed variant. Useful as an onramp to the
       `Caravela.Live.*` runtime.
-    * `--frontend MODE` — override the render transport for every
+    * `--frontend MODE` - override the render transport for every
       entity in the domain. `MODE` is `live` (LiveView + WebSocket)
       or `rest` (Inertia-style HTTP via `caravela_svelte`). Without
       the flag, each entity's DSL-declared `frontend:` is used,
       defaulting to `:live`.
-    * `--no-tests` — skip generating ExUnit + Vitest test skeletons.
+    * `--no-tests` - skip generating ExUnit + Vitest test skeletons.
       By default the generator emits one `<entity>_live_test.exs`
       per `:live` entity, one `<entity>_controller_test.exs` per
       `:rest` entity, and one `*.test.ts` colocated next to each
@@ -65,7 +65,7 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
   The task prints a one-line hint pointing at `Caravela.Router`.
   Drop `use Caravela.Router` + `caravela_routes MyApp.Domains.X`
   into your router and every route for every entity expands at
-  compile time — no paste-snippet necessary. See `Caravela.Router`
+  compile time - no paste-snippet necessary. See `Caravela.Router`
   for the full API.
 
   Regeneration preserves content below the `# --- CUSTOM ---` /
@@ -139,11 +139,11 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
 
   # A single line the developer drops into their scope, instead of
   # pasting a snippet for every entity. `caravela_routes MyApp.Domains.X`
-  # expands at compile time — see `Caravela.Router` for semantics.
+  # expands at compile time - see `Caravela.Router` for semantics.
   defp router_hint(%Domain{module: domain_module} = _domain, rest?: rest?) do
     base = """
 
-    Routes — add one line to lib/<app>_web/router.ex:
+    Routes - add one line to lib/<app>_web/router.ex:
 
         defmodule MyAppWeb.Router do
           use Phoenix.Router
@@ -213,11 +213,11 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
     Next steps:
 
       1. Add {:caravela_svelte, "~> 0.1"} to mix.exs. Both modes rely
-         on caravela_svelte — :live mounts via CaravelaSvelte.svelte,
+         on caravela_svelte - :live mounts via CaravelaSvelte.svelte,
          :rest renders via CaravelaSvelte.render/3.
       2. Install deps:  mix deps.get && cd assets && npm install && cd ..
       3. Wire CaravelaSvelte into assets/js/app.js (see caravela_svelte docs).
-      4. Review generated controllers under lib/<app>_web/controllers/ —
+      4. Review generated controllers under lib/<app>_web/controllers/ -
          they call CaravelaSvelte.Caravela.put_field_access/2 and
          errors/1 automatically. Custom logic goes below the
          `# --- CUSTOM ---` markers and is preserved on regeneration.
@@ -226,7 +226,7 @@ defmodule Mix.Tasks.Caravela.Gen.Live do
   end
 
   # caravela_svelte is the shared transport for both render modes. Warn
-  # (don't fail) if the consumer app doesn't have it yet — they may be
+  # (don't fail) if the consumer app doesn't have it yet - they may be
   # adding it as part of running this task.
   defp warn_if_caravela_svelte_missing(%Domain{} = _domain) do
     unless Code.ensure_loaded?(CaravelaSvelte) do

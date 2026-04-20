@@ -1,7 +1,7 @@
 defmodule Caravela.Phase4TemplateTest do
   @moduledoc """
-  Exercises `Caravela.Live.Template` using a minimal "socket" — a plain
-  map with `:assigns` — so we don't need a running LiveView process.
+  Exercises `Caravela.Live.Template` using a minimal "socket" - a plain
+  map with `:assigns` - so we don't need a running LiveView process.
   The generated mount/3 and handle_event/3 clauses only touch
   `socket.assigns` via the Updater helpers, which work on any map.
   """

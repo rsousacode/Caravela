@@ -9,7 +9,7 @@ defmodule Caravela.Tenant do
   every read by `tenant_id` and stamp every write with the caller's
   tenant id.
 
-  This module only produces IR updates — the actual scoping helpers
+  This module only produces IR updates - the actual scoping helpers
   live in the context template (see `priv/templates/context.eex`).
   """
 

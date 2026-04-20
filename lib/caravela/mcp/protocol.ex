@@ -10,8 +10,8 @@ defmodule Caravela.MCP.Protocol do
 
   The standard error codes follow JSON-RPC 2.0:
 
-    * `-32700` Parse error — invalid JSON was received
-    * `-32600` Invalid Request — not a valid request object
+    * `-32700` Parse error - invalid JSON was received
+    * `-32600` Invalid Request - not a valid request object
     * `-32601` Method not found
     * `-32602` Invalid params
     * `-32603` Internal error

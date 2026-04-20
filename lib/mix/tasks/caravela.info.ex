@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Caravela.Info do
   @shortdoc "Print a human-readable summary of a Caravela domain"
 
   @moduledoc """
-  Print a terminal-friendly summary of a compiled Caravela domain —
+  Print a terminal-friendly summary of a compiled Caravela domain -
   domain-level flags, every entity's fields / relations / policy /
   auth config, and top-level counts.
 
@@ -13,7 +13,7 @@ defmodule Mix.Tasks.Caravela.Info do
 
   Flags:
 
-    * `--no-color` — disable ANSI colors (useful for CI / piping)
+    * `--no-color` - disable ANSI colors (useful for CI / piping)
   """
 
   use Mix.Task
@@ -64,7 +64,7 @@ defmodule Mix.Tasks.Caravela.Info do
 
       multi-tenant:   #{yn(ir.multi_tenant)}
       default policy: #{ir.default_policy}
-      api version:    #{ir.version || "—"}\
+      api version:    #{ir.version || "-"}\
     """
   end
 
@@ -103,7 +103,7 @@ defmodule Mix.Tasks.Caravela.Info do
 
   # --- Fields -----------------------------------------------------------
 
-  defp field_section([]), do: "    fields:     —\n"
+  defp field_section([]), do: "    fields:     -\n"
 
   defp field_section([first | rest]) do
     first_line = "    fields:     " <> render_field(first) <> "\n"
@@ -148,7 +148,7 @@ defmodule Mix.Tasks.Caravela.Info do
 
     case relevant do
       [] ->
-        "    relations:  —\n"
+        "    relations:  -\n"
 
       [first | rest] ->
         "    relations:  " <>
@@ -175,7 +175,7 @@ defmodule Mix.Tasks.Caravela.Info do
 
   # --- Policy -----------------------------------------------------------
 
-  defp policy_section(%{policy: nil}), do: "    policy:     —\n"
+  defp policy_section(%{policy: nil}), do: "    policy:     -\n"
 
   defp policy_section(%{policy: p}) do
     parts = []
@@ -193,7 +193,7 @@ defmodule Mix.Tasks.Caravela.Info do
 
   # --- Auth -------------------------------------------------------------
 
-  defp auth_section(%{auth: nil}), do: "    auth:       —\n"
+  defp auth_section(%{auth: nil}), do: "    auth:       -\n"
 
   defp auth_section(%{auth: auth}) do
     strategies = auth.strategies |> Enum.map(& &1.kind) |> Enum.join(", ")
@@ -230,7 +230,7 @@ defmodule Mix.Tasks.Caravela.Info do
 
   defp yn(true), do: "yes"
   defp yn(false), do: "no"
-  defp yn(_), do: "—"
+  defp yn(_), do: "-"
 
   defp colorize(text, _color, false), do: text
 

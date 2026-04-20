@@ -14,15 +14,15 @@ defmodule Caravela.Gen.Custom do
 
   On regeneration the checksum is re-computed from the file on disk.
   If the content *above* the marker was edited by hand, the hashes no
-  longer match and `verify_existing!/2` aborts via `Mix.raise/1` — the
+  longer match and `verify_existing!/2` aborts via `Mix.raise/1` - the
   user's edits would otherwise be silently overwritten. Pass
   `force: true` (from the mix task's `--force` flag) to bypass.
 
   Three comment styles are supported via the `:style` opt:
 
-    * `:elixir` (default) — `# …`
-    * `:ts` — `// …` (TypeScript)
-    * `:svelte` — `<!-- … -->` (HTML/Svelte top-level)
+    * `:elixir` (default) - `# …`
+    * `:ts` - `// …` (TypeScript)
+    * `:svelte` - `<!-- … -->` (HTML/Svelte top-level)
   """
 
   @header_prefix "caravela-gen:"
@@ -200,8 +200,8 @@ defmodule Caravela.Gen.Custom do
   has not been tampered with above the marker.
 
   `opts`:
-    * `:style` (default `:elixir`) — `:elixir | :ts | :svelte`.
-    * `:force` (default false) — skip the verification step.
+    * `:style` (default `:elixir`) - `:elixir | :ts | :svelte`.
+    * `:force` (default false) - skip the verification step.
 
   Raises via `Mix.raise/1` when the file's stored checksum does not
   match its current above-marker body and `force: true` was not
@@ -227,9 +227,9 @@ defmodule Caravela.Gen.Custom do
   existing header line on the first line.
 
   `opts`:
-    * `:generator` (required) — atom identifying the generator.
-    * `:style` (default `:elixir`) — comment style for the header.
-    * `:version` — override the default Caravela version string.
+    * `:generator` (required) - atom identifying the generator.
+    * `:style` (default `:elixir`) - comment style for the header.
+    * `:version` - override the default Caravela version string.
 
   The checksum covers every byte above the CUSTOM marker, excluding
   the header line itself. Call after any formatting step so the hash
@@ -404,7 +404,7 @@ defmodule Caravela.Gen.Custom do
         :no_marker -> source
       end
 
-    # Named-block bodies are user territory — normalise them to empty
+    # Named-block bodies are user territory - normalise them to empty
     # before hashing so edits inside a block don't trigger a mismatch.
     # Edits that add, remove, or rename markers *do* change the hash.
     normalized = normalize_for_hash(above, style)

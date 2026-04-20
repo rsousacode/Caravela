@@ -32,10 +32,10 @@ defmodule Mix.Tasks.Caravela.Mcp do
 
   Once connected, the host exposes these tools to the LLM:
 
-    * `caravela__describe_domain` — full IR for a domain module
-    * `caravela__list_entities` — entity names in a domain
-    * `caravela__describe_entity` — IR for one entity
-    * `caravela__validate_dsl` — compile a candidate DSL and report
+    * `caravela__describe_domain` - full IR for a domain module
+    * `caravela__list_entities` - entity names in a domain
+    * `caravela__describe_entity` - IR for one entity
+    * `caravela__validate_dsl` - compile a candidate DSL and report
       structured errors
 
   See `Caravela.MCP` for the full tool list and wire format.
@@ -48,7 +48,7 @@ defmodule Mix.Tasks.Caravela.Mcp do
     # Compile the project so the consumer's domain modules are
     # available for introspection.
     Mix.Task.run("compile", ["--no-return-errors"])
-    Mix.shell().info("[caravela.mcp] serving on stdio — Ctrl-D to stop.")
+    Mix.shell().info("[caravela.mcp] serving on stdio - Ctrl-D to stop.")
 
     Caravela.MCP.serve()
   end

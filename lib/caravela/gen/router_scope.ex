@@ -3,7 +3,7 @@ defmodule Caravela.Gen.RouterScope do
   Renders the router scope snippet a developer needs to paste into
   their `lib/<app>_web/router.ex` after generating controllers.
 
-  Caravela does not edit the router file automatically — the router is
+  Caravela does not edit the router file automatically - the router is
   the application's own composition root. Instead, the generator prints
   the exact `scope` + `resources` lines and the developer pastes them
   in.

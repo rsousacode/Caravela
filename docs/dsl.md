@@ -28,7 +28,7 @@ mode and real-time behaviour. Omit it and Caravela defaults to
 | option       | values                 | effect                                                          |
 |--------------|------------------------|-----------------------------------------------------------------|
 | `:frontend`  | `:live` (default) / `:rest` | Which transport the generated UI uses. See [svelte frontend](livesvelte.md). |
-| `:realtime`  | `true` / `false` (default)  | SSE-driven live updates on top of `:rest`. Requires `frontend: :rest` — rejected on `:live` entities (LiveView already has a WebSocket). |
+| `:realtime`  | `true` / `false` (default)  | SSE-driven live updates on top of `:rest`. Requires `frontend: :rest` - rejected on `:live` entities (LiveView already has a WebSocket). |
 
 ```elixir
 # Classic LiveView + WebSocket.
@@ -47,7 +47,7 @@ entity :orders, frontend: :rest, realtime: true do
 end
 ```
 
-A single domain can mix both modes — `caravela_routes` in the router
+A single domain can mix both modes - `caravela_routes` in the router
 picks the right transport per entity automatically.
 
 Invalid option values (`frontend: :graphql`, non-boolean `realtime`,
@@ -73,7 +73,7 @@ suggestions at compile time.
 ## `relation :<from>, :<to>, type: <t>`
 
 `t` is one of `:has_many`, `:has_one`, `:belongs_to`, `:many_to_many`.
-Declare either side of a relationship — Caravela infers the other.
+Declare either side of a relationship - Caravela infers the other.
 
 ```elixir
 relation :authors, :books,   type: :has_many
@@ -122,9 +122,9 @@ aborted and the tuple propagates back to the caller.
 ## Authorization: `policy` blocks
 
 Caravela's authorization is declared via `policy :entity do … end`
-blocks. A single policy compiles into three enforcement targets —
+blocks. A single policy compiles into three enforcement targets -
 Ecto `WHERE` clauses, field-level projection on API responses, and a
-typed `field_access` Svelte prop — so UI, API, and database stay in
+typed `field_access` Svelte prop - so UI, API, and database stay in
 sync automatically. See [Policies](policies.md) for the full guide.
 
 ```elixir

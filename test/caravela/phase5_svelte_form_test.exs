@@ -76,7 +76,7 @@ defmodule Caravela.Phase5SvelteFormTest do
     test "fields without a predicate render unconditionally", %{src: src} do
       # `title` has no visibility predicate, so no `{#if field_visibility.title}`
       refute src =~ "{#if field_visibility.title}"
-      # But the input still renders — match a fragment of its label/input
+      # But the input still renders - match a fragment of its label/input
       assert src =~ "Title"
     end
 

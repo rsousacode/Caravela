@@ -29,7 +29,7 @@ defmodule Caravela.RouterTest do
     end
   end
 
-  describe "expand_routes/2 — :live entities" do
+  describe "expand_routes/2 - :live entities" do
     test "emits a `live` route per CRUD action for every :live entity" do
       src = expand(MixedDomain.__caravela_domain__())
 
@@ -58,7 +58,7 @@ defmodule Caravela.RouterTest do
     end
   end
 
-  describe "expand_routes/2 — :rest entities" do
+  describe "expand_routes/2 - :rest entities" do
     test "emits a `caravela_rest` route per :rest entity" do
       src = expand(MixedDomain.__caravela_domain__())
 

@@ -3,17 +3,17 @@ defmodule Caravela.Gen.LiveViewTest do
   Generates ExUnit tests for every `:live` entity's three LiveView
   modules (Index / Show / Form). One test file per entity,
   organized as `describe` blocks per module with one test per
-  action — a CI-ready skeleton the developer fills in with
+  action - a CI-ready skeleton the developer fills in with
   fixtures and assertions specific to their domain.
 
   The generated tests use the standard Phoenix test stack
   (`Phoenix.ConnTest`, `Phoenix.LiveViewTest`) and assume the
   consumer app has a `*.ConnCase` module under
-  `test/support/conn_case.ex` — which `mix phx.new` emits by
+  `test/support/conn_case.ex` - which `mix phx.new` emits by
   default, so no extra setup is needed.
 
   Each generated test carries a `# TODO:` line pointing at the
-  fixture hole to fill — the generator cannot know the app's
+  fixture hole to fill - the generator cannot know the app's
   context factories, so it stops short of full assertions.
 
   Returns a list of `{path, source}` tuples. Custom code below the
@@ -94,7 +94,7 @@ defmodule Caravela.Gen.LiveViewTest do
   end
 
   defp test_module(%Domain{} = domain, %Entity{} = entity) do
-    # Name: `<Web>.[V1.]<Context>.<Entity>LiveTest` — sibling of the
+    # Name: `<Web>.[V1.]<Context>.<Entity>LiveTest` - sibling of the
     # LiveView modules themselves, one suffix deeper in camelization.
     index_mod = Naming.live_module(domain, entity.name, :index)
 

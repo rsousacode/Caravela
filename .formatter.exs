@@ -8,7 +8,7 @@ locals_without_parens = [
   on_create: 2,
   on_update: 2,
   on_delete: 2,
-  # Caravela.Domain — authenticatable trait (Phase 7)
+  # Caravela.Domain - authenticatable trait (Phase 7)
   authenticatable: 1,
   strategy: 1,
   strategy: 2,
@@ -20,7 +20,7 @@ locals_without_parens = [
   reset: 2,
   on_register: 1,
   on_login: 1,
-  # Caravela.Domain — policy DSL (Phase 9)
+  # Caravela.Domain - policy DSL (Phase 9)
   policy: 2,
   scope: 1,
   allow: 2,

@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Caravela.Check do
 
   Runs, in order:
 
-    1. `mix compile` — everything must compile.
+    1. `mix compile` - everything must compile.
     2. Discover every module that uses `Caravela.Domain`.
     3. For each domain, render every applicable generator in memory
        (no files written) and confirm it doesn't raise.
@@ -15,14 +15,14 @@ defmodule Mix.Tasks.Caravela.Check do
 
   Exits 0 on green, non-zero with a per-domain / per-generator
   summary otherwise. Intended as the **single oracle** for LLM
-  iteration loops and CI — one command, one signal.
+  iteration loops and CI - one command, one signal.
 
   ## Flags
 
-    * `--tests` — also run `mix test`.
-    * `--dialyzer` — also run `mix dialyzer` (requires `:dialyxir`).
-    * `--only DOMAIN` — check a single domain module instead of all.
-    * `--quiet` — suppress per-step output, print final summary only.
+    * `--tests` - also run `mix test`.
+    * `--dialyzer` - also run `mix dialyzer` (requires `:dialyxir`).
+    * `--only DOMAIN` - check a single domain module instead of all.
+    * `--quiet` - suppress per-step output, print final summary only.
   """
 
   use Mix.Task
@@ -187,7 +187,7 @@ defmodule Mix.Tasks.Caravela.Check do
 
     {to_string(label),
      fn ->
-       # Generators write nothing — they're pure functions returning
+       # Generators write nothing - they're pure functions returning
        # {path, source} tuples. Just call and let any raise surface.
        apply(mod, fun, args)
      end}
@@ -242,10 +242,10 @@ defmodule Mix.Tasks.Caravela.Check do
 
     if failures == [] do
       unless quiet?, do: Mix.shell().info("")
-      Mix.shell().info("\e[32m✓ caravela.check — #{total} step(s) passed.\e[0m")
+      Mix.shell().info("\e[32m✓ caravela.check - #{total} step(s) passed.\e[0m")
       :ok
     else
-      Mix.shell().info("\n\e[31m✗ caravela.check — #{failed}/#{total} step(s) failed:\e[0m")
+      Mix.shell().info("\n\e[31m✗ caravela.check - #{failed}/#{total} step(s) failed:\e[0m")
 
       Enum.each(failures, fn {name, {:error, reason}} ->
         Mix.shell().info("  • #{name}: #{format_reason(reason)}")

@@ -4,16 +4,16 @@ defmodule Caravela.MCP.Router do
 
   Takes a decoded JSON-RPC request map and returns either a response
   map (for request-id-carrying messages) or `:notification`
-  (notifications are fire-and-forget — we write nothing back).
+  (notifications are fire-and-forget - we write nothing back).
 
   Supported MCP methods:
 
-    * `initialize` — handshake, returns protocol version +
+    * `initialize` - handshake, returns protocol version +
       server capabilities.
-    * `notifications/initialized` — post-handshake notification.
+    * `notifications/initialized` - post-handshake notification.
       Acknowledged silently.
-    * `tools/list` — enumerate registered tools.
-    * `tools/call` — dispatch to the named tool.
+    * `tools/list` - enumerate registered tools.
+    * `tools/call` - dispatch to the named tool.
 
   Anything else returns a `method_not_found` error.
   """
@@ -56,7 +56,7 @@ defmodule Caravela.MCP.Router do
   end
 
   def handle(%{"method" => _method}) do
-    # Notification for an unknown method — ignore silently per JSON-RPC.
+    # Notification for an unknown method - ignore silently per JSON-RPC.
     :notification
   end
 

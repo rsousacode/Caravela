@@ -18,7 +18,7 @@ defmodule Caravela.Live.Domain do
         updater :mark_saved,  fn assigns -> %{assigns | saving: false, flash_message: "Saved!"} end
         updater :set_book,    fn assigns, book -> %{assigns | book: book} end
 
-        # Inside on_event we have the full `apply_updater/2,3` sugar —
+        # Inside on_event we have the full `apply_updater/2,3` sugar -
         # Caravela.Live.Domain's `use` block sets `@caravela_live_domain
         # __MODULE__`, so the macro resolves updater names against this
         # module without an explicit third argument.
@@ -40,10 +40,10 @@ defmodule Caravela.Live.Domain do
   After compilation the module exposes four lookup functions consumed
   by `Caravela.Live.Template`:
 
-    * `__caravela_live_state__/0` — default assigns map from `state do ... end`
-    * `__caravela_live_updater__/1` — returns the updater function for a name, or `nil`
-    * `__caravela_live_event__/3` — dispatches an event name to its handler, returning a socket
-    * `__caravela_live_info__/2` — dispatches an async message (`handle_info`) to its handler
+    * `__caravela_live_state__/0` - default assigns map from `state do ... end`
+    * `__caravela_live_updater__/1` - returns the updater function for a name, or `nil`
+    * `__caravela_live_event__/3` - dispatches an event name to its handler, returning a socket
+    * `__caravela_live_info__/2` - dispatches an async message (`handle_info`) to its handler
 
   Updater functions are stored as literal `fn`s, so they can be composed
   with `Caravela.Live.Updater.compose/2` or piped through the `~>`
@@ -83,7 +83,7 @@ defmodule Caravela.Live.Domain do
   end
 
   @doc """
-  Declare the default state fields — the assigns map a mounted LiveView
+  Declare the default state fields - the assigns map a mounted LiveView
   starts with. Each `field/2,3` inside `state do ... end` contributes
   one key/default pair.
 
@@ -101,7 +101,7 @@ defmodule Caravela.Live.Domain do
   @doc """
   Declare a field on the domain state. `type` is an informational tag
   only (for future typed-prop codegen). `opts` may include
-  `default:` — the value used when the domain mounts.
+  `default:` - the value used when the domain mounts.
 
       field :saving, :boolean, default: false
   """
@@ -222,7 +222,7 @@ defmodule Caravela.Live.Domain do
       @doc false
       def __caravela_live_infos__, do: unquote(Macro.escape(infos))
 
-      # Fallback clauses — come after the specific ones injected by
+      # Fallback clauses - come after the specific ones injected by
       # each `updater`/`on_event`/`on_info` call.
       def __caravela_live_updater__(_name), do: nil
 
@@ -235,7 +235,7 @@ defmodule Caravela.Live.Domain do
 
   # --- Internal helpers ----------------------------------------------------
 
-  # Narrowed clone of Caravela.Domain.fun_arity — both modules use it to
+  # Narrowed clone of Caravela.Domain.fun_arity - both modules use it to
   # validate user-supplied function literals at compile time. Accepts
   # anonymous `fn` and captures.
   defp fun_arity_or_raise!(fun, allowed, macro_name) do

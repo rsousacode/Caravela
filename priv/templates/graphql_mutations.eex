@@ -4,9 +4,9 @@ defmodule <%= inspect @mutations_module %> do
 
   Absinthe mutations for every entity. For each entity:
 
-    * `create_<singular>` — accepts a typed input object
-    * `update_<singular>` — takes id + typed input
-    * `delete_<singular>` — takes id, returns the removed entity
+    * `create_<singular>` - accepts a typed input object
+    * `update_<singular>` - takes id + typed input
+    * `delete_<singular>` - takes id, returns the removed entity
 
   All mutations delegate to the generated context module, which
   enforces authorization and lifecycle hooks.

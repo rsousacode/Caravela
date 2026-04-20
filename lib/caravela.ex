@@ -1,6 +1,6 @@
 defmodule Caravela do
   @moduledoc """
-  Caravela — a schema-driven, composable full-stack framework for Phoenix.
+  Caravela - a schema-driven, composable full-stack framework for Phoenix.
 
   **Declare your domain. Sail with the generated code.**
 

@@ -11,11 +11,11 @@ defmodule Mix.Tasks.Caravela.Ir do
 
   Flags:
 
-    * `--output PATH` — write to a file instead of stdout
-    * `--no-pretty` — emit compact JSON (one line, no indentation)
+    * `--output PATH` - write to a file instead of stdout
+    * `--no-pretty` - emit compact JSON (one line, no indentation)
 
   The emitted shape is documented in `Caravela.IR`. Anonymous
-  functions inside policies are not included — only their metadata
+  functions inside policies are not included - only their metadata
   (the fact that a rule exists, its arity, its target entity).
   """
 

@@ -7,11 +7,11 @@ defmodule Caravela.Gen.AuthSvelte do
   Emits, under `assets/svelte/[v<N>/]auth/`:
 
     * `LoginForm.svelte`
-    * `RegisterForm.svelte` — fields dynamically derived from the
+    * `RegisterForm.svelte` - fields dynamically derived from the
       authenticatable entity (every required public field + password)
-    * `ResetPasswordForm.svelte` — two-phase (request / confirm)
-    * `ConfirmEmail.svelte` — status page for `/auth/confirm/:token`
-    * `TokenManager.svelte` — only when the `:api_token` strategy is
+    * `ResetPasswordForm.svelte` - two-phase (request / confirm)
+    * `ConfirmEmail.svelte` - status page for `/auth/confirm/:token`
+    * `TokenManager.svelte` - only when the `:api_token` strategy is
       enabled
     * `SessionList.svelte`
 

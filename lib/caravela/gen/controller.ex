@@ -5,7 +5,7 @@ defmodule Caravela.Gen.Controller do
 
   Each controller provides standard REST actions (`index`, `show`,
   `create`, `update`, `delete`) and delegates to the generated context
-  module. Authorization and hooks are enforced inside the context —
+  module. Authorization and hooks are enforced inside the context -
   the controller only translates `{:ok, _} | {:error, _}` tuples into
   HTTP status codes.
 

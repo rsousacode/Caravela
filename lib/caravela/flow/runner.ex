@@ -10,7 +10,7 @@ defmodule Caravela.Flow.Runner do
   Notifications (`{:flow_state, state}`, `{:flow_done, state}`,
   `{:flow_error, reason}`) go to the `:notify` pid supplied at start
   time. Listeners typically use `handle_info/2` in a LiveView to
-  re-assign socket state — LiveSvelte pushes the resulting prop diff
+  re-assign socket state - LiveSvelte pushes the resulting prop diff
   to the Svelte component.
 
   When `:tag` is supplied at start time, every notification is wrapped
@@ -155,7 +155,7 @@ defmodule Caravela.Flow.Runner do
       {:noreply, %{state | mode: :running, debounce_snapshot: nil, debounce_ms: nil}}
     else
       # A cast already rescheduled a fresh check with the new snapshot;
-      # this old one is stale — drop it.
+      # this old one is stale - drop it.
       {:noreply, state}
     end
   end

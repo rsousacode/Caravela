@@ -120,7 +120,7 @@ defmodule <%= inspect @context_module %> do
   # `field_access/2`, called from generated LiveViews).
 
   @doc """
-  Returns the `field_access` map for `entity` — keys are field atoms,
+  Returns the `field_access` map for `entity` - keys are field atoms,
   values are `true`, `false`, or `:per_record` (record-dependent rule;
   evaluate per row).
   """
@@ -138,7 +138,7 @@ defmodule <%= inspect @context_module %> do
 <% end %>  defp compute_field_access(_entity, _actor), do: %{}
 
   @doc """
-  Returns the `action_access` map for `entity` — keys are
+  Returns the `action_access` map for `entity` - keys are
   `:create`, `:update`, `:delete`; values are `true`, `false`, or
   `:per_record` when the declared gate is arity-2
   (record-dependent) and a specific record hasn't been supplied.
@@ -266,7 +266,7 @@ defmodule <%= inspect @context_module %> do
     end)
   end
 
-  # Works for both Ecto structs and plain maps — the client-bound
+  # Works for both Ecto structs and plain maps - the client-bound
   # representation may be either depending on controller or
   # `caravela_svelte` serialisation. We set the field to `nil` rather
   # than removing it, so the TypeScript shape stays stable for Svelte

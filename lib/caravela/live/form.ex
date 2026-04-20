@@ -41,13 +41,13 @@ defmodule Caravela.Live.Form do
 
   After compilation the module exposes:
 
-    * `__caravela_form__/0` — form metadata (entity, context fields,
+    * `__caravela_form__/0` - form metadata (entity, context fields,
       visible/async field lists, debounces).
-    * `__caravela_form_visibility__/1` — compute the `field_visibility`
+    * `__caravela_form_visibility__/1` - compute the `field_visibility`
       map from an assigns map by running every `visible` predicate.
-    * `__caravela_form_visible__/2` — per-field visibility predicate
+    * `__caravela_form_visible__/2` - per-field visibility predicate
       (fallback returns `true` for undeclared fields).
-    * `__caravela_form_validate_async__/3` — dispatches a field's
+    * `__caravela_form_validate_async__/3` - dispatches a field's
       async validator; returns `:ok` or `{:error, reason}`.
   """
 
@@ -188,7 +188,7 @@ defmodule Caravela.Live.Form do
         end)
       end
 
-      # Fallback clauses — matched only after specific clauses injected
+      # Fallback clauses - matched only after specific clauses injected
       # by each `visible/2` and `validate_async/2,3` macro call.
       def __caravela_form_visible__(_field, _assigns), do: true
       def __caravela_form_validate_async__(_field, _value, _assigns), do: :ok

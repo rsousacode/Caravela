@@ -1,7 +1,7 @@
 defmodule Caravela.Router do
   @moduledoc """
   Router macros that register a Caravela domain's frontend routes at
-  compile time. The router stays in sync with the domain's DSL — add
+  compile time. The router stays in sync with the domain's DSL - add
   an entity, regenerate, restart the server, and the routes exist.
 
   Replaces the paste-snippet workflow shipped through v0.11: instead
@@ -32,7 +32,7 @@ defmodule Caravela.Router do
       `frontend: :rest` entity.
 
   Module names stay *unqualified* in the expansion so Phoenix's
-  scope `alias:` resolution kicks in — drop the `caravela_routes`
+  scope `alias:` resolution kicks in - drop the `caravela_routes`
   call inside a `scope Foo.BookWeb.Library do … end` and
   `BookLive.Index` becomes `Foo.BookWeb.Library.BookLive.Index`,
   matching what `Caravela.Gen.LiveView` emits.
@@ -40,7 +40,7 @@ defmodule Caravela.Router do
   ## Options
 
   `caravela_routes/2` accepts the same options as Phoenix's
-  `live_session/2` — pass them through when grouping multiple
+  `live_session/2` - pass them through when grouping multiple
   entities behind a common `on_mount` hook:
 
       caravela_routes MyApp.Domains.Library,
@@ -54,7 +54,7 @@ defmodule Caravela.Router do
   ## Versioned domains
 
   A domain declared with `version "v1"` names its modules
-  `MyApp.Library.V1.Book` etc. The macro respects that — it emits
+  `MyApp.Library.V1.Book` etc. The macro respects that - it emits
   `V1.BookLive.Index` so Phoenix's scope alias keeps resolution
   working across both plain and versioned layouts.
   """
@@ -104,7 +104,7 @@ defmodule Caravela.Router do
     rest_block = rest_block(rest_entities, version_segment)
 
     # Return a do-block even when one side is empty so the macro
-    # always expands to valid AST — Phoenix.Router tolerates empty
+    # always expands to valid AST - Phoenix.Router tolerates empty
     # route accumulators fine.
     quote do
       unquote(live_block)
@@ -214,7 +214,7 @@ defmodule Caravela.Router do
     {:__aliases__, meta, parts ++ [segment]}
   end
 
-  # An AST that expands to nothing — keeps the outer quote block
+  # An AST that expands to nothing - keeps the outer quote block
   # well-formed when a given render mode has no entities.
   defp empty_ast do
     quote do

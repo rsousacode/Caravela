@@ -1,6 +1,6 @@
 defmodule Caravela.Gen.LiveRoute do
   @moduledoc """
-  Pure-string router-snippet renderer — a debugging / legacy helper.
+  Pure-string router-snippet renderer - a debugging / legacy helper.
 
   > #### Superseded in v0.12 {: .warning}
   >

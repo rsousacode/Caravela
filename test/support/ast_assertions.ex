@@ -36,10 +36,10 @@ defmodule Caravela.ASTAssertions do
 
   `args_match` is a list of argument matchers, applied positionally:
 
-    * `:_`          — matches anything
-    * an atom       — matches that literal atom
-    * a string      — matches that literal string
-    * any other term — compared with `==`
+    * `:_`          - matches anything
+    * an atom       - matches that literal atom
+    * a string      - matches that literal string
+    * any other term - compared with `==`
 
   Returns `:ok`; raises `ExUnit.AssertionError` on mismatch.
 
@@ -94,7 +94,7 @@ defmodule Caravela.ASTAssertions do
         when kind in [:def, :defp] and is_list(args) ->
           acc or arity_matches?(args, arity)
 
-        # `def name` with no args at all — body-less head like
+        # `def name` with no args at all - body-less head like
         # `def foo(struct_or_id, context \\ %{})` arrives as args=nil
         # for the bodyless form in some shapes; accept if arity is 0.
         {kind, _, [{^name, _, nil} | _]}, acc
@@ -151,11 +151,11 @@ defmodule Caravela.ASTAssertions do
 
   # Match `aliases` ([A, B, C] from A.B.C) against `module`:
   #
-  #   nil               — caller doesn't care (pure-function match still OK)
-  #   atom              — match the LAST segment of the alias. The input
+  #   nil               - caller doesn't care (pure-function match still OK)
+  #   atom              - match the LAST segment of the alias. The input
   #                       atom is a real module (`:"Elixir.Foo"`) so we
   #                       reduce it to its last segment before comparing.
-  #   list of atoms     — match the full alias list
+  #   list of atoms     - match the full alias list
   defp match_module?(_aliases, nil), do: true
 
   defp match_module?(aliases, name) when is_atom(name) do

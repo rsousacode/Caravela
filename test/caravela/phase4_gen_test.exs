@@ -10,7 +10,7 @@ defmodule Caravela.Phase4GenTest do
      tenant: MyApp.Domains.TenantLibrary.__caravela_domain__()}
   end
 
-  describe "Naming helpers — LiveView + Svelte" do
+  describe "Naming helpers - LiveView + Svelte" do
     test "live_module is <Web>.<Context>.<Entity>Live.<Kind> without version", %{plain: domain} do
       assert Naming.live_module(domain, :books, :index) ==
                MyAppWeb.Library.BookLive.Index
@@ -134,7 +134,7 @@ defmodule Caravela.Phase4GenTest do
 
     test "--with-domain form uses keyword args for :load and :put_attr updaters",
          %{plain: domain} do
-      # §2.1: three-tuple `{entity, attrs, errors}` → keyword list so
+      # 2.1: three-tuple `{entity, attrs, errors}` → keyword list so
       # call sites are self-documenting and surviving-refactors-friendly.
       {_path, src} =
         LiveView.render_all(domain, with_domain: true)
@@ -299,7 +299,7 @@ defmodule Caravela.Phase4GenTest do
     end
   end
 
-  describe "Caravela.Gen.Svelte — TypeScript interfaces" do
+  describe "Caravela.Gen.Svelte - TypeScript interfaces" do
     test "generates a single types file per domain", %{plain: domain} do
       {path, src} = Svelte.render_types(domain)
 
@@ -347,7 +347,7 @@ defmodule Caravela.Phase4GenTest do
     end
   end
 
-  describe "Caravela.Gen.Svelte — components" do
+  describe "Caravela.Gen.Svelte - components" do
     test "generates index, show, and form per entity", %{plain: domain} do
       paths =
         Svelte.render_components(domain)

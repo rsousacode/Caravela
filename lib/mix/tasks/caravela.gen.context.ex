@@ -10,9 +10,9 @@ defmodule Mix.Tasks.Caravela.Gen.Context do
 
   Flags:
 
-    * `--dry-run`  — print the generated file without writing
-    * `--output DIR` — write under `DIR` instead of the project root
-    * `--force`    — overwrite existing files without prompting
+    * `--dry-run`  - print the generated file without writing
+    * `--output DIR` - write under `DIR` instead of the project root
+    * `--force`    - overwrite existing files without prompting
 
   Regeneration preserves content below the `# --- CUSTOM ---` marker.
   """

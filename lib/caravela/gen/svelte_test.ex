@@ -1,10 +1,10 @@
 defmodule Caravela.Gen.SvelteTest do
   @moduledoc """
-  Generates Vitest + `@testing-library/svelte` smoke tests — one
+  Generates Vitest + `@testing-library/svelte` smoke tests - one
   `*.test.ts` file colocated next to every generated Svelte
   component. The tests assert the component mounts with minimally
   valid props and exposes key entity fields in the DOM. They are
-  deliberately thin — a CI oracle that catches "my prop contract
+  deliberately thin - a CI oracle that catches "my prop contract
   changed and the component now throws", not a full UX regression
   suite.
 
@@ -86,7 +86,7 @@ defmodule Caravela.Gen.SvelteTest do
   end
 
   # JSON-ish literal of `{ field: true, ... }` covering every
-  # public field — enough for the component to mount without prop
+  # public field - enough for the component to mount without prop
   # errors. Matches the default field-access literal the Svelte
   # generator ships.
   defp field_access_literal(%Entity{fields: fields}) do

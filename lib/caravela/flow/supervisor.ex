@@ -13,7 +13,7 @@ defmodule Caravela.Flow.Supervisor do
 
   Once running, `Caravela.Flow.start/3` starts runners as supervised
   children. If the supervisor is not running, `start/3` falls back to
-  starting an unsupervised runner — handy for tests and tooling.
+  starting an unsupervised runner - handy for tests and tooling.
   """
 
   use DynamicSupervisor

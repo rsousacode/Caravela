@@ -4,13 +4,13 @@
 Svelte frontend for every entity in the domain. Each entity picks one
 of two render modes via its DSL declaration:
 
-* `frontend: :live` (default) — Phoenix LiveView + WebSocket.
-* `frontend: :rest` — Phoenix controller + Inertia-style HTTP.
+* `frontend: :live` (default) - Phoenix LiveView + WebSocket.
+* `frontend: :rest` - Phoenix controller + Inertia-style HTTP.
 
 Both modes mount Svelte components through
 [`caravela_svelte`](https://hex.pm/packages/caravela_svelte), so the
 same `BookIndex.svelte` works under either transport without
-changes — the author barely notices which mode is in play.
+changes - the author barely notices which mode is in play.
 
 ## Setup
 
@@ -75,7 +75,7 @@ caravela_routes MyApp.Domains.Library,
 Passing `:session` wraps the `:live` routes in a `live_session/3`
 block so a group of entities can share an `on_mount` hook.
 
-## `:live` mode — what the generated LiveView looks like
+## `:live` mode - what the generated LiveView looks like
 
 ```elixir
 defmodule MyAppWeb.Library.BookLive.Index do
@@ -115,11 +115,11 @@ defmodule MyAppWeb.Library.BookLive.Index do
 end
 ```
 
-The LiveView is standard Phoenix — plain `mount/3`, explicit
+The LiveView is standard Phoenix - plain `mount/3`, explicit
 `handle_event` clauses, the context module aliased at the top.
 No Caravela runtime coupling in the default output.
 
-## `:rest` mode — what the generated controller looks like
+## `:rest` mode - what the generated controller looks like
 
 ```elixir
 defmodule MyAppWeb.BookController do
@@ -196,20 +196,20 @@ pass `--with-domain`:
 mix caravela.gen.live --with-domain MyApp.Domains.Library
 ```
 
-This emits one extra file per `:live` entity — a
-`Caravela.Live.Domain`-backed companion module — and regenerates
+This emits one extra file per `:live` entity - a
+`Caravela.Live.Domain`-backed companion module - and regenerates
 `form.ex` to use `Caravela.Live.Template`. Index and show stay plain.
 The Template-backed form is ~30% shorter and makes the Updater model
 concrete. `:rest` entities are unaffected.
 
 ## Other flags
 
-- `--frontend rest|live` — blanket override. Treats every entity in
+- `--frontend rest|live` - blanket override. Treats every entity in
   the domain as the given mode, ignoring DSL declarations. Useful
   for previewing generator output.
-- `--no-tests` — skip emitting the ExUnit + Vitest test skeletons
-  (they're emitted by default — see [testing](testing.md)).
-- `--dry-run`, `--force`, `--output DIR` — standard across all
+- `--no-tests` - skip emitting the ExUnit + Vitest test skeletons
+  (they're emitted by default - see [testing](testing.md)).
+- `--dry-run`, `--force`, `--output DIR` - standard across all
   generators.
 
 ## Client events (`:live` mode)
@@ -229,7 +229,7 @@ names:
 | Form       | `save`     | `{}`             | `create_*` or `update_*`, navigate     |
 | Form       | `cancel`   | `{}`             | `push_navigate` to index               |
 
-Feel free to add your own — generated `handle_event` clauses live
+Feel free to add your own - generated `handle_event` clauses live
 above the `# --- CUSTOM ---` marker; anything you add below it
 survives regeneration (see [regeneration](regeneration.md)).
 
@@ -296,7 +296,7 @@ Both modes render components server-side via `caravela_svelte`'s Node
 bridge by default. A few Svelte libraries load code lazily at runtime
 in a way the Node bridge can't resolve:
 
-- **Shiki** (syntax highlighter) — dynamically imports per-language
+- **Shiki** (syntax highlighter) - dynamically imports per-language
   grammar chunks. Under Node SSR the dynamic imports fail and the
   render crashes. Workaround: disable SSR in your app config:
 

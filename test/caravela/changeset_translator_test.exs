@@ -6,7 +6,7 @@ defmodule Caravela.ChangesetTranslatorTest do
   alias Caravela.ChangesetTranslator
 
   # Minimal schema used only to build changesets with known error
-  # shapes — we never insert, so no repo / migration is needed.
+  # shapes - we never insert, so no repo / migration is needed.
   defmodule Book do
     use Ecto.Schema
     import Ecto.Changeset
@@ -60,7 +60,7 @@ defmodule Caravela.ChangesetTranslatorTest do
     end
   end
 
-  describe "translate/2 — structured shape" do
+  describe "translate/2 - structured shape" do
     test "returns %{field => [%{code, params, message}]} for required fields" do
       errors = ChangesetTranslator.translate(Book.changeset(%{}))
 
@@ -100,7 +100,7 @@ defmodule Caravela.ChangesetTranslatorTest do
     end
   end
 
-  describe "translate/2 — translator plumbing" do
+  describe "translate/2 - translator plumbing" do
     setup do
       {:ok, _pid} = FakeGettext.start_link()
       :ok
@@ -168,7 +168,7 @@ defmodule Caravela.ChangesetTranslatorTest do
     end
   end
 
-  describe "translate_error/2 — single error entry" do
+  describe "translate_error/2 - single error entry" do
     test "accepts either a translator module or the keyword-list form" do
       raw = {"is invalid", [validation: :format]}
 

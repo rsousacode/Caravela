@@ -9,9 +9,9 @@ defmodule Mix.Tasks.Caravela.Gen.Schema do
 
   Flags:
 
-    * `--dry-run`  — print the generated files without writing anything
-    * `--output DIR` — write under `DIR` instead of the project root
-    * `--force`    — overwrite existing files without prompting
+    * `--dry-run`  - print the generated files without writing anything
+    * `--output DIR` - write under `DIR` instead of the project root
+    * `--force`    - overwrite existing files without prompting
   """
 
   use Mix.Task
@@ -40,14 +40,14 @@ defmodule Mix.Tasks.Caravela.Gen.Schema do
 
   # Locate any prior migration for this domain's `create_*_tables`
   # step before rendering. Reusing the existing timestamp keeps
-  # regeneration idempotent — a second run overwrites the same file
+  # regeneration idempotent - a second run overwrites the same file
   # instead of appending a new timestamped duplicate that
   # `mix ecto.migrate` would try to run alongside the first.
   #
   # `MixHelpers.write_files/4` already handles the
   # "file exists, are you sure?" prompt on overwrite, so this
   # function's only extra work is warning about *duplicate* prior
-  # migrations — a symptom of earlier regenerations that shipped
+  # migrations - a symptom of earlier regenerations that shipped
   # before this fix landed.
   defp build_migration!(domain, root, dry_run?) do
     {timestamp, duplicates} = Migration.reconcile_timestamp(domain, root)
@@ -62,7 +62,7 @@ defmodule Mix.Tasks.Caravela.Gen.Schema do
       Mix.shell().info("""
 
       ! #{length(duplicates)} extra migration file(s) with the same `create_*_tables` stem
-        already exist — regeneration reused the oldest one. Review and delete
+        already exist - regeneration reused the oldest one. Review and delete
         the rest manually:
       #{Enum.map_join(duplicates, "\n", &"    priv/repo/migrations/#{&1}")}
       """)

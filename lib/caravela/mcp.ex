@@ -19,10 +19,10 @@ defmodule Caravela.MCP do
 
   ## Tools shipped in 0.10
 
-    * `caravela__describe_domain` — full IR for a domain module.
-    * `caravela__list_entities` — entity names for a domain module.
-    * `caravela__describe_entity` — IR for one entity.
-    * `caravela__validate_dsl` — compile a candidate domain DSL and
+    * `caravela__describe_domain` - full IR for a domain module.
+    * `caravela__list_entities` - entity names for a domain module.
+    * `caravela__describe_entity` - IR for one entity.
+    * `caravela__validate_dsl` - compile a candidate domain DSL and
       report structured errors.
 
   All tools are read-only or sandboxed; none mutate source files.

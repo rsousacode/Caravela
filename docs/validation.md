@@ -22,7 +22,7 @@ Every field's error list is a sequence of structured maps:
 
 - **`:code`** is Ecto's `:validation` option when present, then
   `:constraint`, then `:invalid` as a fallback. Stable across locales
-  and Ecto versions — frontends key their translations on it.
+  and Ecto versions - frontends key their translations on it.
 - **`:params`** is the original Ecto error options with
   `:validation` / `:constraint` stripped (they're promoted to
   `:code`). Carries `:count`, `:kind`, `:max`, `:number`, etc. that
@@ -43,13 +43,13 @@ config :caravela, :changeset_translator, MyAppWeb.Gettext
 Caravela calls `MyAppWeb.Gettext.dgettext("errors", template, params)`
 for singular messages and `MyAppWeb.Gettext.dngettext("errors",
 singular, plural, count, params)` when Ecto signals a plural via the
-`:count` option — the same contract Phoenix's own
+`:count` option - the same contract Phoenix's own
 `ErrorHelpers.translate_error/1` uses. Existing
 `priv/gettext/<locale>/LC_MESSAGES/errors.po` locale files work
 unchanged.
 
 Any module that exports `dgettext/3` and `dngettext/5` is a valid
-translator — Gettext backends are the common case but not a
+translator - Gettext backends are the common case but not a
 requirement.
 
 ## Per-call override
@@ -57,14 +57,14 @@ requirement.
 ```elixir
 Caravela.ChangesetTranslator.translate(changeset, translator: OtherBackend)
 
-# Or force the pass-through path (no translation) — useful in tests:
+# Or force the pass-through path (no translation) - useful in tests:
 Caravela.ChangesetTranslator.translate(changeset, translator: false)
 ```
 
 ## Using it outside generated code
 
 `Caravela.ChangesetTranslator.translate/2` is a public helper. Call it
-from any controller or LiveView that needs the structured shape — it
+from any controller or LiveView that needs the structured shape - it
 isn't tied to Caravela-generated code:
 
 ```elixir

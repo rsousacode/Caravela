@@ -28,13 +28,13 @@ defmodule Caravela.Error do
 
   ## Kinds
 
-    * `:unauthorized` — a policy rule (scope, field, or allow) denied
+    * `:unauthorized` - a policy rule (scope, field, or allow) denied
       the request. `details` is the entity atom that failed the check.
-    * `:not_found` — a `get_*` / `delete_*(id, _)` lookup returned nil
+    * `:not_found` - a `get_*` / `delete_*(id, _)` lookup returned nil
       (either missing or hidden by a policy scope). `details` is the id.
-    * `:invalid` — input failed changeset validation. `details` is
+    * `:invalid` - input failed changeset validation. `details` is
       the `%Ecto.Changeset{}`.
-    * `:internal` — anything else: a raised exception, a hook that
+    * `:internal` - anything else: a raised exception, a hook that
       returned a non-`:ok` tuple, a downstream integration failure.
       `details` is the original reason term.
 

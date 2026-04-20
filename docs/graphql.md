@@ -48,7 +48,7 @@ end
 
 `extract_context/1` reads `%{context: ...}` from the Absinthe resolution
 and passes it to the Caravela context. Plug your
-`current_user`/`tenant` into `Absinthe.Plug` context — everything else
+`current_user`/`tenant` into `Absinthe.Plug` context - everything else
 is automatic.
 
 ## What's hidden from GraphQL
@@ -73,8 +73,8 @@ end
 ```
 
 Wire Dataloader into your Absinthe schema as usual. The Caravela
-generator does not emit a Dataloader source — just the `resolve:`
-reference — because the source composition depends on your Repo
+generator does not emit a Dataloader source - just the `resolve:`
+reference - because the source composition depends on your Repo
 setup. See Absinthe's Dataloader docs.
 
 ## Versioning
@@ -82,5 +82,5 @@ setup. See Absinthe's Dataloader docs.
 With `version "v1"`, the three files move under `schema/v1/` and module
 names become `MyAppWeb.Schema.V1.LibraryTypes` etc. The Absinthe
 schema you stitch together in `lib/<app>_web/schema.ex` imports the
-types/queries/mutations per version — keep `/graphql/v1` and
+types/queries/mutations per version - keep `/graphql/v1` and
 `/graphql/v2` endpoints separate in your router.

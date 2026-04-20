@@ -25,7 +25,7 @@ defmodule Caravela.Naming do
   @typedoc "Either a compiled `Caravela.Schema.Domain` struct or a raw domain module atom."
   @type domain_or_module :: Domain.t() | module()
 
-  @typedoc "An entity's DSL name (plural atom — e.g. `:books`)."
+  @typedoc "An entity's DSL name (plural atom - e.g. `:books`)."
   @type entity_name :: atom()
 
   @typedoc "A LiveView / Svelte component kind."
@@ -91,7 +91,7 @@ defmodule Caravela.Naming do
 
   @doc """
   Postgres table name for an entity: `"<context>_<entity>"`. Tables are
-  version-independent — different versions of a domain share a table.
+  version-independent - different versions of a domain share a table.
 
       table_name(MyApp.Domains.Library, :books) #=> "library_books"
   """
@@ -289,7 +289,7 @@ defmodule Caravela.Naming do
 
   @doc """
   Controller module for an entity. Version-aware when given a `Domain`
-  struct — inserts a version segment between the web module and the
+  struct - inserts a version segment between the web module and the
   controller name.
 
       controller_module(MyApp.Domains.Library, :books)
@@ -410,7 +410,7 @@ defmodule Caravela.Naming do
   end
 
   @doc """
-  Svelte component reference — the path string passed to
+  Svelte component reference - the path string passed to
   `<CaravelaSvelte.svelte name="..." />`. Matches the Svelte-file
   path relative to `assets/svelte/`, without the `.svelte` extension.
 

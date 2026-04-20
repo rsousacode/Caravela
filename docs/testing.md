@@ -2,14 +2,14 @@
 
 Two stories on one page:
 
-1. **Testing apps Caravela generates for you** — the ExUnit + Vitest
+1. **Testing apps Caravela generates for you** - the ExUnit + Vitest
    skeletons `mix caravela.gen.live` emits, and how to fill them in.
    Jump to [Generated test skeletons](#generated-test-skeletons).
-2. **Testing Caravela itself** — the three-tier approach used inside
+2. **Testing Caravela itself** - the three-tier approach used inside
    this repo to verify the code generators emit the right shape.
    Jump to [Tier 1: structural assertions](#tier-1-structural-assertions).
 
-Most users only need §1. §2 is for contributors.
+Most users only need 1. 2 is for contributors.
 
 ## Generated test skeletons
 
@@ -53,7 +53,7 @@ end
 
 The skeletons use the standard Phoenix test stack
 (`Phoenix.ConnTest`, `Phoenix.LiveViewTest`) and assume the app has
-`*.ConnCase` under `test/support/conn_case.ex` — which `mix phx.new`
+`*.ConnCase` under `test/support/conn_case.ex` - which `mix phx.new`
 emits by default. Pre-wired:
 
 - Structured-error assertions reference
@@ -89,7 +89,7 @@ describe('BookIndex', () => {
 });
 ```
 
-These are intentionally thin — a CI oracle that catches "my prop
+These are intentionally thin - a CI oracle that catches "my prop
 contract changed and the component now throws", not a full UX
 regression suite. Install the dev deps in your app's
 `assets/package.json`:
@@ -123,7 +123,7 @@ Caravela's own test suite sits in a corner that most libraries avoid:
 we test a code generator. Every assertion has to decide whether it's
 checking *the shape* of the generated source or *the behavior* the
 source produces. String matching on generated code makes the suite
-fragile — a formatter tweak cascades into dozens of test edits — so we
+fragile - a formatter tweak cascades into dozens of test edits - so we
 use the three-tier approach below.
 
 ## Tier 1: structural assertions
@@ -186,7 +186,7 @@ assertions, but the fragment still has to appear *in order*.
 
 ## Tier 2: compile + exercise
 
-Sometimes the test isn't "did the template emit X?" — it's "does the
+Sometimes the test isn't "did the template emit X?" - it's "does the
 code actually work?". For those, compile the generated source into an
 isolated namespace and call into it. [context_integration_test.exs](../test/caravela/context_integration_test.exs)
 is the worked example: it renders the context, rewrites the module
@@ -206,10 +206,10 @@ Use this tier when:
 Not routinely used. A future expansion would spin up an ephemeral
 Phoenix app against a test database, run every generator, migrate,
 and issue HTTP requests. The cost/benefit usually lands better at
-Tier 2 — but this doc will update if the e2e harness lands.
+Tier 2 - but this doc will update if the e2e harness lands.
 
 ## When to reach for `src =~ "literal"`
 
-Only for tokens that are genuinely positional and stable — CUSTOM
+Only for tokens that are genuinely positional and stable - CUSTOM
 markers, fixed doc strings, the `@generated` header. For anything
 that could move under a formatter tweak, prefer Tier 1.

@@ -28,9 +28,9 @@ defmodule Caravela.Flow.DSL do
 
   Every `flow/3` declaration compiles into two lookup functions:
 
-    * `__caravela_flow__/1` — returns the compiled step tree for the
+    * `__caravela_flow__/1` - returns the compiled step tree for the
       given flow name.
-    * `__caravela_flow_initial_state__/1` — returns the default
+    * `__caravela_flow_initial_state__/1` - returns the default
       initial-state map.
 
   `__caravela_flows__/0` lists every declared name.
@@ -130,9 +130,9 @@ defmodule Caravela.Flow.DSL do
 
   Accepted options:
 
-    * `:retries`    — how many retries on `{:error, _}` / `{:retry, _}`
-    * `:backoff`    — `:linear` (default) or `:exponential`
-    * `:base_delay` — ms multiplier for retry delay (default `100`)
+    * `:retries`    - how many retries on `{:error, _}` / `{:retry, _}`
+    * `:backoff`    - `:linear` (default) or `:exponential`
+    * `:base_delay` - ms multiplier for retry delay (default `100`)
   """
   defmacro run(fun, opts \\ []) do
     retries = Keyword.get(opts, :retries, 0)
@@ -205,7 +205,7 @@ defmodule Caravela.Flow.DSL do
       @doc false
       def __caravela_flows__, do: unquote(flows)
 
-      # Fallbacks — appear after the specific clauses injected by
+      # Fallbacks - appear after the specific clauses injected by
       # every `flow/3` call.
       def __caravela_flow__(_name), do: nil
       def __caravela_flow_initial_state__(_name), do: %{}

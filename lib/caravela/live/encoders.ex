@@ -6,13 +6,13 @@ defmodule Caravela.Live.Encoders do
 
   Covers two structs that every generated CRUD page trips over:
 
-    * `Decimal` — the Ecto `:decimal` type. Without a custom encoder,
+    * `Decimal` - the Ecto `:decimal` type. Without a custom encoder,
       LiveSvelte's fallback serialises a `%Decimal{}` as
       `%{coef: _, exp: _, sign: _}`, which Svelte then stringifies as
       `[object Object]`. This impl emits the normalised decimal string
       (matching the generated TypeScript `string` type for `:decimal`
       fields).
-    * `Ecto.Association.NotLoaded` — when a schema field is never
+    * `Ecto.Association.NotLoaded` - when a schema field is never
       preloaded, the default encoding leaks internal module names
       (`__owner__`, `__field__`) to the browser. This impl replaces
       the not-loaded sentinel with `nil`.
@@ -21,7 +21,7 @@ defmodule Caravela.Live.Encoders do
   safe to compile even when LiveSvelte is absent or older than 0.18
   (where the `LiveSvelte.Encoder` protocol first landed).
 
-  This module has no runtime API — it exists solely to host the two
+  This module has no runtime API - it exists solely to host the two
   `defimpl` blocks below, which Elixir's protocol consolidation picks
   up automatically.
   """

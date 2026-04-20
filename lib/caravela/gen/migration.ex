@@ -3,7 +3,7 @@ defmodule Caravela.Gen.Migration do
   Generates a single Ecto migration file for every entity in a
   `Caravela.Schema.Domain`.
 
-  Returns `{path, source}` — the caller writes the file. The migration
+  Returns `{path, source}` - the caller writes the file. The migration
   file name is timestamped so subsequent runs produce a distinct file.
 
   ## Deterministic output
@@ -27,7 +27,7 @@ defmodule Caravela.Gen.Migration do
   Render the migration for the domain.
 
   Options:
-    * `:timestamp` — override the numeric prefix (defaults to `now()`)
+    * `:timestamp` - override the numeric prefix (defaults to `now()`)
   """
   def render(%Domain{} = domain, opts \\ []) do
     timestamp = Keyword.get(opts, :timestamp, default_timestamp())
@@ -60,7 +60,7 @@ defmodule Caravela.Gen.Migration do
 
   When more than one matching migration is present (a symptom of
   prior regenerations that didn't reconcile), the *oldest* one is
-  returned — regenerating against it lets the caller consolidate
+  returned - regenerating against it lets the caller consolidate
   state while still surfacing the duplicates for manual cleanup.
   """
   @spec existing_migration_basename(Domain.t(), Path.t()) :: String.t() | nil
@@ -239,7 +239,7 @@ defmodule Caravela.Gen.Migration do
   defp kahn(deps) do
     case Enum.find(deps, fn {_, d} -> d == [] end) do
       nil ->
-        # Cycle in non-required belongs_to — fall back to declaration order.
+        # Cycle in non-required belongs_to - fall back to declaration order.
         Map.keys(deps)
 
       {node, _} ->

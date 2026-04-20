@@ -1,5 +1,5 @@
 defmodule MyApp.Domains.Library do
-  # This fixture predates `default_policy: :deny` — keep the legacy
+  # This fixture predates `default_policy: :deny` - keep the legacy
   # permissive fallback so the generic CRUD tests (which don't declare
   # policies on every entity) still list/create records freely.
   use Caravela.Domain, default_policy: :allow
@@ -29,7 +29,7 @@ defmodule MyApp.Domains.Library do
 
   on_create :books, fn changeset, _context ->
     # Mark whether we saw the changeset at create time by tagging in
-    # metadata — the test introspects this via fallback behaviour.
+    # metadata - the test introspects this via fallback behaviour.
     changeset
   end
 
@@ -45,7 +45,7 @@ defmodule MyApp.Domains.Library do
     end
   end
 
-  # Policies (the authorization model — replaces the legacy
+  # Policies (the authorization model - replaces the legacy
   # `can_read` / `can_create` / `can_update` / `can_delete` hooks).
 
   policy :books do

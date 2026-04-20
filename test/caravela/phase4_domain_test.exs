@@ -1,7 +1,7 @@
 defmodule Caravela.Phase4DomainTest do
   use ExUnit.Case, async: true
 
-  describe "Caravela.Live.Domain — state + updaters + on_event" do
+  describe "Caravela.Live.Domain - state + updaters + on_event" do
     defmodule BookEditor do
       use Caravela.Live.Domain
 
@@ -95,7 +95,7 @@ defmodule Caravela.Phase4DomainTest do
       updater :set_flash, fn s, msg -> %{s | flash: msg} end
 
       # Using `apply_updater` inside the body proves @caravela_live_domain
-      # is set on the Domain module itself — the macro doesn't need the
+      # is set on the Domain module itself - the macro doesn't need the
       # LiveView's Template `use` to resolve the updater.
       on_event "bump", fn socket ->
         apply_updater(socket, :inc)

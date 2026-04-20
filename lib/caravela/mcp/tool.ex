@@ -4,12 +4,12 @@ defmodule Caravela.MCP.Tool do
 
   A tool module implements:
 
-    * `name/0` — the wire-level tool name, exposed to the MCP client.
+    * `name/0` - the wire-level tool name, exposed to the MCP client.
       By convention, prefix with `caravela__` so tools show up
       grouped in host UIs.
-    * `description/0` — short prose explaining what the tool does.
-    * `input_schema/0` — JSON Schema for the tool's arguments.
-    * `call/1` — invoke the tool; returns structured content or an
+    * `description/0` - short prose explaining what the tool does.
+    * `input_schema/0` - JSON Schema for the tool's arguments.
+    * `call/1` - invoke the tool; returns structured content or an
       error.
 
   ## Return shape
@@ -53,7 +53,7 @@ defmodule Caravela.MCP.Tool do
   end
 
   @doc """
-  The MCP `tools/list` response shape — one entry per registered
+  The MCP `tools/list` response shape - one entry per registered
   tool with its name, description, and input schema.
   """
   @spec list() :: [map()]

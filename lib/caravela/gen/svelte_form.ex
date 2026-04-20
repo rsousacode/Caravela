@@ -13,7 +13,7 @@ defmodule Caravela.Gen.SvelteForm do
   `visible`/`validate_async` use the dynamic one.
 
   Caller supplies the compiled form module (with `__caravela_form__/0`)
-  plus the owning `Caravela.Schema.Domain` — the domain provides the
+  plus the owning `Caravela.Schema.Domain` - the domain provides the
   entity's field/type list, which drives input control selection and
   the TypeScript import path.
 

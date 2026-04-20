@@ -17,7 +17,7 @@ defmodule Caravela.Gen.RestController do
   `frontend: :rest` in the `Caravela.Domain` DSL. When an entity also
   declares `realtime: true`, the generated controller calls
   `CaravelaSvelte.Caravela.broadcast_patch/3` after each
-  state-changing action — create, update, delete.
+  state-changing action - create, update, delete.
 
   Returns a list of `{path, source}` tuples. Files preserve content
   below the `# --- CUSTOM ---` marker on regeneration.

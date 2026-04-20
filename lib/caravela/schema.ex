@@ -85,7 +85,7 @@ defmodule Caravela.Schema do
     controller + Inertia-style HTTP response via `caravela_svelte`.
 
     `realtime?` opts the entity into SSE-driven live updates on top
-    of `:rest`. Only valid when `frontend: :rest` — a `:live` entity
+    of `:rest`. Only valid when `frontend: :rest` - a `:live` entity
     already has LiveView's WebSocket for real-time. Generated
     controllers publish `broadcast_patch/3` on create / update /
     delete when this flag is set.

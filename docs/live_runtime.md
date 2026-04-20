@@ -1,21 +1,21 @@
-# Live runtime — `Caravela.Live.*`
+# Live runtime - `Caravela.Live.*`
 
 The default `mix caravela.gen.live` output is intentionally vanilla
-Phoenix — no Caravela imports, no macros, nothing to learn beyond
+Phoenix - no Caravela imports, no macros, nothing to learn beyond
 `handle_event`. That keeps CRUD pages easy to read, easy to patch by
 hand, and easy to eject.
 
 When you're **hand-writing** a complex stateful LiveView, that
 plainness starts to cost. Editors with async validation, wizards with
-branching steps, dashboards with a dozen event types — all benefit
+branching steps, dashboards with a dozen event types - all benefit
 from giving state transitions a name and composing them like
 functions. That's what `Caravela.Live.*` is for.
 
 Three modules, each small and independent:
 
-- `Caravela.Live.Updater` — pure composition on assigns maps
-- `Caravela.Live.Domain` — DSL to declare state + named updaters + event handlers
-- `Caravela.Live.Template` — wiring for a LiveView that mounts a Domain module
+- `Caravela.Live.Updater` - pure composition on assigns maps
+- `Caravela.Live.Domain` - DSL to declare state + named updaters + event handlers
+- `Caravela.Live.Template` - wiring for a LiveView that mounts a Domain module
 
 You can use one without the others. `Updater` works in any LiveView
 callback. `Domain` works without `Template` if you want to drive it
@@ -36,7 +36,7 @@ yourself. `Template` needs a `Domain`, but nothing else.
 - One event type and less than a few lines of state
 - Glue code with no meaningful state transitions
 
-The generated CRUD output is the proof of the second case — four
+The generated CRUD output is the proof of the second case - four
 events, six assigns, no domain needed.
 
 ## `Caravela.Live.Updater`
@@ -57,13 +57,13 @@ clear_flash = fn s -> %{s | flash_message: nil} end
 pipeline = mark_saving ~> clear_flash
 socket = run(socket, pipeline)
 
-# vertical composition — apply `increment` only to :child_state
+# vertical composition - apply `increment` only to :child_state
 scoped = embed(&ChildDomain.increment/1, :child_state)
 socket = run(socket, scoped)
 ```
 
 `Caravela.Live.Updater.apply/2,3` is an undocumented backwards-compat
-alias for `run/2,3`. Prefer `run` — `apply` shadows `Kernel.apply/2,3`
+alias for `run/2,3`. Prefer `run` - `apply` shadows `Kernel.apply/2,3`
 and reads worse in pipelines.
 
 ## `Caravela.Live.Domain`
@@ -84,7 +84,7 @@ defmodule MyApp.BookEditorDomain do
   updater :mark_saved,  fn s -> %{s | saving: false, flash_message: "Saved"} end
   updater :set_book,    fn s, book -> %{s | book: book} end
 
-  # `apply_updater` resolves against this module — @caravela_live_domain
+  # `apply_updater` resolves against this module - @caravela_live_domain
   # is set to __MODULE__ inside `use Caravela.Live.Domain`.
   on_event "save", fn socket ->
     apply_updater(socket, :mark_saving)
@@ -102,10 +102,10 @@ end
 The compiled module exposes four lookup functions consumed by
 `Caravela.Live.Template`:
 
-- `__caravela_live_state__/0` — the default assigns map
-- `__caravela_live_updater__/1` — function lookup by name (or `nil`)
-- `__caravela_live_event__/3` — dispatch an event name to its handler
-- `__caravela_live_info__/2` — dispatch an async message pattern
+- `__caravela_live_state__/0` - the default assigns map
+- `__caravela_live_updater__/1` - function lookup by name (or `nil`)
+- `__caravela_live_event__/3` - dispatch an event name to its handler
+- `__caravela_live_info__/2` - dispatch an async message pattern
 
 At compile time the DSL rejects updaters with arities outside `[1, 2]`
 and events with non-string names.
@@ -131,10 +131,10 @@ end
 
 The `use Template` macro injects:
 
-- `mount/3` — assigns the domain's default state
-- `handle_event/3` — dispatches to the domain's `on_event` handlers
-- `handle_info/2` — dispatches to the domain's `on_info` handlers
-- `apply_updater/2,3` — sugar for resolving updater names against the
+- `mount/3` - assigns the domain's default state
+- `handle_event/3` - dispatches to the domain's `on_event` handlers
+- `handle_info/2` - dispatches to the domain's `on_info` handlers
+- `apply_updater/2,3` - sugar for resolving updater names against the
   bound domain
 
 Everything is `defoverridable`, so you can override any callback for
@@ -167,7 +167,7 @@ regenerates `form.ex` to use `Caravela.Live.Template`. It's the
 shortest path to a working example of the pattern without writing a
 domain from scratch.
 
-## `Caravela.Live.Form` — visibility predicates + async validation
+## `Caravela.Live.Form` - visibility predicates + async validation
 
 When a form needs conditional fields or server-round-trip validation,
 reach for `Caravela.Live.Form`. It's a thin DSL layered on top of
@@ -207,20 +207,20 @@ end
 
 The compiled module exposes:
 
-- `__caravela_form__/0` — metadata (entity, context fields, visible
+- `__caravela_form__/0` - metadata (entity, context fields, visible
   fields, async fields, debounce map)
-- `__caravela_form_visibility__/1` — compute the `field_visibility`
+- `__caravela_form_visibility__/1` - compute the `field_visibility`
   map by running every predicate against an assigns map
-- `__caravela_form_visible__/2` — per-field visibility predicate
+- `__caravela_form_visible__/2` - per-field visibility predicate
   (fallback returns `true`)
-- `__caravela_form_validate_async__/3` — dispatches a field's async
+- `__caravela_form_validate_async__/3` - dispatches a field's async
   validator
 
-Authorization-sensitive visibility **stays on the server** — the
+Authorization-sensitive visibility **stays on the server** - the
 client only receives the boolean result. Svelte's `{#if ...}` blocks
 never see fields the current user shouldn't have.
 
-### Dynamic Svelte form — `Caravela.Gen.SvelteForm`
+### Dynamic Svelte form - `Caravela.Gen.SvelteForm`
 
 `Caravela.Gen.SvelteForm.render(form_module, domain)` generates a
 `<Entity>FormDynamic.svelte` sibling to the plain `<Entity>Form.svelte`

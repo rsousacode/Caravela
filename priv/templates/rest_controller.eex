@@ -4,8 +4,8 @@ defmodule <%= inspect @controller_module %> do
 
   Renders Svelte components via `caravela_svelte`'s Inertia-style
   transport. Every action delegates CRUD to
-  `<%= inspect @context_module %>` (authorization, hooks, and —
-  when enabled — tenant scoping apply automatically) and ships the
+  `<%= inspect @context_module %>` (authorization, hooks, and -
+  when enabled - tenant scoping apply automatically) and ships the
   entity's policy-derived `field_access` map as a prop so the
   Svelte component can render permission-gated fields without a
   round-trip.<%= if @realtime do %>
@@ -228,7 +228,7 @@ defmodule <%= inspect @controller_module %> do
     }
   end
 
-  # Placeholder — slice 3 will derive this from the compiled policy.
+  # Placeholder - slice 3 will derive this from the compiled policy.
   # Kept here so generated code has a single call-site to extend.
   defp field_access(_context), do: %{}
 <%= if @realtime do %>
